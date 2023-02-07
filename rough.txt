@@ -1,0 +1,9 @@
+exports|opens|requires|uses|module|var||provides|to|with|open|record|transitive|yield {} /* keywords */
+
+
+class Point {}
+class Point extends ColoredPoint {}
+class ImaginaryNumber extends Number implements Arithmetic {}
+public final class ImaginaryNumber extends Number implements Arithmetic {}
+class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T>> {}
+class Redundant implements java.lang.Cloneable, Cloneable{}
