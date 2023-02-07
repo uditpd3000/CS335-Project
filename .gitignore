@@ -7,3 +7,5 @@
 *.h
 *.yy.c
 *.yy.cc
+*.txt
+a.out

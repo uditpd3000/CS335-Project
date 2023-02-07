@@ -11,22 +11,6 @@ extern void set_output_file(const char* filename);
 extern void close_output_file();
 
 
-int chapters=0,sections=0,paras=0,w=0,words=0,dec_sentences=0,ex_sentences=0,interr_sentences=0;
-
-vector<string> v;
-void update_stats(string s){
-  
-}
-
-void print_stats(){
-
-  fstream fout;
-  fout.open("output.txt", ios::out); /* the statistical output csv file */
-
-  
-  fout.close();
-}
-
 /* {} 0 or more
 [] 0 or one*/
 
@@ -36,9 +20,9 @@ void print_stats(){
   char* sym;
 }
 
-%token curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark and_symbol at
+%token brac_open brac_close curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark and_symbol at assign
 %token class_just_class class_modifier literal_type AssignmentOperator boolean literal keyword
-%token Identifier extends super implements permits
+%token Identifier extends super implements permits enum_just_enum record_just_record
 
 
 %%
@@ -49,18 +33,31 @@ input:
 
 ClassDeclaration:
     NormalClassDeclaration
-/* |    EnumDeclaration
-|    RecordDeclaration
-|    RecordDeclaration */
+|    EnumDeclaration
 ;
 
 NormalClassDeclaration:
-  ClassModifier class_just_class TypeIdentifier TypeParameters ClassExtends ClassImplements maybe_ClassPermits ClassBody {cout<<"class declared yayy!!\n";}
+  maybe_ClassModifier class_just_class TypeIdentifier TypeParameters ClassExtends ClassImplements maybe_ClassPermits ClassBody {cout<<"class declared yayy!!\n";}
 ;
+
+/* 
+EnumDeclaration:
+  maybe_ClassModifier enum TypeIdentifier ClassImplements EnumBody
+;
+ */
+
+EnumDeclaration:
+  maybe_ClassModifier enum_just_enum TypeIdentifier ClassImplements ClassBody {cout<<"class declared yayy!!\n";}
+;
+
+/* 
+enumBody
+ */
 
 ClassBody:
   curly_open curly_close {cout<<"classbody\n";}
 ;
+
 
 TypeParameters:
 | less_than TypeParameterList greater_than {cout<<"typeparam\n";}
@@ -201,13 +198,65 @@ TypeVariable:
 | TypeIdentifier
 ;
 
+maybe_ClassModifier:
+| ClassModifier
+;
 ClassModifier:
-|  Annotation class_modifier {cout<<"classModifier yayy!!\n";}
+   Annotation class_modifier {cout<<"classModifier yayy!!\n";}
 |  ClassModifier Annotation class_modifier {cout<<"classModifier yayy!!\n";}
 ;
 
 Annotation:
+| NormalAnnotation
 | at TypeName
+| at TypeName brac_open ElementValue brac_close
+;
+
+NormalAnnotation:
+  at TypeName brac_open maybe_ElemValuePairList brac_close
+;
+
+maybe_ElemValuePairList:
+| ElementValuePairList
+;
+
+ElementValuePairList:
+  ElementValuePair
+| ElementValuePairList comma ElementValuePair
+;
+
+ElementValuePair:
+  Identifier assign ElementValue
+;
+
+/* 
+ElementValue:
+  ConditionalExpression
+  ElementValueArrayInitializer
+  Annotation
+;
+*/
+
+ElementValue:
+  ElementValueArrayInitializer
+| Annotation
+;
+
+ElementValueArrayInitializer:
+  curly_open maybe_ElementValueList maybe_comma curly_close
+;
+
+maybe_comma:
+| comma
+;
+
+maybe_ElementValueList:
+| ElementValueList
+;
+
+ElementValueList:
+  ElementValue
+| ElementValueList comma ElementValue
 ;
 
 TypeIdentifier:
@@ -237,7 +286,6 @@ int main(int argc, char *argv[])
 
     /* printf("%d %d %d %d\n",titles,paras,words,sentences)); */
     /* fout<<titles<<" "<<paras<<" "<<words<<" "<<sentences<<endl; */
-    print_stats();
 
     return 0;
 }

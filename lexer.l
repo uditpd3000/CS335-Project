@@ -43,26 +43,31 @@ FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLite
 "/*"([^*]|\*+[^*/])*\*+"/" /* multiline comments */
 
 "("|")"|";"|"..."|"::"  /* seperators */
+"(" {return brac_open;}
+")" {return brac_close;}
 "{" {return curly_open;}
 "}" {return curly_close;}
 "[" {return box_open;}
 "]" {return box_close;}
-"," {cout<<"comma--\n";return comma;}
+"," {return comma;}
 "?" {return ques_mark;}
 "@" {return at;}
 
-"="|"*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|=" {return AssignmentOperator;}
-"." {cout<<"dot---\n";return dot;}
+"*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|=" {return AssignmentOperator;}
+"=" {return assign;}
+"." {return dot;}
 "<" {return less_than;}
 ">" {return greater_than;}
 "&" {return and_symbol;}
 
-continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|protected|throw|else|import|throws|case|enum|instanceof|return|transient|catch|try|interface|void|finally|volatile|const|native|while|"_" {return keyword;} /* keywords */
+continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|protected|throw|else|import|throws|case|instanceof|return|transient|catch|try|interface|void|finally|volatile|const|native|while|"_" {return keyword;} /* keywords */
 
 "class" {return class_just_class;}
 public|private|abstract|static|final|sealed|non-sealed|strictfp {return class_modifier;}
 extends {return extends;}
 super {return super;}
+enum {return enum_just_enum;}
+record {return record_just_record;}
 implements {return implements;}
 perits {return permits;}
 byte|short|int|long|char|float|double {return literal_type;}
@@ -74,7 +79,7 @@ null {} /* null literals */
 \"[^\n"]+\" {} /* string literals */
 {FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral} { return literal;} /* numerical literals */
 
-[a-zA-Z_][a-zA-Z0-9_]*  {cout<<yytext<<"----identifier\n"; return Identifier;} /* identifiers */
+[a-zA-Z_][a-zA-Z0-9_]*  {return Identifier;} /* identifiers */
 
 . {printf("Error on line %d : read an invalid character %s\n", yylineno, yytext ); flag=true; return 0;} /* lexical error */
 
