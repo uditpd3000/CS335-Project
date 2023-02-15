@@ -18,6 +18,7 @@ void update_stats(string s){
   
 }
 
+
 void print_stats(){
 
   fstream fout;
@@ -36,167 +37,96 @@ void print_stats(){
   char* sym;
 }
 
-%token curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark and_symbol at
+%token curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark and_symbol at colon OR brac_open brac_close
 %token class_just_class class_modifier literal_type AssignmentOperator boolean literal keyword
-%token Identifier extends super implements permits
+%token Identifier extends super implements permits 
+%token ARITHMETIC_OP LOGICAL_OP BITWISE_OP RELATIONAL_OP INCR_DECR VOID THIS
+%glr-parser
 
 %%
 
-input:
-|   ClassDeclaration input
+input : Expression
+| Expression input
+;
+Expression : literal
+| AssignmentExpression
 ;
 
-ClassDeclaration:
-    NormalClassDeclaration
-/* |    EnumDeclaration
-|    RecordDeclaration
-|    RecordDeclaration */
+AssignmentExpression : 
+ Assignment
 ;
 
-NormalClassDeclaration:
-  ClassModifier class_just_class TypeIdentifier TypeParameters ClassExtends ClassImplements maybe_ClassPermits ClassBody {cout<<"class declared yayy!!\n";}
+Assignment:
+  LeftHandSide AssignmentOperator Expression {cout<<"mera ho gaya\n";}
 ;
 
-ClassBody:
-  curly_open curly_close {cout<<"classbody\n";}
+LeftHandSide:
+FieldAccess      {cout<<"Fieldacc\n";}
+| ExpressionName {cout<<"Expname\n";}
+| ArrayAccess    {cout<<"Arraceess\n";}
 ;
 
-TypeParameters:
-| less_than TypeParameterList greater_than {cout<<"typeparam\n";}
+ExpressionName:
+Identifier {cout<<"Id-Expname\n";}
+| AmbiguousName dot Identifier {cout<<"Id-Expname2\n";}
 ;
 
-ClassExtends:
-| extends ClassType {cout<<"extends\n";}
+AmbiguousName:
+Identifier {cout<<"Id-Expna\n";}
+| AmbiguousName dot Identifier
 ;
 
-ClassImplements:
-| implements InterfaceTypeList {cout<<"implements\n";}
+FieldAccess:
+Primary dot Identifier 
+| super dot Identifier
+| TypeName dot super dot Identifier
 ;
 
-maybe_ClassPermits:
-| permits ClassPermits
+Primary:
+PrimaryNoNewArray
 ;
 
-ClassPermits:
-  ClassPermits comma TypeName
-|  TypeName
+PrimaryNoNewArray:
+literal
+| ClassLiteral
+| THIS
+| TypeName dot THIS
+| brac_open Expression brac_close
+| FieldAccess
+| ArrayAccess
 ;
 
 TypeName:
-  TypeIdentifier
-| PackageOrTypeName dot TypeIdentifier
-;
-
-PackageOrTypeName:
-  Identifier
-| PackageOrTypeName dot Identifier
-;
-
-TypeParameterList:
-  TypeParameterList comma TypeParameter
-| TypeParameter
-;
-
-InterfaceTypeList:
- InterfaceType {cout<<"interfacetypelist1\n";}
-| InterfaceType comma InterfaceType {cout<<"interfacetypelist2\n";}
-;
-
-TypeParameter:
-  Annotation TypeIdentifier TypeBound
-| TypeIdentifier TypeBound
-;
-
-TypeBound:
-| extends TypeVariable {cout<<"typebound1\n";}
-| extends ClassOrInterfaceType AdditionalBound {cout<<"typebound2\n";}
-;
-
-AdditionalBound:
-| AdditionalBound and_symbol InterfaceType
-| and_symbol InterfaceType
-;
-
-ClassOrInterfaceType:
-  ClassType
-| InterfaceType
-;
-
-InterfaceType:
-  ClassType {cout<<"interfacetype\n";}
-;
-
-ClassType:
-  TypeIdentifier TypeArguments {cout<<"classtype1\n";}
-| PackageName dot TypeIdentifier TypeArguments {cout<<"classtype2\n";}
-| ClassOrInterfaceType dot Annotation TypeIdentifier TypeArguments {cout<<"classtype3\n";}
-;
-
-PackageName:
-  Identifier {cout<<"packagename\n";}
-| PackageName dot Identifier {cout<<"packagename\n";}
-;
-
-TypeArguments:
-| less_than TypeArgumentList greater_than {cout<<"typeargs\n";}
-;
-
-TypeArgumentList :
- TypeArgumentList comma TypeArgument
-| TypeArgument
-;
-
-TypeArgument:
-  ReferenceType
-| Wildcard
-;
-
-Wildcard:
- Annotation ques_mark WildcardBounds
-;
-
-WildcardBounds:
-| extends ReferenceType
-| super ReferenceType
-;
-
-ReferenceType:
-  ClassOrInterfaceType
-| TypeVariable
-| ArrayType
-;
-
-ArrayType:
-  PrimitiveType Dims
-| ClassOrInterfaceType Dims
-| TypeVariable Dims
-;
-
-Dims:
-  Annotation box_open box_close
-| Dims Annotation box_open box_close
-
-PrimitiveType:
-  Annotation literal_type
-;
-
-TypeVariable:
-  Annotation TypeIdentifier
-| TypeIdentifier
-;
-
-ClassModifier:
-|  Annotation class_modifier {cout<<"classModifier yayy!!\n";}
-|  ClassModifier Annotation class_modifier {cout<<"classModifier yayy!!\n";}
-;
-
-Annotation:
-| at TypeName
+TypeIdentifier
+| PackageOrTypeName dot TypeIdentifier 
 ;
 
 TypeIdentifier:
- Identifier {cout<<"typeidentifier\n";}
+ Identifier   {cout<<"IDentifier\n";}
 ;
+
+PackageOrTypeName:
+Identifier {cout<<"Id2-1\n";}
+| PackageOrTypeName dot Identifier {cout<<"Id2-2\n";}
+;
+
+ArrayAccess:
+ExpressionName box_open Expression box_close
+| PrimaryNoNewArray box_open Expression box_close
+;
+
+squarebox: box_open box_close 
+| squarebox box_open box_close
+;
+
+ClassLiteral : TypeName squarebox dot class_just_class
+| TypeName dot class_just_class
+| literal_type squarebox dot class_just_class
+| literal_type dot class_just_class
+| boolean squarebox dot class_just_class
+| boolean dot class_just_class
+| VOID dot class_just_class
+
 
 %%
 

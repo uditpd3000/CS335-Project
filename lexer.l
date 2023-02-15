@@ -1,5 +1,5 @@
 %{  
-#include "myparser.tab.h"
+#include "parser.tab.h"
 
 #include <bits/stdc++.h>
 using namespace std;

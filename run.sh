@@ -1,4 +1,4 @@
 flex lexer.l
-bison -d -t myparser.y
-g++ lex.yy.c myparser.tab.c
+bison -d -t parser.y
+g++ lex.yy.c parser.tab.c
 ./a.out input.java
