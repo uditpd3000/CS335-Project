@@ -1,9 +1,4 @@
 %{
-    #include <iostream>
-    #include <map>
-    #include <string.h>
-    #include <fstream>
-    #include <vector>
     #include <bits/stdc++.h>
 
     using namespace std;
@@ -71,7 +66,13 @@ float {float1}|{float2}|{number}[fFdD]|{hexnumber}[fFdD]
 ","|";"|"("|")"|"["|"]"|"."|"..."|"@"|"::"|"{"|"}" {insertMap(yytext,"Seperator");}  
 abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|exports|opens|requires|uses|module|permits|sealed|var|non-sealed|provides|to|with|open|record|transitive|yield {insertMap(yytext,"Keyword");}
 null|{string}|{text_block}|{char}|{number}|{hexnumber}|{octal}|{binary}|{long}|{boolean}|{hexfloat}|{float} {insertMap(yytext,"Literal");}
-"+"|"-"|"*"|"/"|"!"|"="|"<"|"<="|">="|">"|"^"|"~"|"?"|":"|"->"|"=="|"!="|"&&"|"||"|"++"|"--"|"&"|"|"|"%"|"<<"|">>"|">>>"|"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^="|"<<="|">>="|">>>=" {insertMap(yytext,"Operator");}
+"+"|"-"|"*"|"/"|"%" {return ARITHMETIC_OP;}
+"--"|"++" {return INCR_DECR;}
+"<"|"<="|">="|">"|"=="|"!=" {return RELATIONAL_OP;}
+"^"|"~"|"&"|"|"|"<<"|">>"|">>>" {return BITWISE_OP;}
+"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^="| {return ASSIGN_OP;}
+"&&"|"||"|"!" {return LOGICAL_OP;}
+"?"|":" {return TERNARY_OPERATOR;}
 [a-zA-Z_][a-zA-Z0-9_]* {insertMap(yytext,"Identifier");}
 
 . {report_error(yylineno,yytext);return 0;}

@@ -1,0 +1,9 @@
+int[][].class.aisehi = 3
+xyz.class.something = 3 
+x = 5
+a[4] = 5
+super. udit = "hii"
+udit.super.some = "onemorew"
+this.myname = "udit"
+udit.this.opop += 5
+void.class.name = "udit"
