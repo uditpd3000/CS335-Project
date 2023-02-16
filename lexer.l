@@ -42,7 +42,7 @@ FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLite
 
 "/*"([^*]|\*+[^*/])*\*+"/" /* multiline comments */
 
-"("|")"|";"|"..."|"::"  /* seperators */
+"::"  /* seperators */
 "(" {return brac_open;}
 ")" {return brac_close;}
 "{" {return curly_open;}
@@ -56,20 +56,34 @@ FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLite
 "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|=" {return AssignmentOperator;}
 "=" {return assign;}
 "." {return dot;}
+"..." {return dots;}
 "<" {return less_than;}
 ">" {return greater_than;}
 "&" {return and_symbol;}
+";" {return semi_colon;}
 
-continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|protected|throw|else|import|throws|case|instanceof|return|transient|catch|try|interface|void|finally|volatile|const|native|while|"_" {return keyword;} /* keywords */
+continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|instanceof|return|catch|try|interface|finally|const|native|while|"_" {return keyword;} /* keywords */
 
-"class" {return class_just_class;}
-public|private|abstract|static|final|sealed|non-sealed|strictfp {return class_modifier;}
+class {return class_just_class;}
+public|private|protected {return class_access;}
+static {return STATIC;}
+final {return FINAL;}
+sealed|non-sealed {return key_SEAL;}
+abstract {return key_abstract;}
+strictfp {return key_STRICTFP;}
+transient|volatile {return field_modifier;}
+native|synchronized {return method_modifier;}
+
 extends {return extends;}
 super {return super;}
 enum {return enum_just_enum;}
+this {return THIS;}
 record {return record_just_record;}
 implements {return implements;}
 perits {return permits;}
+var {return var;}
+void {return VOID;}
+throws {return throws;}
 byte|short|int|long|char|float|double {return literal_type;}
  
 true|false { return boolean;} /* boolean literals */
