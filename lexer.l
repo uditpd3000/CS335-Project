@@ -35,6 +35,11 @@ DecimalFloatingPointLiteral {NonZeroDigit}{Digits}*([.]{Digits}*)?([eE][+-]?{Dig
 HexadecimalFloatingPointLiteral ([0][xX]{HexNumeral}*[.]{HexNumeral}?)[pP][+-]?{Digits}+[fFdD]?
 FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLiteral}
 
+CharacterLiteral ['][^'][']
+BooleanLiteral true|false
+NullLiteral null
+TextBlock ["]["]["](([^"]*)|(["][^"]*["][^"]+)|([\n]))*["]["]["]
+StringLiteral \"[^\n"]+\" 
 %%
 
 "//"(.*[ \t]*.*)*[\n] /* for single line comments */
@@ -52,17 +57,28 @@ FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLite
 "," {return comma;}
 "?" {return ques_mark;}
 "@" {return at;}
-
-"*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|=" {return AssignmentOperator;}
 "=" {return assign;}
 "." {return dot;}
 "..." {return dots;}
 "<" {return less_than;}
 ">" {return greater_than;}
-"&" {return and_symbol;}
 ";" {return semi_colon;}
+":" {return colon;}
+"||" {return OR;}
+"&&" {return AND;}
+"&" {return bitwise_and;}
+"^" {return bitwise_xor;}
+"|" {return bitwise_or;}
+"=="|"!=" {return EQUALNOTEQUAL;}
+"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^=" {return AssignmentOperator1;}
+"+"|"-" {return ARITHMETIC_OP_ADDITIVE;}
+"*"|"/"|"%" {return ARITHMETIC_OP_MULTIPLY;}
+"--"|"++" {return INCR_DECR;}
+"<="|">=" {return RELATIONAL_OP1;}
+"<<"|">>"|">>>" {return SHIFT_OP;}
+"~"|"!" {return LOGICAL_OP;}
 
-continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|instanceof|return|catch|try|interface|finally|const|native|while|"_" {return keyword;} /* keywords */
+continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|return|catch|try|interface|finally|const|while|"_" {return keyword;} /* keywords */
 
 class {return class_just_class;}
 public|private|protected {return class_access;}
@@ -73,25 +89,21 @@ abstract {return key_abstract;}
 strictfp {return key_STRICTFP;}
 transient|volatile {return field_modifier;}
 native|synchronized {return method_modifier;}
-
 extends {return extends;}
 super {return super;}
 enum {return enum_just_enum;}
 this {return THIS;}
 record {return record_just_record;}
 implements {return implements;}
-perits {return permits;}
+permits {return permits;}
 var {return var;}
 void {return VOID;}
 throws {return throws;}
 byte|short|int|long|char|float|double {return literal_type;}
- 
-true|false { return boolean;} /* boolean literals */
-null {} /* null literals */
-['][^']['] {} /* char literals */
-["]["]["](([^"]*)|(["][^"]*["][^"]+)|([\n]))*["]["]["] {} /* text-block literals */
-\"[^\n"]+\" {} /* string literals */
-{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral} { return literal;} /* numerical literals */
+instanceof {return INSTANCE_OF;}
+
+{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} { return literal;} /* literals */
+
 
 [a-zA-Z_][a-zA-Z0-9_]*  {return Identifier;} /* identifiers */
 

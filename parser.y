@@ -10,6 +10,7 @@ extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
 
+int num=0;
 
 /* {} 0 or more
 [] 0 or 1*/
@@ -19,12 +20,30 @@ extern void close_output_file();
 %union{
   char* sym;
 }
-
-%token brac_open brac_close curly_open curly_close box_open box_close dot dots less_than greater_than 
-%token comma ques_mark and_symbol at assign semi_colon
-%token class_just_class literal_type AssignmentOperator boolean literal keyword VOID THIS throws var 
+ 
 %token class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
+%token curly_open curly_close box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
+%token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
 %token Identifier extends super implements permits enum_just_enum record_just_record
+%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1
+
+
+
+
+%left OR
+%left AND
+%left bitwise_or bitwise_xor
+%left bitwise_and
+%left EQUALNOTEQUAL
+%left RELATIONAL_OP1 greater_than less_than
+%left SHIFT_OP
+%left ARITHMETIC_OP_ADDITIVE 
+%left ARITHMETIC_OP_MULTIPLY
+%right LOGICAL_OP
+%right AssignmentOperator1 assign
+%left INCR_DECR
+%left dot
+%left super
 
 %%
 
@@ -83,7 +102,6 @@ ConstructorDeclarationEnd:
 | curly_open ConstructorBody {cout<<"constructordeclaration2\n";}
 ;
 
-
 ConstructorModifier:
   Annotation {cout<<"constructormodifier1\n";}
 | class_access {cout<<"constructormodifier2\n";}
@@ -111,6 +129,8 @@ ConstructorBodyEnd:
  ExplicitConstructorInvocation:
   TypeArguments ExplicitConsInvTillTypeArgs
 | ExplicitConsInvTillTypeArgs
+| TypeName dot TypeArguments super brac_open ArgumentList brac_close semi_colon
+| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon
 ;
 
 ExplicitConsInvTillTypeArgs:
@@ -123,17 +143,13 @@ ArgumentList:
 | ArgumentList comma Expression
 ;
 
-Expression:
-  literal
-;
-
 ConstructorDeclarator:
   ConstructorDeclaratorStart ConstructorDeclaratorEnd
 ;
 
 ConstructorDeclaratorStart:
   TypeParameters Identifier brac_open 
-| Identifier brac_open 
+| Identifier brac_open {cout<<"ConstructorDeclaratorStart\n";}
 ;
 
 ConstructorDeclaratorEnd:
@@ -148,12 +164,12 @@ StaticInitializer:
 ;
 
 InstanceInitializer:
-  curly_open Block {cout<<"";}
+ Block {cout<<"";}
 ;
 
 Block:
-  BlockStatements curly_close {cout<<"Block1\n";}
-| curly_close {cout<<"Block2\n";}
+  curly_open BlockStatements curly_close {cout<<"Block1\n";}
+| curly_open curly_close {cout<<"Block2\n";}
 ;
 
 BlockStatements:
@@ -168,7 +184,8 @@ BlockStatements:
 ; */
 
 BlockStatement:
-  LocalClassOrInterfaceDeclaration {cout<<"";}
+  Assignment semi_colon
+| LocalClassOrInterfaceDeclaration {cout<<"";}
 | LocalVariableDeclarationStatement {cout<<"";}
 ;
 
@@ -253,7 +270,8 @@ MethodDeclarator:
 ;
 
 MethodDeclaratorTillRP:
-  Annotation UnannType ReceiverParameter MethodDeclaratorTillFP {cout<<"MethodDeclarator1\n";}
+  UnannType ReceiverParameter MethodDeclaratorTillFP
+|  Annotation UnannType ReceiverParameter MethodDeclaratorTillFP {cout<<"MethodDeclarator1\n";}
 | MethodDeclaratorTillFP 
 ;
 
@@ -269,13 +287,21 @@ MethodDeclaratorEnd:
 
 FormalParameterList:
   FormalParameter
-| VariableModifier UnannType comma FormalParameterList
+| FormalParameter comma FormalParameterList 
 ;
 
 FormalParameter:
-  VariableDeclaratorId {cout<<"FormalParameter1\n";}
-| VariableArityParameter {cout<<"FormalParameter2\n";}
+  VariableModifier UnannType VariableDeclaratorId
+| UnannType VariableDeclaratorId
+| VariableModifier UnannType VariableArityParameter
+| UnannType VariableArityParameter
 ;
+
+
+// FormalParameter:
+//   VariableDeclaratorId {cout<<"FormalParameter1\n";}
+// | VariableArityParameter {cout<<"FormalParameter2\n";}
+// ;
 
 VariableDeclaratorId:
   Identifier Dims
@@ -381,16 +407,6 @@ ClassPermits:
 |  TypeName
 ;
 
-TypeName:
-  Identifier
-| PackageOrTypeName dot Identifier
-;
-
-PackageOrTypeName:
-  Identifier
-| PackageOrTypeName dot Identifier
-;
-
 TypeParameterList:
   TypeParameterList comma TypeParameter
 | TypeParameter
@@ -421,8 +437,8 @@ TypeBound:
 ;
 
 AdditionalBound:
-  AdditionalBound and_symbol InterfaceType
-| and_symbol InterfaceType
+  AdditionalBound bitwise_and InterfaceType
+| bitwise_and InterfaceType
 ;
 
 InterfaceType:
@@ -547,6 +563,145 @@ ElementValueArrayInitializer:
 ElementValueList:
   ElementValue
 | ElementValueList comma ElementValue
+;
+
+Expression : 
+  AssignmentExpression {cout<<num++<<" Khatam----------------------------------------\n";}
+
+;
+
+AssignmentExpression : 
+Assignment             {cout<<"Assignment\n";}
+| ConditionalExpression {cout<<"Exp\n";}
+;
+
+Assignment:
+  LeftHandSide AssignmentOperator Expression 
+;
+
+LeftHandSide:
+FieldAccess      {cout<<"Fieldacc\n";}
+| TypeName {cout<<"Expname\n";}
+| ArrayAccess    {cout<<"Arraceess\n";}
+;
+
+FieldAccess:
+Primary dot Identifier {cout<<"PrimdotId\n";}
+| super dot Identifier
+| TypeName dot super dot Identifier
+;
+
+Primary:
+PrimaryNoNewArray
+;
+
+PrimaryNoNewArray:
+literal
+| ClassLiteral {cout<<"Classliteral\n";}
+| THIS
+| TypeName dot THIS
+| brac_open Expression brac_close
+| FieldAccess
+| ArrayAccess
+;
+
+TypeName:
+Identifier
+| TypeName dot Identifier 
+;
+
+ArrayAccess:
+TypeName box_open Expression box_close
+| PrimaryNoNewArray box_open Expression box_close
+;
+
+squarebox: 
+  box_open box_close 
+| squarebox box_open box_close
+;
+
+ClassLiteral : 
+  TypeName squarebox dot class_just_class 
+| TypeName dot class_just_class
+| literal_type squarebox dot class_just_class 
+| literal_type dot class_just_class
+| boolean squarebox dot class_just_class
+| boolean dot class_just_class
+| VOID dot class_just_class
+;
+
+ConditionalExpression : 
+  ConditionalOrExpression
+| ConditionalOrExpression ques_mark Expression colon ConditionalExpression
+;
+
+ConditionalOrExpression : 
+  UnaryExpression 
+| ConditionalOrExpression OR ConditionalOrExpression                      {cout<<"OR\n";}
+| ConditionalOrExpression AND ConditionalOrExpression                     {cout<<"AND\n";}
+| ConditionalOrExpression bitwise_or ConditionalOrExpression              {cout<<"or\n";}
+| ConditionalOrExpression bitwise_xor ConditionalOrExpression             {cout<<"xor\n";}
+| ConditionalOrExpression bitwise_and ConditionalOrExpression             {cout<<"and\n";}
+| ConditionalOrExpression EQUALNOTEQUAL ConditionalOrExpression           {cout<<"Equality\n";}
+| ConditionalOrExpression RELATIONAL_OP ConditionalOrExpression           {cout<<"Relational\n";}
+| ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {cout<<"Shift\n";}
+| ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {cout<<"add\n";}
+| ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {cout<<"mult\n";}
+;
+
+UnaryExpression:
+  PreIncrDecrExpression                 {cout<<"IncrDecr\n";}
+| ARITHMETIC_OP_ADDITIVE UnaryExpression 
+| UnaryExpressionNotPlusMinus 
+;
+
+PreIncrDecrExpression:
+INCR_DECR UnaryExpression
+;
+
+UnaryExpressionNotPlusMinus:
+  LOGICAL_OP UnaryExpression
+| PostfixExpression
+;
+
+PostfixExpression:
+  Primary
+| TypeName
+| PostIncrDecrExpression
+;
+
+PostIncrDecrExpression:
+  PostfixExpression INCR_DECR
+;
+
+RELATIONAL_OP :
+RELATIONAL_OP1 
+| greater_than
+| less_than
+;
+
+// InstanceofExpression:
+  // ConditionalOrExpression INSTANCE_OF ReferenceType
+// | ConditionalOrExpression INSTANCE_OF Pattern
+
+// CastExpression:
+//   brac_open PrimitiveType brac_close UnaryExpression
+// | brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus
+// | brac_open ReferenceType AdditionalBounds brac_close UnaryExpressionNotPlusMinus
+;
+
+// AdditionalBounds:
+// AdditionalBound 
+// | AdditionalBounds AdditionalBound
+// ;
+
+// AdditionalBound:
+// bitwise_and InterfaceType
+// ;
+
+AssignmentOperator:
+assign
+| AssignmentOperator1
 ;
 
 %%
