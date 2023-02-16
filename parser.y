@@ -11,7 +11,7 @@ extern void set_output_file(const char* filename);
 extern void close_output_file();
 
 
-int chapters=0,sections=0,paras=0,w=0,words=0,dec_sentences=0,ex_sentences=0,interr_sentences=0;
+int num=0;
 
 vector<string> v;
 void update_stats(string s){
@@ -37,47 +37,58 @@ void print_stats(){
   char* sym;
 }
 
-%token curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark and_symbol at colon OR brac_open brac_close
+%token curly_open curly_close box_open box_close dot less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or
 %token class_just_class class_modifier literal_type AssignmentOperator boolean literal keyword
 %token Identifier extends super implements permits 
-%token ARITHMETIC_OP LOGICAL_OP BITWISE_OP RELATIONAL_OP INCR_DECR VOID THIS
-%glr-parser
+%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1
+
+
+
+
+%left OR
+%left AND
+%left bitwise_or bitwise_xor
+%left bitwise_and
+%left EQUALNOTEQUAL
+%left RELATIONAL_OP1 greater_than less_than
+%left SHIFT_OP
+%left ARITHMETIC_OP_ADDITIVE 
+%left ARITHMETIC_OP_MULTIPLY
+%right LOGICAL_OP
+%right AssignmentOperator
+%left INCR_DECR
+%left dot
+%left super
+
 
 %%
+
 
 input : Expression
 | Expression input
 ;
-Expression : literal
-| AssignmentExpression
+Expression : 
+  AssignmentExpression {cout<<num++<<" Khatam----------------------------------------\n";}
+
 ;
 
 AssignmentExpression : 
- Assignment
+Assignment             {cout<<"Assignment\n";}
+| ConditionalExpression {cout<<"Exp\n";}
 ;
 
 Assignment:
-  LeftHandSide AssignmentOperator Expression {cout<<"mera ho gaya\n";}
+  LeftHandSide AssignmentOperator Expression 
 ;
 
 LeftHandSide:
 FieldAccess      {cout<<"Fieldacc\n";}
-| ExpressionName {cout<<"Expname\n";}
+| TypeName {cout<<"Expname\n";}
 | ArrayAccess    {cout<<"Arraceess\n";}
 ;
 
-ExpressionName:
-Identifier {cout<<"Id-Expname\n";}
-| AmbiguousName dot Identifier {cout<<"Id-Expname2\n";}
-;
-
-AmbiguousName:
-Identifier {cout<<"Id-Expna\n";}
-| AmbiguousName dot Identifier
-;
-
 FieldAccess:
-Primary dot Identifier 
+Primary dot Identifier {cout<<"PrimdotId\n";}
 | super dot Identifier
 | TypeName dot super dot Identifier
 ;
@@ -88,7 +99,7 @@ PrimaryNoNewArray
 
 PrimaryNoNewArray:
 literal
-| ClassLiteral
+| ClassLiteral {cout<<"Classliteral\n";}
 | THIS
 | TypeName dot THIS
 | brac_open Expression brac_close
@@ -97,35 +108,101 @@ literal
 ;
 
 TypeName:
-TypeIdentifier
-| PackageOrTypeName dot TypeIdentifier 
-;
-
-TypeIdentifier:
- Identifier   {cout<<"IDentifier\n";}
-;
-
-PackageOrTypeName:
-Identifier {cout<<"Id2-1\n";}
-| PackageOrTypeName dot Identifier {cout<<"Id2-2\n";}
+Identifier
+| TypeName dot Identifier 
 ;
 
 ArrayAccess:
-ExpressionName box_open Expression box_close
+TypeName box_open Expression box_close
 | PrimaryNoNewArray box_open Expression box_close
 ;
 
-squarebox: box_open box_close 
+squarebox: 
+  box_open box_close 
 | squarebox box_open box_close
 ;
 
-ClassLiteral : TypeName squarebox dot class_just_class
+ClassLiteral : 
+  TypeName squarebox dot class_just_class 
 | TypeName dot class_just_class
-| literal_type squarebox dot class_just_class
+| literal_type squarebox dot class_just_class 
 | literal_type dot class_just_class
 | boolean squarebox dot class_just_class
 | boolean dot class_just_class
 | VOID dot class_just_class
+;
+
+ConditionalExpression : 
+  ConditionalOrExpression
+| ConditionalOrExpression ques_mark Expression colon ConditionalExpression
+;
+
+ConditionalOrExpression : 
+  UnaryExpression 
+| ConditionalOrExpression OR ConditionalOrExpression                      {cout<<"OR\n";}
+| ConditionalOrExpression AND ConditionalOrExpression                     {cout<<"AND\n";}
+| ConditionalOrExpression bitwise_or ConditionalOrExpression              {cout<<"or\n";}
+| ConditionalOrExpression bitwise_xor ConditionalOrExpression             {cout<<"xor\n";}
+| ConditionalOrExpression bitwise_and ConditionalOrExpression             {cout<<"and\n";}
+| ConditionalOrExpression EQUALNOTEQUAL ConditionalOrExpression           {cout<<"Equality\n";}
+| ConditionalOrExpression RELATIONAL_OP ConditionalOrExpression           {cout<<"Relational\n";}
+| ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {cout<<"Shift\n";}
+| ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {cout<<"add\n";}
+| ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {cout<<"mult\n";}
+;
+
+UnaryExpression:
+  PreIncrDecrExpression                 {cout<<"IncrDecr\n";}
+| ARITHMETIC_OP_ADDITIVE UnaryExpression 
+| UnaryExpressionNotPlusMinus 
+;
+
+PreIncrDecrExpression:
+INCR_DECR UnaryExpression
+;
+
+UnaryExpressionNotPlusMinus:
+  LOGICAL_OP UnaryExpression
+| PostfixExpression
+;
+
+PostfixExpression:
+  Primary
+| TypeName
+| PostIncrDecrExpression
+;
+
+PostIncrDecrExpression:
+  PostfixExpression INCR_DECR
+;
+
+RELATIONAL_OP :
+RELATIONAL_OP1 
+| greater_than
+| less_than
+;
+
+// InstanceofExpression:
+  // ConditionalOrExpression INSTANCE_OF ReferenceType
+// | ConditionalOrExpression INSTANCE_OF Pattern
+
+// CastExpression:
+//   brac_open PrimitiveType brac_close UnaryExpression
+// | brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus
+// | brac_open ReferenceType AdditionalBounds brac_close UnaryExpressionNotPlusMinus
+;
+
+// AdditionalBounds:
+// AdditionalBound 
+// | AdditionalBounds AdditionalBound
+// ;
+
+// AdditionalBound:
+// bitwise_and InterfaceType
+// ;
+
+
+
 
 
 %%

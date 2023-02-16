@@ -1,9 +1,20 @@
+z = a++
 int[][].class.aisehi = 3
-xyz.class.something = 3 
-x = 5
-a[4] = 5
-super. udit = "hii"
-udit.super.some = "onemorew"
-this.myname = "udit"
-udit.this.opop += 5
-void.class.name = "udit"
+z=6
+super.udit.name="ab"
+udit.wow.name = "mine"
+a[4] = 4
+this.name = "udit"
+void.class.name = you
+super.name = kyaabat
+udit.this.wow=3
+udit.wiw.kdkkkd.super.mneeee= "rosey"
+a == a+3
+a != b+3
+a &= d*f+r
+a+ k%z||x
+z= b++
+++c 
+r = c== ros
+kyoo= x&&y
+a ? x : y 

@@ -57,22 +57,27 @@ StringLiteral \"[^\n"]+\"
 ":" {return colon;}
 "@" {return at;}
 "||" {return OR;}
+"&&" {return AND;}
 "(" {return brac_open;}
 ")" {return brac_close;}
 
 "." {return dot;}
 "<" {return less_than;}
 ">" {return greater_than;}
-"&" {return and_symbol;}
+"&" {return bitwise_and;}
+"^" {return bitwise_xor;}
+"|" {return bitwise_or;}
+"=="|"!=" {return EQUALNOTEQUAL;}
 "="|"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^=" {return AssignmentOperator;}
-"+"|"-"|"*"|"/"|"%" {return ARITHMETIC_OP;}
+"+"|"-" {return ARITHMETIC_OP_ADDITIVE;}
+"*"|"/"|"%" {return ARITHMETIC_OP_MULTIPLY;}
 "--"|"++" {return INCR_DECR;}
-"<"|"<="|">="|">"|"=="|"!=" {return RELATIONAL_OP;}
-"^"|"~"|"&"|"|"|"<<"|">>"|">>>" {return BITWISE_OP;}
-"&&"|"||"|"!" {return LOGICAL_OP;}
+"<="|">=" {return RELATIONAL_OP1;}
+"<<"|">>"|">>>" {return SHIFT_OP;}
+"~"|"!" {return LOGICAL_OP;}
 
-continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|protected|throw|else|import|throws|case|enum|instanceof|return|transient|catch|try|interface|finally|volatile|const|native|while|"_" {return keyword;} /* keywords */
-
+continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|protected|throw|else|import|throws|case|enum|return|transient|catch|try|interface|finally|volatile|const|native|while|"_" {return keyword;} /* keywords */
+instanceof {return INSTANCE_OF;}
 class {return class_just_class;}
 void {return VOID;}
 this {return THIS;}
