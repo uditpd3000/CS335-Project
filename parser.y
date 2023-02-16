@@ -33,13 +33,33 @@ input:
 ;
 
 ClassDeclaration:
-  ClassModifier class_just_class Identifier TypeParameters ClassExtends ClassImplements maybe_ClassPermits ClassBody {cout<<"class declared yayy!!1\n";}
-| class_just_class Identifier TypeParameters ClassExtends ClassImplements maybe_ClassPermits ClassBody {cout<<"class declared yayy!!2\n";}
+  ClassModifier class_just_class Identifier ClassDecTillTypeParameters ClassBody {cout<<"class declared yayy!!1\n";}
+| class_just_class Identifier ClassDecTillTypeParameters ClassBody {cout<<"class declared yayy!!2\n";}
+;
+
+ClassDecTillTypeParameters:
+  TypeParameters ClassDecTillExtends
+| ClassDecTillExtends
+;
+
+ClassDecTillExtends:
+ ClassExtends ClassDecTillImplements
+| ClassDecTillImplements
+;
+
+ClassDecTillImplements:
+  ClassImplements ClassDecTillPermits
+| ClassDecTillPermits
+;
+
+ClassDecTillPermits:
+  permits ClassPermits curly_open
+| curly_open
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
-| curly_open curly_close {cout<<"classbody2\n";}
+  ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
+| curly_close {cout<<"classbody2\n";}
 ;
 
 ClassBodyDeclaration:
@@ -54,23 +74,31 @@ ClassBodyDeclaration:
 ;
 
 ConstructorDeclaration:
-  ConstructorModifier ConstructorDeclarator Throws ConstructorBody {cout<<"constructordeclaration1\n";}
-| ConstructorDeclarator Throws ConstructorBody {cout<<"constructordeclaration2\n";}
+  ConstructorModifier ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
+| ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared2\n";}
+;
+
+ConstructorDeclarationEnd:
+  Throws curly_open ConstructorBody {cout<<"constructordeclaration1\n";}
+| curly_open ConstructorBody {cout<<"constructordeclaration2\n";}
 ;
 
 
 ConstructorModifier:
-   Annotation {cout<<"constructormodifier1\n";}
-|  class_access {cout<<"constructormodifier2\n";}
-|  Annotation ConstructorModifier {cout<<"constructormodifier3\n";}
-|  class_access ConstructorModifier {cout<<"constructormodifier4\n";}
+  Annotation {cout<<"constructormodifier1\n";}
+| class_access {cout<<"constructormodifier2\n";}
+| Annotation ConstructorModifier {cout<<"constructormodifier3\n";}
+| class_access ConstructorModifier {cout<<"constructormodifier4\n";}
 ;
 
 ConstructorBody:
-  curly_open ExplicitConstructorInvocation BlockStatements curly_close
-| curly_open ExplicitConstructorInvocation curly_close
-| curly_open BlockStatements curly_close
-| curly_open curly_close
+  ExplicitConstructorInvocation ConstructorBodyEnd {cout<<"ConstructorBody1\n";}
+| ConstructorBodyEnd {cout<<"ConstructorBody2\n";}
+;
+
+ConstructorBodyEnd:
+  BlockStatements curly_close
+| curly_close
 ;
 
 /* ExplicitConstructorInvocation:
@@ -81,13 +109,18 @@ ConstructorBody:
 ; */
 
  ExplicitConstructorInvocation:
-  TypeArguments THIS brac_open ArgumentList brac_close semi_colon {cout<<"";}
-| TypeArguments super brac_open ArgumentList brac_close semi_colon {cout<<"";}
+  TypeArguments ExplicitConsInvTillTypeArgs
+| ExplicitConsInvTillTypeArgs
+;
+
+ExplicitConsInvTillTypeArgs:
+  THIS brac_open ArgumentList brac_close semi_colon
+| super brac_open ArgumentList brac_close semi_colon
 ;
 
 ArgumentList:
   Expression
-| Expression comma ArgumentList
+| ArgumentList comma Expression
 ;
 
 Expression:
@@ -100,6 +133,7 @@ ConstructorDeclarator:
 
 ConstructorDeclaratorStart:
   TypeParameters Identifier brac_open 
+| Identifier brac_open 
 ;
 
 ConstructorDeclaratorEnd:
@@ -114,12 +148,12 @@ StaticInitializer:
 ;
 
 InstanceInitializer:
-  Block {cout<<"";}
+  curly_open Block {cout<<"";}
 ;
 
 Block:
-  curly_open BlockStatements curly_close {cout<<"Block1\n";}
-| curly_open curly_close {cout<<"Block2\n";}
+  BlockStatements curly_close {cout<<"Block1\n";}
+| curly_close {cout<<"Block2\n";}
 ;
 
 BlockStatements:
@@ -139,10 +173,6 @@ BlockStatement:
 ;
 
 LocalVariableDeclarationStatement:
-  LocalVariableDeclaration
-;
-
-LocalVariableDeclaration:
   VariableModifier LocalVariableType VariableDeclaratorList
 ;
 
@@ -174,8 +204,13 @@ ClassMemberDeclaration:
 ;
 
 MethodDeclaration:
-  MethodModifier MethodHeader Block {cout<<"MethodDeclaration1\n";}
-| MethodHeader Block {cout<<"MethodDeclaration\2";}
+  MethodModifier MethodHeader MethodDeclarationEnd
+| MethodHeader MethodDeclarationEnd
+;
+
+MethodDeclarationEnd:
+  Block {cout<<"MethodDeclaration1\n";}
+| semi_colon {cout<<"MethodDeclaration2\n";}
 ;
 
 MethodModifier:
@@ -193,50 +228,52 @@ method_modifiers:
 ;
 
 MethodHeader:
-  Result MethodDeclarator Throws {cout<<"MethodHeader1\n";}
-| TypeParameters Annotation Result MethodDeclarator Throws {cout<<"MethodHeader2\n";}
+  TypeParameters MethodHeaderStart {cout<<"MethodHeader1\n";}
+| MethodHeaderStart {cout<<"MethodHeader2\n";}
+;
+
+MethodHeaderStart:
+  Annotation Result MethodDeclarator {cout<<"MethodHeader3\n";}
+| Result MethodDeclarator {cout<<"MethodHeader4\n";}
+| Annotation Result MethodDeclarator Throws {cout<<"MethodHeader3\n";}
+| Result MethodDeclarator Throws {cout<<"MethodHeader4\n";}
 ;
 
 Throws:
-| throws ExceptionTypeList
+  throws ExceptionTypeList semi_colon
 ;
 
 ExceptionTypeList:
-  ExceptionType
-| ExceptionType comma ExceptionTypeList
-;
-
-ExceptionType:
   ClassType
-| TypeVariable
+| ClassType comma ExceptionTypeList
 ;
 
 MethodDeclarator:
-  MethodDeclaratorStart MethodDeclaratorEnd
+  Identifier brac_open MethodDeclaratorTillRP
 ;
 
-MethodDeclaratorStart:
-  Identifier brac_open {cout<<"MethodDeclaratorStart\n";}
+MethodDeclaratorTillRP:
+  Annotation UnannType ReceiverParameter MethodDeclaratorTillFP {cout<<"MethodDeclarator1\n";}
+| MethodDeclaratorTillFP 
+;
+
+MethodDeclaratorTillFP:
+  FormalParameterList MethodDeclaratorEnd {cout<<"MethodDeclarator2\n";}
+| MethodDeclaratorEnd {cout<<"MethodDeclarator3\n";}
 ;
 
 MethodDeclaratorEnd:
-  ReceiverParameter FormalParameterList brac_close {cout<<"MethodDeclarator1\n";}
-| ReceiverParameter FormalParameterList brac_close Dims {cout<<"MethodDeclarator2\n";}
-| FormalParameterList brac_close {cout<<"MethodDeclarator3\n";}
-| FormalParameterList brac_close Dims {cout<<"MethodDeclarator4\n";}
-| ReceiverParameter brac_close {cout<<"MethodDeclarator5\n";}
-| ReceiverParameter brac_close Dims {cout<<"MethodDeclarator6\n";}
-| brac_close {cout<<"MethodDeclarator7\n";}
-| brac_close Dims {cout<<"MethodDeclarator8\n";}
+  brac_close
+| brac_close Dims
 ;
 
 FormalParameterList:
   FormalParameter
-| FormalParameter comma FormalParameterList
+| VariableModifier UnannType comma FormalParameterList
 ;
 
 FormalParameter:
-  VariableModifier UnannType VariableDeclaratorId {cout<<"FormalParameter1\n";}
+  VariableDeclaratorId {cout<<"FormalParameter1\n";}
 | VariableArityParameter {cout<<"FormalParameter2\n";}
 ;
 
@@ -246,7 +283,8 @@ VariableDeclaratorId:
 ;
 
 VariableArityParameter:
-  VariableModifier UnannType Annotation dots Identifier
+  Annotation dots Identifier
+| dots Identifier
 ;
 
 VariableModifier:
@@ -257,8 +295,8 @@ VariableModifier:
 ;
 
 ReceiverParameter:
-  Annotation UnannType THIS comma {cout<<"ReceiverParameter1\n";}
-| Annotation UnannType Identifier dot THIS comma  {cout<<"ReceiverParameter2\n";}
+  THIS comma {cout<<"ReceiverParameter1\n";}
+| Identifier dot THIS comma  {cout<<"ReceiverParameter2\n";}
 ;
 
 Result:
@@ -300,18 +338,14 @@ UnannPrimitiveType:
 
 UnannReferenceType:
   ClassType
-| UnannTypeVariable
+| Identifier
 | UnannArrayType
-;
-
-UnannTypeVariable:
-  Identifier {cout<<"UnannTypeVariable\n";}
 ;
 
 UnannArrayType:
   UnannPrimitiveType Dims
 | ClassType Dims
-| UnannTypeVariable Dims
+| Identifier Dims
 ;
 
 VariableDeclarator:
@@ -331,19 +365,15 @@ VariableInitializer:
 ;
 
 TypeParameters:
-| less_than TypeParameterList greater_than {cout<<"typeparam\n";}
+  less_than TypeParameterList greater_than {cout<<"typeparam\n";}
 ;
 
 ClassExtends:
-| extends ClassType {cout<<"extends\n";}
+  extends ClassType {cout<<"extends\n";}
 ;
 
 ClassImplements:
-| implements InterfaceTypeList {cout<<"implements\n";}
-;
-
-maybe_ClassPermits:
-| permits ClassPermits
+ implements InterfaceTypeList {cout<<"implements\n";}
 ;
 
 ClassPermits:
@@ -381,15 +411,17 @@ InterfaceTypeList:
 TypeParameter:
   Annotation Identifier TypeBound
 | Identifier TypeBound
+| Annotation Identifier
+| Identifier
 ;
 
 TypeBound:
-| extends TypeVariable {cout<<"typebound1\n";}
+  extends ClassType {cout<<"typebound1\n";}
 | extends ClassType AdditionalBound {cout<<"typebound2\n";}
 ;
 
 AdditionalBound:
-| AdditionalBound and_symbol InterfaceType
+  AdditionalBound and_symbol InterfaceType
 | and_symbol InterfaceType
 ;
 
@@ -406,18 +438,20 @@ ClassType:
 */
 
 ClassType:
-  Identifier TypeArguments {cout<<"classtype1\n";}
-| PackageName dot Identifier TypeArguments {cout<<"classtype2\n";}
-| ClassType dot Identifier TypeArguments {cout<<"classtype3\n";}
+  Identifier dot {cout<<"classtype2\n";}
+| ClassType Identifier dot ClassTypeTillPackage {cout<<"classtype1\n";}
+| ClassTypeTillPackage
 ;
 
-PackageName:
-  Identifier {cout<<"packagename\n";}
-| PackageName dot Identifier {cout<<"packagename\n";}
+ClassTypeTillPackage:
+  Annotation Identifier TypeArguments {cout<<"classtype3\n";}
+| Annotation Identifier 
+| Identifier TypeArguments
+| Identifier
 ;
 
 TypeArguments:
-| less_than TypeArgumentList greater_than {cout<<"typeargs\n";}
+  less_than TypeArgumentList greater_than {cout<<"typeargs\n";}
 ;
 
 TypeArgumentList :
@@ -427,11 +461,7 @@ TypeArgumentList :
 
 TypeArgument:
   ReferenceType
-| Wildcard
-;
-
-Wildcard:
- Annotation ques_mark
+| Annotation ques_mark
 | Annotation ques_mark WildcardBounds
 ;
 
@@ -442,27 +472,23 @@ WildcardBounds:
 
 ReferenceType:
   ClassType
-| TypeVariable
 | ArrayType
 ;
 
 ArrayType:
   PrimitiveType Dims
 | ClassType Dims
-| TypeVariable Dims
 ;
 
 Dims:
   Annotation box_open box_close
+| box_open box_close
 | Dims Annotation box_open box_close
+| Dims box_open box_close
+;
 
 PrimitiveType:
   Annotation literal_type {cout<<"PrimitiveType\n";}
-;
-
-TypeVariable:
-  Annotation Identifier
-| Identifier
 ;
 
 ClassModifier:
