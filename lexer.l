@@ -57,6 +57,7 @@ StringLiteral \"[^\n"]+\"
 "," {return comma;}
 "?" {return ques_mark;}
 "@" {return at;}
+"=="|"!=" {return EQUALNOTEQUAL;}
 "=" {return assign;}
 "." {return dot;}
 "..." {return dots;}
@@ -69,7 +70,6 @@ StringLiteral \"[^\n"]+\"
 "&" {return bitwise_and;}
 "^" {return bitwise_xor;}
 "|" {return bitwise_or;}
-"=="|"!=" {return EQUALNOTEQUAL;}
 "|="|"%="|"+="|"-="|"*="|"/="|"&="|"^=" {return AssignmentOperator1;}
 "+"|"-" {return ARITHMETIC_OP_ADDITIVE;}
 "*"|"/"|"%" {return ARITHMETIC_OP_MULTIPLY;}
@@ -78,7 +78,7 @@ StringLiteral \"[^\n"]+\"
 "<<"|">>"|">>>" {return SHIFT_OP;}
 "~"|"!" {return LOGICAL_OP;}
 
-continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|return|catch|try|interface|finally|const|while|"_" {return keyword;} /* keywords */
+continue|for|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|return|catch|try|interface|finally|const|while|"_" {return keyword;} /* keywords */
 
 class {return class_just_class;}
 public|private|protected {return class_access;}
@@ -101,6 +101,7 @@ void {return VOID;}
 throws {return throws;}
 byte|short|int|long|char|float|double {return literal_type;}
 instanceof {return INSTANCE_OF;}
+new {return NEW;}
 
 {FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} { return literal;} /* literals */
 

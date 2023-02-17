@@ -24,8 +24,8 @@ int num=0;
 %token class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token curly_open curly_close box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
-%token Identifier extends super implements permits enum_just_enum record_just_record
-%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1
+%token Identifier extends super implements permits enum_just_enum record_just_record 
+%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW
 
 
 
@@ -46,6 +46,9 @@ int num=0;
 %left super
 
 %%
+input: Expression semi_colon
+| input Expression semi_colon
+;
 
 input:
 | ClassDeclaration input
@@ -186,11 +189,12 @@ BlockStatements:
 BlockStatement:
   Assignment semi_colon
 | LocalClassOrInterfaceDeclaration {cout<<"";}
-| LocalVariableDeclarationStatement {cout<<"";}
+| LocalVariableDeclarationStatement semi_colon {cout<<"";}
 ;
 
 LocalVariableDeclarationStatement:
   VariableModifier LocalVariableType VariableDeclaratorList
+| LocalVariableType VariableDeclaratorList
 ;
 
 LocalVariableType:
@@ -231,7 +235,9 @@ MethodDeclarationEnd:
 ;
 
 MethodModifier:
-   Annotation method_modifiers {cout<<"method_modifiers \n";}
+  method_modifiers
+|  Annotation method_modifiers {cout<<"method_modifiers \n";}
+| MethodModifier method_modifiers
 |  MethodModifier Annotation method_modifiers {cout<<"method_modifiers \n";}
 ;
 
@@ -338,6 +344,8 @@ FieldDeclaration:
 FieldModifier:
    Annotation field_modifiers {cout<<"fieldModifier \n";}
 |  FieldModifier Annotation field_modifiers {cout<<"fieldModifier \n";}
+|  field_modifiers {cout<<"fieldModifier \n";}
+|  FieldModifier field_modifiers {cout<<"fieldModifier \n";}
 ;
 
 field_modifiers:
@@ -381,14 +389,10 @@ VariableDeclarator:
 | Identifier Dims assign VariableInitializer
 ;
 
-/* VariableInitializer:
-  Expression
-| ArrayInitializer
-; */
-
 VariableInitializer:
-  literal
-;
+  Expression
+// | ArrayInitializer
+; 
 
 TypeParameters:
   less_than TypeParameterList greater_than {cout<<"typeparam\n";}
@@ -437,13 +441,10 @@ TypeBound:
 ;
 
 AdditionalBound:
-  AdditionalBound bitwise_and InterfaceType
-| bitwise_and InterfaceType
+  AdditionalBound bitwise_and ClassType
+| bitwise_and ClassType
 ;
 
-InterfaceType:
-  ClassType {cout<<"interfacetype\n";}
-;
 
 /*
 ClassType:
@@ -454,8 +455,7 @@ ClassType:
 */
 
 ClassType:
-  Identifier dot {cout<<"classtype2\n";}
-| ClassType Identifier dot ClassTypeTillPackage {cout<<"classtype1\n";}
+TypeName dot ClassTypeTillPackage {cout<<"classtype1\n";}
 | ClassTypeTillPackage
 ;
 
@@ -479,6 +479,8 @@ TypeArgument:
   ReferenceType
 | Annotation ques_mark
 | Annotation ques_mark WildcardBounds
+| ques_mark
+| ques_mark WildcardBounds
 ;
 
 WildcardBounds:
@@ -492,7 +494,7 @@ ReferenceType:
 ;
 
 ArrayType:
-  PrimitiveType Dims
+  PrimitiveType Dims {cout<<"primdims\n";}
 | ClassType Dims
 ;
 
@@ -505,11 +507,14 @@ Dims:
 
 PrimitiveType:
   Annotation literal_type {cout<<"PrimitiveType\n";}
+| literal_type
 ;
 
 ClassModifier:
    Annotation class_modifiers {cout<<"classModifier \n";}
 |  ClassModifier Annotation class_modifiers {cout<<"classModifier \n";}
+|  class_modifiers {cout<<"classModifier \n";}
+|  ClassModifier class_modifiers {cout<<"classModifier \n";}
 ;
 
 class_modifiers:
@@ -522,7 +527,7 @@ class_modifiers:
 ;
 
 Annotation:
-| NormalAnnotation
+  NormalAnnotation
 | at TypeName
 | at TypeName brac_open ElementValue brac_close
 ;
@@ -596,17 +601,19 @@ PrimaryNoNewArray
 ;
 
 PrimaryNoNewArray:
-literal
+  literal
 | ClassLiteral {cout<<"Classliteral\n";}
 | THIS
 | TypeName dot THIS
 | brac_open Expression brac_close
 | FieldAccess
 | ArrayAccess
+| MethodInvocation
+| ClassInstanceCreationExpression
 ;
 
 TypeName:
-Identifier
+  Identifier
 | TypeName dot Identifier 
 ;
 
@@ -647,6 +654,7 @@ ConditionalOrExpression :
 | ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {cout<<"Shift\n";}
 | ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {cout<<"add\n";}
 | ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {cout<<"mult\n";}
+| InstanceofExpression
 ;
 
 UnaryExpression:
@@ -662,6 +670,7 @@ INCR_DECR UnaryExpression
 UnaryExpressionNotPlusMinus:
   LOGICAL_OP UnaryExpression
 | PostfixExpression
+| CastExpression {cout<<"C---a----s---t\n";}
 ;
 
 PostfixExpression:
@@ -680,31 +689,88 @@ RELATIONAL_OP1
 | less_than
 ;
 
-// InstanceofExpression:
-  // ConditionalOrExpression INSTANCE_OF ReferenceType
-// | ConditionalOrExpression INSTANCE_OF Pattern
 
-// CastExpression:
-//   brac_open PrimitiveType brac_close UnaryExpression
-// | brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus
-// | brac_open ReferenceType AdditionalBounds brac_close UnaryExpressionNotPlusMinus
+CastExpression:
+  brac_open PrimitiveType brac_close UnaryExpression
+| brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus
+| brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus
 ;
-
-// AdditionalBounds:
-// AdditionalBound 
-// | AdditionalBounds AdditionalBound
-// ;
-
-// AdditionalBound:
-// bitwise_and InterfaceType
-// ;
 
 AssignmentOperator:
 assign
 | AssignmentOperator1
 ;
 
+InstanceofExpression:
+  ConditionalOrExpression INSTANCE_OF ReferenceType {cout<<"Instance//////////////////\n";}
+| ConditionalOrExpression INSTANCE_OF LocalVariableDeclarationStatement  {cout<<"Instance||||||||||||||||||\n";}
+; 
+
+MethodInvocation:
+  Identifier brac_open ArgumentList brac_close
+| Identifier brac_open brac_close
+| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close
+| FieldAccess brac_open ArgumentList brac_close
+| FieldAccess brac_open brac_close
+| MethodIncovationStart TypeArguments Identifier  brac_open brac_close
+;
+
+MethodIncovationStart:
+  TypeName dot
+| Primary dot
+| super dot          {cout<<"MethodInvocationStart\n";}
+| TypeName dot super dot
+;
+
+ClassInstanceCreationExpression:
+  UnqualifiedClassInstanceCreationExpression
+| TypeName dot UnqualifiedClassInstanceCreationExpression
+| Primary dot UnqualifiedClassInstanceCreationExpression
+;
+
+UnqualifiedClassInstanceCreationExpression:
+  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close ClassBody
+| NEW ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close ClassBody
+| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open  brac_close ClassBody
+| NEW ClassOrInterfaceTypeToInstantiate brac_open brac_close ClassBody
+| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open  brac_close 
+| NEW ClassOrInterfaceTypeToInstantiate brac_open brac_close 
+| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close
+| NEW ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close 
+;
+
+ClassOrInterfaceTypeToInstantiate:
+ Identifier 
+| Identifier TypeArgumentsOrDiamond
+| Identifier ClassOrInterfaceType2
+| Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
+| Annotations Identifier 
+| Annotations Identifier TypeArgumentsOrDiamond
+| Annotations Identifier ClassOrInterfaceType2
+| Annotations Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
+;
+
+Annotations:
+  Annotation 
+| Annotations Annotation
+;
+
+TypeArgumentsOrDiamond:
+  TypeArguments
+| less_than greater_than
+;
+
+ClassOrInterfaceType2:
+  dot Identifier
+| dot Annotations Identifier
+| ClassOrInterfaceType2 dot Identifier
+| ClassOrInterfaceType2 dot Annotations Identifier
+;
+
+
 %%
+
+
 
 int yyerror(string s)
 {
