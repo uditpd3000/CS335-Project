@@ -1,5 +1,6 @@
 %{  
 #include <bits/stdc++.h>
+#include "nodes.cpp"
 using namespace std;
 
 extern int yyparse();
@@ -12,6 +13,36 @@ extern void close_output_file();
 
 int num=0;
 
+void generatetree(Node* n){
+  int ptr=num;
+    num++;
+
+
+    if(n->objects.size()){
+
+        for(auto x : n->objects){
+
+            cout<<n->label<<ptr<<"->";
+            generatetree(x);
+            // cout<<";\n";
+        }
+
+        cout<<n->label<<ptr;
+        cout<<"[label=\"";
+        n->print();
+        cout<<"\"];"<<endl;
+        
+    }
+    else{
+      cout<<n->label<<ptr<<";\n";
+
+      cout<<n->label<<ptr;
+          cout<<"[label=\"";
+          n->print();
+          cout<<"\"];"<<endl;
+    }
+}
+
 /* {} 0 or more
 [] 0 or 1*/
 
@@ -19,15 +50,18 @@ int num=0;
 
 %union{
   char* sym;
+  Node* node;
 }
  
 %token class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
-%token curly_open curly_close box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
+%token<sym> curly_open curly_close 
+%token box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
-%token Identifier extends super implements permits enum_just_enum record_just_record 
+%token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
 %token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK
 
-
+%type<node> ClassBody ClassPermits TypeName
+%type<node> ClassDecTillPermits ClassDecTillImplements
 
 
 %left OR
@@ -68,17 +102,17 @@ ClassDecTillExtends:
 
 ClassDecTillImplements:
   ClassImplements ClassDecTillPermits
-| ClassDecTillPermits
+| ClassDecTillPermits {$$=$1;cout<<"\n\n"; generatetree($$);}
 ;
 
 ClassDecTillPermits:
-  permits ClassPermits ClassBody
-| ClassBody
+  permits ClassPermits ClassBody {string t1=$1; $$ = new Node();  vector<Node*>v{new Node("keyword",t1),$2,$3}; $$->add(v);}
+| ClassBody {$$ = $1;}
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
-| curly_open curly_close {cout<<"classbody2\n";}
+  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody");vector<Node*>v{new Node("seperator",t1),new Node("seperator",t2)}; $$->add(v); cout<<"classbody1\n";}
+| curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node("seperator",t1),new Node("seperator",t2)}; $$->add(v);  cout<<"\n---classbody2\n";}
 ;
 
 ClassBodyDeclaration:
@@ -388,8 +422,8 @@ ClassImplements:
 ;
 
 ClassPermits:
-  ClassPermits comma TypeName
-|  TypeName
+  ClassPermits comma TypeName {$$=$1; string t2=$3->lexeme; $$->lexeme=$$->lexeme+","+t2;}
+|  TypeName {$$=$1;}
 ;
 
 TypeParameterList:
@@ -589,8 +623,8 @@ PrimaryNoNewArray:
 ;
 
 TypeName:
-  Identifier {cout<<"typename1\n";}
-| TypeName dot Identifier {cout<<"typename2\n";}
+  Identifier {string t1=$1; $$=new Node("Identifier",t1); cout<<"typename1\n";}
+| TypeName dot Identifier {string t2 =$3; $$=$1; $$->lexeme=$$->lexeme+"."+t2; cout<<"typename2\n";}
 ;
 
 Idboxopen:

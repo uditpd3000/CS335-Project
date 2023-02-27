@@ -1,4 +1,6 @@
 %{  
+#include <bits/stdc++.h>
+#include "nodes.cpp" 
 #include "parser.tab.h"
 
 #include <bits/stdc++.h>
@@ -50,8 +52,8 @@ StringLiteral \"[^\n"]+\"
 "::"  /* seperators */
 "(" {return brac_open;}
 ")" {return brac_close;}
-"{" {return curly_open;}
-"}" {return curly_close;}
+"{" {yylval.sym = strdup(yytext); return curly_open;}
+"}" {yylval.sym = strdup(yytext); return curly_close;}
 "[" {return box_open;}
 "]" {return box_close;}
 "," {return comma;}
@@ -94,8 +96,8 @@ super {return super;}
 enum {return enum_just_enum;}
 this {return THIS;}
 record {return record_just_record;}
-implements {return implements;}
-permits {return permits;}
+implements {yylval.sym = strdup(yytext); return implements;}
+permits {yylval.sym = strdup(yytext);return permits;}
 var {return var;}
 void {return VOID;}
 throws {return throws;}
