@@ -127,18 +127,13 @@ ClassBodyDeclaration:
 ;
 
 ConstructorDeclaration:
-  ConstructorModifier ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
+  class_access ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
 | ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared2\n";}
 ;
 
 ConstructorDeclarationEnd:
   Throws curly_open ConstructorBody {cout<<"constructordeclaration1\n";}
 | curly_open ConstructorBody {cout<<"constructordeclaration2\n";}
-;
-
-ConstructorModifier:
-  class_access {cout<<"constructormodifier2\n";}
-| class_access ConstructorModifier {cout<<"constructormodifier4\n";}
 ;
 
 ConstructorBody:
@@ -206,7 +201,7 @@ BlockStatements:
 BlockStatement:
   Assignment semi_colon {cout<<"mo2222222222222222222\n";}
 | LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
-| LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
+| LocalVariableDeclarationStatement semi_colon {cout<<"LocalVariableDeclarationStatement";}
 | Statement
 ;
 
@@ -255,13 +250,12 @@ MethodDeclarationEnd:
 MethodModifier:
   method_modifiers
 | MethodModifier method_modifiers
+| CommonModifiers
+| MethodModifier CommonModifiers
 ;
 
 method_modifiers:
-  class_access
-| key_abstract
-| STATIC
-| FINAL
+ key_abstract
 | key_STRICTFP
 | method_modifier
 ;
@@ -328,7 +322,6 @@ VariableArityParameter:
 
 VariableModifier:
  FINAL
-| FINAL VariableModifier
 ;
 
 ReceiverParameter:
@@ -342,21 +335,21 @@ Result:
 ;
 
 FieldDeclaration:
-  FieldModifier UnannType VariableDeclaratorList {cout<<"fd1\n";} semi_colon {cout<<"FieldDeclaration1\n";}
-| UnannType VariableDeclaratorList {cout<<"fd2\n";} semi_colon {cout<<"FieldDeclaration2\n";}
+  FieldModifier UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration1\n";}
+| UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration2\n";}
 ;
 
 FieldModifier:
- field_modifiers {cout<<"fieldModifier \n";}
-|  FieldModifier field_modifiers {cout<<"fieldModifier \n";}
+ field_modifier {cout<<"fieldModifier \n";}
+|  FieldModifier field_modifier {cout<<"fieldModifier \n";}
+| CommonModifiers
+| FieldModifier CommonModifiers
 ;
 
-field_modifiers:
+CommonModifiers:
   class_access
 | STATIC
 | FINAL
-| field_modifier
-;
 
 VariableDeclaratorList:
   VariableDeclarator {cout<<"VariableDeclaratorList1\n";}
@@ -375,20 +368,18 @@ UnannPrimitiveType:
 
 UnannReferenceType:
   ClassType
-| Identifier
 | UnannArrayType
 ;
 
 UnannArrayType:
   UnannPrimitiveType Dims
 | ClassType Dims
-| Identifier Dims
 ;
 
 VariableDeclarator:
   Identifier
 | Identifier Dims {cout<<"kakka";}
-| Identifier assign {cout<<"vardec=\n";} VariableInitializer {cout<<"VariableDeclarator1\n";}
+| Identifier assign VariableInitializer {cout<<"VariableDeclarator1\n";}
 | Identifier Dims assign VariableInitializer
 ;
 
@@ -406,7 +397,7 @@ ClassExtends:
 ;
 
 ClassImplements:
- implements {cout<<"impl\n";} InterfaceTypeList {cout<<"implements\n";}
+ implements InterfaceTypeList {cout<<"implements\n";}
 ;
 
 ClassPermits:
@@ -428,7 +419,7 @@ InterfaceTypeList:
 
 InterfaceTypeList:
  ClassType {cout<<"interfacetypelist1\n";}
-| InterfaceTypeList {cout<<"intface\n"; } comma ClassType {cout<<"interfacetypelist2\n";}
+| InterfaceTypeList comma ClassType {cout<<"interfacetypelist2\n";}
 ;
 
 TypeParameter:
@@ -445,15 +436,6 @@ AdditionalBound:
   AdditionalBound bitwise_and ClassType
 | bitwise_and ClassType
 ;
-
-
-/*
-ClassType:
-  Annotation Identifier TypeArguments {cout<<"classtype1\n";}
-| PackageName dot Annotation Identifier TypeArguments {cout<<"classtype2\n";}
-| ClassOrInterfaceType dot Annotation Annotation Identifier TypeArguments {cout<<"classtype3\n";}
-;
-*/
 
 ClassType:
 TypeName 
@@ -505,16 +487,16 @@ PrimitiveType:
 
 ClassModifier:
  class_modifiers {cout<<"classModifier \n";}
-|  ClassModifier class_modifiers {cout<<"classModifier \n";}
+| ClassModifier class_modifiers {cout<<"classModifier \n";}
+| CommonModifiers
+| ClassModifier CommonModifiers
 ;
 
 class_modifiers:
   key_abstract
 | key_STRICTFP
-| class_access
 | key_SEAL
-| STATIC
-| FINAL
+
 ;
 
 Expression : 
@@ -528,7 +510,7 @@ Assignment             {cout<<"Assignment\n";}
 ;
 
 Assignment:
-  LeftHandSide {cout<<"LEFTHAND-------------------------------------------\n";} AssignmentOperator Expression 
+  LeftHandSide AssignmentOperator Expression 
 ;
 
 LeftHandSide:
@@ -815,14 +797,14 @@ BasicForStatementNoShortIf:
 BasicForStatementStart StatementNoShortIf
 
 BasicForStatementStart:
-FOR curly_open semi_colon semi_colon brac_close 
-| FOR curly_open ForInit semi_colon semi_colon brac_close 
-| FOR curly_open semi_colon Expression semi_colon brac_close 
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close
+FOR brac_open semi_colon semi_colon brac_close 
+| FOR brac_open ForInit semi_colon semi_colon brac_close 
+| FOR brac_open semi_colon Expression semi_colon brac_close 
+| FOR brac_open semi_colon semi_colon ForUpdate brac_close
+| FOR brac_open semi_colon Expression semi_colon ForUpdate brac_close
+| FOR brac_open ForInit semi_colon semi_colon ForUpdate brac_close
+| FOR brac_open ForInit semi_colon Expression semi_colon brac_close
+| FOR brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close
 ;
 
 
@@ -841,7 +823,7 @@ StatementExpression
 ;
 
 EnhancedForStatement:
-FOR curly_open LocalVariableDeclaration colon Expression brac_close Statement
+FOR brac_open LocalVariableDeclaration colon Expression brac_close Statement
 ;
 
 EnhancedForStatementNoShortIf:
@@ -858,7 +840,7 @@ LocalVariableType VariableDeclaratorList
 ;
 
 ArrayCreationExpression: 
-newclasstype {cout<<"Arraycreation\n";} ArrayCreationExpressionAfterType
+newclasstype ArrayCreationExpressionAfterType
 | newprimtype ArrayCreationExpressionAfterType
 ;
 
@@ -891,12 +873,10 @@ curly_open VariableInitializerList curly_close
 
 VariableInitializerList:
 VariableInitializer 
-| VariableInitializer VariableInitializerList
+| VariableInitializerList comma VariableInitializer
 ;
 
 %%
-
-
 
 int yyerror(string s)
 {
