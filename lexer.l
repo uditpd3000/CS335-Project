@@ -50,21 +50,21 @@ StringLiteral \"[^\n"]+\"
 "/*"([^*]|\*+[^*/])*\*+"/" /* multiline comments */
 
 "::"  /* seperators */
-"(" {return brac_open;}
-")" {return brac_close;}
+"(" {yylval.sym = strdup(yytext); return brac_open;}
+")" {yylval.sym = strdup(yytext); return brac_close;}
 "{" {yylval.sym = strdup(yytext); return curly_open;}
 "}" {yylval.sym = strdup(yytext); return curly_close;}
-"[" {return box_open;}
-"]" {return box_close;}
-"," {return comma;}
-"?" {return ques_mark;}
-"@" {return at;}
-"=="|"!=" {return EQUALNOTEQUAL;}
-"=" {return assign;}
-"." {return dot;}
+"[" {yylval.sym = strdup(yytext); return box_open;}
+"]" {yylval.sym = strdup(yytext); return box_close;}
+"," {yylval.sym = strdup(yytext); return comma;}
+"?" {yylval.sym = strdup(yytext); return ques_mark;}
+"@" {yylval.sym = strdup(yytext); return at;}
+"=="|"!=" {yylval.sym = strdup(yytext); return EQUALNOTEQUAL;}
+"=" {yylval.sym = strdup(yytext); return assign;}
+"." {yylval.sym = strdup(yytext); return dot;}
 "..." {return dots;}
-"<" {return less_than;}
-">" {return greater_than;}
+"<" {yylval.sym = strdup(yytext); return less_than;}
+">" {yylval.sym = strdup(yytext); return greater_than;}
 ";" {cout<<";\n";return semi_colon;}
 ":" {return colon;}
 "||" {return OR;}
@@ -115,7 +115,7 @@ new {return NEW;}
 {FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} { return literal;} /* literals */
 
 
-[a-zA-Z_][a-zA-Z0-9_]*  {return Identifier;} /* identifiers */
+[a-zA-Z_][a-zA-Z0-9_]*  {yylval.sym = strdup(yytext); return Identifier;} /* identifiers */
 
 . {printf("Error on line %d : read an invalid character %s\n", yylineno, yytext ); flag=true; return 0;} /* lexical error */
 

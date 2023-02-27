@@ -53,16 +53,15 @@ void generatetree(Node* n){
   Node* node;
 }
  
-%token class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
-%token<sym> curly_open curly_close 
-%token box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
-%token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
+%token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
+%token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
+%token<sym> class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
 %token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
-%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK
+%token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW
 
-%type<node> ClassBody ClassPermits TypeName
-%type<node> ClassDecTillPermits ClassDecTillImplements
-
+%type<node> ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument
+%type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassTypeTillPackage
+%type<node> WildcardBounds ReferenceType ArrayType Dims
 
 %left OR
 %left AND
@@ -80,6 +79,7 @@ void generatetree(Node* n){
 %left super
 
 %error-verbose
+
 %%
 input:
 | ClassDeclaration input
@@ -101,7 +101,7 @@ ClassDecTillExtends:
 ;
 
 ClassDecTillImplements:
-  ClassImplements ClassDecTillPermits
+  ClassImplements ClassDecTillPermits {$$=$1; $$->add($2->objects);}
 | ClassDecTillPermits {$$=$1;cout<<"\n\n"; generatetree($$);}
 ;
 
@@ -111,7 +111,7 @@ ClassDecTillPermits:
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody");vector<Node*>v{new Node("seperator",t1),new Node("seperator",t2)}; $$->add(v); cout<<"classbody1\n";}
+  curly_open ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
 | curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node("seperator",t1),new Node("seperator",t2)}; $$->add(v);  cout<<"\n---classbody2\n";}
 ;
 
@@ -152,6 +152,13 @@ ConstructorBodyEnd:
   BlockStatements curly_close
 | curly_close
 ;
+
+/* ExplicitConstructorInvocation:
+| TypeArguments this brac_open ArgumentList brac_close semi_colon
+| TypeArguments super brac_open ArgumentList brac_close semi_colon
+| ExpressionName dot TypeArguments super brac_open ArgumentList brac_close semi_colon
+| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon
+; */
 
  ExplicitConstructorInvocation:
   TypeArguments ExplicitConsInvTillTypeArgs
@@ -204,12 +211,17 @@ BlockStatements:
 | BlockStatement BlockStatements {cout<<"BlockStatements2\n";}
 ;
 
+/* BlockStatement:
+  LocalClassOrInterfaceDeclaration {cout<<"";}
+| LocalVariableDeclarationStatement {cout<<"";}
+| Statement {cout<<"";}
+; */
 
 BlockStatement:
   Assignment semi_colon {cout<<"mo2222222222222222222\n";}
 | LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
 | LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
-| Statement
+| MethodInvocation semi_colon
 ;
 
 LocalVariableDeclarationStatement:
@@ -324,6 +336,11 @@ FormalParameter:
 ;
 
 
+// FormalParameter:
+//   VariableDeclaratorId {cout<<"FormalParameter1\n";}
+// | VariableArityParameter {cout<<"FormalParameter2\n";}
+// ;
+
 VariableDeclaratorId:
   Identifier Dims
 | Identifier {cout<<"VariableDeclaratorId2\n";}
@@ -406,7 +423,7 @@ VariableDeclarator:
 
 VariableInitializer:
   Expression {cout<<"Varinit\n";}
-| ArrayInitializer
+// | ArrayInitializer
 ; 
 
 TypeParameters:
@@ -418,7 +435,7 @@ ClassExtends:
 ;
 
 ClassImplements:
- implements {cout<<"impl\n";} InterfaceTypeList {cout<<"implements\n";}
+ implements InterfaceTypeList {$$ = new Node(); $$->add(new Node("keyword",$1)); $$->add($2); cout<<"implements\n";}
 ;
 
 ClassPermits:
@@ -439,8 +456,8 @@ InterfaceTypeList:
 */
 
 InterfaceTypeList:
- ClassType {cout<<"interfacetypelist1\n";}
-| InterfaceTypeList {cout<<"intface\n"; } comma ClassType {cout<<"interfacetypelist2\n";}
+ ClassType {$$=new Node("InterfaceTypeList"); $$->add($1->objects); cout<<"interfacetypelist1\n";}
+| InterfaceTypeList comma ClassType { $$=$1; $$->add(new Node("seperator",$2)); $$->add($3->objects);  cout<<"interfacetypelist2\n";}
 ;
 
 TypeParameter:
@@ -470,59 +487,48 @@ ClassType:
 */
 
 ClassType:
-TypeName {cout<<"typename\n";} dot ClassTypeTillPackage {cout<<"classtype1\n";}
-| ClassTypeTillPackage {cout<<"classtypetillpackage\n";}
+TypeName dot ClassTypeTillPackage {$$= new Node("ClassType"); vector<Node*>v{$1,new Node("seperator",$2),$3->objects}; cout<<"classtype1\n";}
+| ClassTypeTillPackage {$$= $1; $$->label = "ClassType";}
 ;
 
 ClassTypeTillPackage:
-  Annotation Identifier TypeArguments {cout<<"classtype3\n";}
-| Annotation Identifier 
-| Identifier TypeArguments
-| Identifier
+  Identifier TypeArguments {$$=new Node(""); string t1=$1; $$->add(new Node("Identifier",t1)); $$->add($2);}
+| Identifier {$$=new Node(""); string t1=$1; $$->add(new Node("Identifier",t1));}
 ;
 
 TypeArguments:
-  less_than TypeArgumentList greater_than {cout<<"typeargs\n";}
+  less_than TypeArgumentList greater_than {$$=new Node("TypeArgument"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);  cout<<"typeargs\n";}
 ;
 
-TypeArgumentList :
- TypeArgumentList comma TypeArgument
-| TypeArgument
+TypeArgumentList:
+ TypeArgumentList comma TypeArgument {$$=$1; string t1=$2; vector<Nodes*>v{new Node(mymap[t1],t1),$3}; $$->add(v); }
+| TypeArgument {$$= new Node("TypeArgumentList"); $$->add($1);}
 ;
 
 TypeArgument:
-  ReferenceType
-| Annotation ques_mark
-| Annotation ques_mark WildcardBounds
-| ques_mark
-| ques_mark WildcardBounds
+  ReferenceType {$$ = $1;}
+| ques_mark {string t1=$1; $$ = new Node(mymap[t1],t1);}
+| ques_mark WildcardBounds {string t1=$1; vector<Nodes*>v{new Node(mymap[t1],t1),$2}; $$ = new Node("TypeArgument"); $$->add(v); }
 ;
 
 WildcardBounds:
-  extends ReferenceType
-| super ReferenceType
+  extends ReferenceType {$$ = new Node("WildcardBounds"); string t1=$1; $$->add(new Node(mymap[t1],$1)); $$->add($2->objects); }
+| super ReferenceType {$$ = new Node("WildcardBounds"); string t1=$1; $$->add(new Node(mymap[t1],$1)); $$->add($2->objects); }
 ;
 
 ReferenceType:
-  ClassType
-| ArrayType
+  ClassType {$$=$1;}
+| ArrayType {$$=$1;}
 ;
 
 ArrayType:
-  PrimitiveType Dims {cout<<"primDims\n";}
-| ClassType Dims
+  literal_type Dims {$$=new Node("ArrayType"); string t1=$1; $$->add(mymap[t1],t1); $$->add($2->objects);   cout<<"primdims\n";}
+| ClassType Dims {$$=new Node("ArrayType"); $$->add($1->objects); $$->add($2->objects);   cout<<"primdims\n";}
 ;
 
 Dims:
-  Annotation box_open box_close
-| box_open box_close
-| Dims Annotation box_open box_close
-| Dims box_open box_close
-;
-
-PrimitiveType:
-  Annotation literal_type {cout<<"PrimitiveType\n";}
-| literal_type
+ box_open box_close {$$=new Node("Dims"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
+| Dims box_open box_close {$$=$1; string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
 ;
 
 ClassModifier:
@@ -560,11 +566,17 @@ ElementValuePair:
   Identifier assign ElementValue
 ;
 
-
+/* 
 ElementValue:
   ConditionalExpression
   ElementValueArrayInitializer
   Annotation
+;
+*/
+
+ElementValue:
+  ElementValueArrayInitializer
+| Annotation
 ;
 
 ElementValueArrayInitializer:
@@ -607,7 +619,6 @@ Primary dot Identifier {cout<<"PrimdotId\n";}
 
 Primary:
 PrimaryNoNewArray
-| ArrayCreationExpression
 ;
 
 PrimaryNoNewArray:
@@ -623,8 +634,8 @@ PrimaryNoNewArray:
 ;
 
 TypeName:
-  Identifier {string t1=$1; $$=new Node("Identifier",t1); cout<<"typename1\n";}
-| TypeName dot Identifier {string t2 =$3; $$=$1; $$->lexeme=$$->lexeme+"."+t2; cout<<"typename2\n";}
+  Identifier {string t1=$1; $$=new Node("Identifier",t1);}
+| TypeName dot Identifier {string t2 =$3; $$=$1; $$->lexeme=$$->lexeme+"."+t2;}
 ;
 
 Idboxopen:
@@ -710,7 +721,7 @@ RELATIONAL_OP1
 
 
 CastExpression:
-  brac_open PrimitiveType brac_close UnaryExpression
+  brac_open literal_type brac_close UnaryExpression
 | brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus
 | brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus
 ;
@@ -787,188 +798,6 @@ ClassOrInterfaceType2:
 | ClassOrInterfaceType2 dot Annotations Identifier
 ;
 
-Statement:
-StatementWithoutTrailingSubstatement
-| LabeledStatement
-| IfThenStatement
-| IfThenElseStatement
-| WhileStatement
-| ForStatement
-;
-
-StatementWithoutTrailingSubstatement:
-Block
-| semi_colon
-| ExpressionStatement
-| BreakStatement
-| ContinueStatement
-| ReturnStatement
-| ThrowStatement
-;
-
-BreakStatement:
-BREAK
-| BREAK Identifier
-;
-
-ContinueStatement:
-CONTINUE
-| CONTINUE Identifier
-;
-
-ReturnStatement:
-RETURN
-| RETURN Expression
-;
-
-ThrowStatement:
-THROW Expression 
-;
-
-StatementExpression:
-Assignment
-| PreIncrDecrExpression
-| PostIncrDecrExpression
-| MethodInvocation
-| ClassInstanceCreationExpression
-;
-
-ExpressionStatement:
-StatementExpression semi_colon
-;
-
-LabeledStatement:
-Identifier colon Statement
-;
-IfThenStatement:
-IF brac_open Expression brac_close Statement
-;
-
-IfThenElseStatement:
-IF brac_open Expression brac_close StatementNoShortIf ELSE Statement
-;
-
-IfThenElseStatementNoShortIf:
-IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf
-;
-
-StatementNoShortIf:
-StatementWithoutTrailingSubstatement
-| LabeledStatementNoShortIf
-| IfThenElseStatementNoShortIf
-| WhileStatementNoShortIf
-| ForStatementNoShortIf
-;
-
-LabeledStatementNoShortIf:
-Identifier colon StatementNoShortIf
-;
-
-WhileStatementNoShortIf:
-WHILE curly_open Expression curly_close StatementNoShortIf
-;
-
-ForStatement:
-BasicForStatement
-| EnhancedForStatement
-;
-
-ForStatementNoShortIf:
-BasicForStatementNoShortIf
-| EnhancedForStatementNoShortIf
-;
-
-BasicForStatement:
-FOR curly_open semi_colon semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close Statement
-;
-
-BasicForStatementNoShortIf:
-FOR curly_open semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
-;
-
-ForInit:
-StatementExpressionList
-| LocalVariableDeclaration
-;
-
-ForUpdate:
-StatementExpressionList
-;
-
-StatementExpressionList:
-StatementExpression
-| StatementExpressionList comma StatementExpression
-;
-
-EnhancedForStatement:
-FOR curly_open LocalVariableDeclaration colon Expression brac_close Statement
-;
-
-EnhancedForStatementNoShortIf:
-FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf
-;
-
-WhileStatement:
-WHILE brac_open Expression brac_close Statement
-;
-
-LocalVariableDeclaration:
-LocalVariableType VariableDeclaratorList
-| VariableModifier LocalVariableType VariableDeclaratorList
-;
-
-ArrayCreationExpression: 
-newclasstype ArrayCreationExpressionAfterType
-| newprimtype ArrayCreationExpressionAfterType
-;
-
-ArrayCreationExpressionAfterType:
-DimExprs
-| DimExprs Dims
-| Dims ArrayInitializer
-;
-
-newprimtype:
-NEW PrimitiveType
-;
-
-newclasstype:
-NEW ClassType
-;
-
-DimExprs:
-DimExpr 
-| DimExprs DimExpr
-;
-
-DimExpr:
-Annotations 
-| Annotations Expression
-;
-
-ArrayInitializer: 
-curly_open VariableInitializerList curly_close
-| curly_open VariableInitializerList comma curly_close
-;
-
-VariableInitializerList:
-VariableInitializer 
-| VariableInitializer VariableInitializerList
-;
 
 %%
 
