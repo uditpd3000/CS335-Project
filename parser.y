@@ -4,6 +4,8 @@
 using namespace std;
 
 extern int yyparse();
+extern map<string, string> mymap;
+extern void insertMap(string, string );
 int yylex (void);
 int yyerror (char const *);
 
@@ -57,11 +59,11 @@ void generatetree(Node* n){
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token<sym> class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
 %token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
-%token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW
+%token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
 %type<node> ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument
-%type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassTypeTillPackage
-%type<node> WildcardBounds ReferenceType ArrayType Dims
+%type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements
+%type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType
 
 %left OR
 %left AND
@@ -137,9 +139,7 @@ ConstructorDeclarationEnd:
 ;
 
 ConstructorModifier:
-  Annotation {cout<<"constructormodifier1\n";}
-| class_access {cout<<"constructormodifier2\n";}
-| Annotation ConstructorModifier {cout<<"constructormodifier3\n";}
+  class_access {cout<<"constructormodifier2\n";}
 | class_access ConstructorModifier {cout<<"constructormodifier4\n";}
 ;
 
@@ -268,9 +268,7 @@ MethodDeclarationEnd:
 
 MethodModifier:
   method_modifiers
-|  Annotation method_modifiers {cout<<"method_modifiers \n";}
 | MethodModifier method_modifiers
-|  MethodModifier Annotation method_modifiers {cout<<"method_modifiers \n";}
 ;
 
 method_modifiers:
@@ -288,9 +286,7 @@ MethodHeader:
 ;
 
 MethodHeaderStart:
-  Annotation Result MethodDeclarator {cout<<"MethodHeader3\n";}
-| Result MethodDeclarator {cout<<"MethodHeader4\n";}
-| Annotation Result MethodDeclarator Throws {cout<<"MethodHeader3\n";}
+ Result MethodDeclarator {cout<<"MethodHeader4\n";}
 | Result MethodDeclarator Throws {cout<<"MethodHeader4\n";}
 ;
 
@@ -309,7 +305,6 @@ MethodDeclarator:
 
 MethodDeclaratorTillRP:
   UnannType ReceiverParameter MethodDeclaratorTillFP
-|  Annotation UnannType ReceiverParameter MethodDeclaratorTillFP {cout<<"MethodDeclarator1\n";}
 | MethodDeclaratorTillFP 
 ;
 
@@ -347,14 +342,11 @@ VariableDeclaratorId:
 ;
 
 VariableArityParameter:
-  Annotation dots Identifier
-| dots Identifier
+ dots Identifier
 ;
 
 VariableModifier:
-  Annotation  {cout<<"VariableModifier\n";}
-| FINAL
-| Annotation VariableModifier  {cout<<"VariableModifier\n";}
+ FINAL
 | FINAL VariableModifier
 ;
 
@@ -374,9 +366,7 @@ FieldDeclaration:
 ;
 
 FieldModifier:
-   Annotation field_modifiers {cout<<"fieldModifier \n";}
-|  FieldModifier Annotation field_modifiers {cout<<"fieldModifier \n";}
-|  field_modifiers {cout<<"fieldModifier \n";}
+ field_modifiers {cout<<"fieldModifier \n";}
 |  FieldModifier field_modifiers {cout<<"fieldModifier \n";}
 ;
 
@@ -461,9 +451,7 @@ InterfaceTypeList:
 ;
 
 TypeParameter:
-  Annotation Identifier TypeBound
-| Identifier TypeBound
-| Annotation Identifier
+ Identifier TypeBound
 | Identifier
 ;
 
@@ -487,28 +475,27 @@ ClassType:
 */
 
 ClassType:
-TypeName dot ClassTypeTillPackage {$$= new Node("ClassType"); vector<Node*>v{$1,new Node("seperator",$2),$3->objects}; cout<<"classtype1\n";}
-| ClassTypeTillPackage {$$= $1; $$->label = "ClassType";}
-;
-
-ClassTypeTillPackage:
-  Identifier TypeArguments {$$=new Node(""); string t1=$1; $$->add(new Node("Identifier",t1)); $$->add($2);}
-| Identifier {$$=new Node(""); string t1=$1; $$->add(new Node("Identifier",t1));}
+TypeName
+| TypeName TypeArguments {$$=new Node();}
+| TypeName dot Identifier {$$=new Node();}
+| TypeName dot Identifier TypeArguments {$$=new Node();}
+| ClassType dot Identifier {$$=new Node();}
+| ClassType dot Identifier TypeArguments {$$=new Node();}
 ;
 
 TypeArguments:
-  less_than TypeArgumentList greater_than {$$=new Node("TypeArgument"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);  cout<<"typeargs\n";}
+  less_than TypeArgumentList greater_than {$$=new Node("TypeArgument"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);  cout<<"typeargs\n";}
 ;
 
 TypeArgumentList:
- TypeArgumentList comma TypeArgument {$$=$1; string t1=$2; vector<Nodes*>v{new Node(mymap[t1],t1),$3}; $$->add(v); }
+ TypeArgumentList comma TypeArgument {$$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3}; $$->add(v); }
 | TypeArgument {$$= new Node("TypeArgumentList"); $$->add($1);}
 ;
 
 TypeArgument:
   ReferenceType {$$ = $1;}
 | ques_mark {string t1=$1; $$ = new Node(mymap[t1],t1);}
-| ques_mark WildcardBounds {string t1=$1; vector<Nodes*>v{new Node(mymap[t1],t1),$2}; $$ = new Node("TypeArgument"); $$->add(v); }
+| ques_mark WildcardBounds {string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$ = new Node("TypeArgument"); $$->add(v); }
 ;
 
 WildcardBounds:
@@ -522,7 +509,7 @@ ReferenceType:
 ;
 
 ArrayType:
-  literal_type Dims {$$=new Node("ArrayType"); string t1=$1; $$->add(mymap[t1],t1); $$->add($2->objects);   cout<<"primdims\n";}
+  PrimitiveType Dims {$$=new Node("ArrayType"); $$->add($1); $$->add($2->objects);   cout<<"primdims\n";}
 | ClassType Dims {$$=new Node("ArrayType"); $$->add($1->objects); $$->add($2->objects);   cout<<"primdims\n";}
 ;
 
@@ -531,10 +518,12 @@ Dims:
 | Dims box_open box_close {$$=$1; string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
 ;
 
+PrimitiveType:
+  literal_type {string t1=$1; $$= new Node(mymap[t1],t1);}
+;
+
 ClassModifier:
-   Annotation class_modifiers {cout<<"classModifier \n";}
-|  ClassModifier Annotation class_modifiers {cout<<"classModifier \n";}
-|  class_modifiers {cout<<"classModifier \n";}
+ class_modifiers {cout<<"classModifier \n";}
 |  ClassModifier class_modifiers {cout<<"classModifier \n";}
 ;
 
@@ -545,50 +534,6 @@ class_modifiers:
 | key_SEAL
 | STATIC
 | FINAL
-;
-
-Annotation:
-  NormalAnnotation
-| at TypeName
-| at TypeName brac_open ElementValue brac_close
-;
-
-NormalAnnotation:
-  at TypeName brac_open ElementValuePairList brac_close
-;
-
-ElementValuePairList:
-  ElementValuePair
-| ElementValuePairList comma ElementValuePair
-;
-
-ElementValuePair:
-  Identifier assign ElementValue
-;
-
-/* 
-ElementValue:
-  ConditionalExpression
-  ElementValueArrayInitializer
-  Annotation
-;
-*/
-
-ElementValue:
-  ElementValueArrayInitializer
-| Annotation
-;
-
-ElementValueArrayInitializer:
-  curly_open ElementValueList comma curly_close
-| curly_open ElementValueList curly_close
-| curly_open comma curly_close
-| curly_open curly_close
-;
-
-ElementValueList:
-  ElementValue
-| ElementValueList comma ElementValue
 ;
 
 Expression : 
@@ -759,8 +704,8 @@ ClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpression:
-  NEW {cout<<"1\n";} TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen
-| NEW {cout<<"2..\n";} ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen {cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
+  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen
+| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen {cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
@@ -775,15 +720,6 @@ ClassOrInterfaceTypeToInstantiate:
 | Identifier TypeArgumentsOrDiamond
 | Identifier ClassOrInterfaceType2
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
-| Annotations Identifier 
-| Annotations Identifier TypeArgumentsOrDiamond
-| Annotations Identifier ClassOrInterfaceType2
-| Annotations Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
-;
-
-Annotations:
-  Annotation 
-| Annotations Annotation
 ;
 
 TypeArgumentsOrDiamond:
@@ -793,11 +729,190 @@ TypeArgumentsOrDiamond:
 
 ClassOrInterfaceType2:
   dot Identifier
-| dot Annotations Identifier
 | ClassOrInterfaceType2 dot Identifier
-| ClassOrInterfaceType2 dot Annotations Identifier
 ;
 
+Statement:
+StatementWithoutTrailingSubstatement
+| LabeledStatement
+| IfThenStatement
+| IfThenElseStatement
+| WhileStatement
+| ForStatement
+| PRINTLN brac_open TypeName brac_close
+;
+
+StatementWithoutTrailingSubstatement:
+Block
+| semi_colon
+| ExpressionStatement
+| BreakStatement
+| ContinueStatement
+| ReturnStatement
+| ThrowStatement
+;
+
+BreakStatement:
+BREAK
+| BREAK Identifier
+;
+
+ContinueStatement:
+CONTINUE
+| CONTINUE Identifier
+;
+
+ReturnStatement:
+RETURN
+| RETURN Expression
+;
+
+ThrowStatement:
+THROW Expression 
+;
+
+StatementExpression:
+Assignment
+| PreIncrDecrExpression
+| PostIncrDecrExpression
+| MethodInvocation
+| ClassInstanceCreationExpression
+;
+
+ExpressionStatement:
+StatementExpression semi_colon
+;
+
+LabeledStatement:
+Identifier colon Statement
+;
+IfThenStatement:
+IF brac_open Expression brac_close Statement
+;
+
+IfThenElseStatement:
+IF brac_open Expression brac_close StatementNoShortIf ELSE Statement
+;
+
+IfThenElseStatementNoShortIf:
+IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf
+;
+
+StatementNoShortIf:
+StatementWithoutTrailingSubstatement
+| LabeledStatementNoShortIf
+| IfThenElseStatementNoShortIf
+| WhileStatementNoShortIf
+| ForStatementNoShortIf
+;
+
+LabeledStatementNoShortIf:
+Identifier colon StatementNoShortIf
+;
+
+WhileStatementNoShortIf:
+WHILE curly_open Expression curly_close StatementNoShortIf
+;
+
+ForStatement:
+BasicForStatement
+| EnhancedForStatement
+;
+
+ForStatementNoShortIf:
+BasicForStatementNoShortIf
+| EnhancedForStatementNoShortIf
+;
+
+BasicForStatement:
+FOR curly_open semi_colon semi_colon brac_close Statement
+| FOR curly_open ForInit semi_colon semi_colon brac_close Statement
+| FOR curly_open semi_colon Expression semi_colon brac_close Statement
+| FOR curly_open semi_colon semi_colon ForUpdate brac_close Statement
+| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close Statement
+| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close Statement
+| FOR curly_open ForInit semi_colon Expression semi_colon brac_close Statement
+| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close Statement
+;
+
+BasicForStatementNoShortIf:
+FOR curly_open semi_colon semi_colon brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon semi_colon brac_close StatementNoShortIf
+| FOR curly_open semi_colon Expression semi_colon brac_close StatementNoShortIf
+| FOR curly_open semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon Expression semi_colon brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+;
+
+ForInit:
+StatementExpressionList
+| LocalVariableDeclaration
+;
+
+ForUpdate:
+StatementExpressionList
+;
+
+StatementExpressionList:
+StatementExpression
+| StatementExpressionList comma StatementExpression
+;
+
+EnhancedForStatement:
+FOR curly_open LocalVariableDeclaration colon Expression brac_close Statement
+;
+
+EnhancedForStatementNoShortIf:
+FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf
+;
+
+WhileStatement:
+WHILE brac_open Expression brac_close Statement
+;
+
+LocalVariableDeclaration:
+LocalVariableType VariableDeclaratorList
+| VariableModifier LocalVariableType VariableDeclaratorList
+;
+
+ArrayCreationExpression: 
+newclasstype {cout<<"Arraycreation\n";} ArrayCreationExpressionAfterType
+| newprimtype ArrayCreationExpressionAfterType
+;
+
+ArrayCreationExpressionAfterType:
+DimExprs
+| DimExprs Dims
+| Dims ArrayInitializer
+;
+
+newprimtype:
+NEW PrimitiveType
+;
+
+newclasstype:
+NEW ClassType
+;
+
+DimExprs:
+  DimExpr
+| DimExprs DimExpr
+;
+
+DimExpr:
+box_open Expression box_close
+
+ArrayInitializer: 
+curly_open VariableInitializerList curly_close
+| curly_open VariableInitializerList comma curly_close
+;
+
+VariableInitializerList:
+VariableInitializer 
+| VariableInitializer VariableInitializerList
+;
 
 %%
 
