@@ -1,8 +1,4 @@
-
-class Point {}
-class kucchbhilikho permits kucchbhi {
-
-}
+class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T> > {}
 // class Point extends ColoredPoint {}
 // class ImaginaryNumber extends Number implements Arithmetic {}
 // public final class ImaginaryNumber extends Number implements Arithmetic {}

@@ -61,9 +61,11 @@ void generatetree(Node* n){
 %token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
-%type<node> ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument
-%type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements
-%type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType
+%type<node> input ClassDeclaration ClassModifier ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument TypeParameters TypeParameterList
+%type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassDecTillExtends ClassDecTillTypeParameters ClassExtends
+%type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType TypeParameter TypeBound AdditionalBound
+
+%type<sym> class_modifiers
 
 %left OR
 %left AND
@@ -84,37 +86,37 @@ void generatetree(Node* n){
 
 %%
 input:
-| ClassDeclaration input
+| ClassDeclaration input {cout<<"\n\n"; generatetree($$);}
 ;
 
 ClassDeclaration:
-  ClassModifier class_just_class Identifier ClassDecTillTypeParameters {cout<<"class declared yayy!!1\n";}
-| class_just_class Identifier ClassDecTillTypeParameters {cout<<"class declared yayy!!2\n";}
+  ClassModifier class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($4->objects); cout<<"class declared yayy!!1\n";}
+| class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($3->objects); cout<<"class declared yayy!!2\n";}
 ;
 
 ClassDecTillTypeParameters:
-  TypeParameters ClassDecTillExtends
-| ClassDecTillExtends
+  TypeParameters ClassDecTillExtends {$$=$1; $$->add($2->objects);}
+| ClassDecTillExtends {$$=$1; cout<<" ===\n";}
 ;
 
 ClassDecTillExtends:
- ClassExtends ClassDecTillImplements
-| ClassDecTillImplements
+ ClassExtends ClassDecTillImplements {$$=$1; $$->add($2->objects);}
+| ClassDecTillImplements {$$=$1;}
 ;
 
 ClassDecTillImplements:
   ClassImplements ClassDecTillPermits {$$=$1; $$->add($2->objects);}
-| ClassDecTillPermits {$$=$1;cout<<"\n\n"; generatetree($$);}
+| ClassDecTillPermits {$$=$1;}
 ;
 
 ClassDecTillPermits:
-  permits ClassPermits ClassBody {string t1=$1; $$ = new Node();  vector<Node*>v{new Node("keyword",t1),$2,$3}; $$->add(v);}
-| ClassBody {$$ = $1;}
+  permits ClassPermits ClassBody {string t1=$1; $$ = new Node();  vector<Node*>v{new Node(mymap[t1],t1),$2,$3}; $$->add(v);}
+| ClassBody {$$ = new Node(); $$->add($1);}
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
-| curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node("seperator",t1),new Node("seperator",t2)}; $$->add(v);  cout<<"\n---classbody2\n";}
+  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody"); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); cout<<"classbody1\n";}
+| curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);  cout<<"\n---classbody2\n";}
 ;
 
 ClassBodyDeclaration:
@@ -221,7 +223,7 @@ BlockStatement:
   Assignment semi_colon {cout<<"mo2222222222222222222\n";}
 | LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
 | LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
-| MethodInvocation semi_colon
+| Statement
 ;
 
 LocalVariableDeclarationStatement:
@@ -417,15 +419,15 @@ VariableInitializer:
 ; 
 
 TypeParameters:
-  less_than TypeParameterList greater_than {cout<<"typeparam\n";}
+  less_than TypeParameterList greater_than {$$=new Node("TypeParameters"); string t1=$1,t2=$3; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add(new Node(mymap[t2],t2)); cout<<"typeparam\n";}
 ;
 
 ClassExtends:
-  extends ClassType {cout<<"extends\n";}
+  extends ClassType {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);cout<<"extends\n";}
 ;
 
 ClassImplements:
- implements InterfaceTypeList {$$ = new Node(); $$->add(new Node("keyword",$1)); $$->add($2); cout<<"implements\n";}
+ implements InterfaceTypeList {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2); cout<<"implements\n";}
 ;
 
 ClassPermits:
@@ -434,8 +436,8 @@ ClassPermits:
 ;
 
 TypeParameterList:
-  TypeParameterList comma TypeParameter
-| TypeParameter
+  TypeParameterList comma TypeParameter {$$=$1; string t2=$2; $$->add(new Node(mymap[t2],t2)); $$->add($3); }
+| TypeParameter {$$= new Node("TypeParameterList"); $$->add($1);}
 ;
 
 /*
@@ -451,18 +453,18 @@ InterfaceTypeList:
 ;
 
 TypeParameter:
- Identifier TypeBound
-| Identifier
+ Identifier TypeBound {string t1=$1; $$=new Node("TypeParameter"); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}
+| Identifier {string t1=$1; $$=new Node("TypeParameter"); $$->add(new Node(mymap[t1],t1));}
 ;
 
 TypeBound:
-  extends ClassType {cout<<"typebound1\n";}
-| extends ClassType AdditionalBound {cout<<"typebound2\n";}
+  extends ClassType {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); cout<<"typebound1\n";}
+| extends ClassType AdditionalBound {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects); cout<<"typebound2\n";}
 ;
 
 AdditionalBound:
-  AdditionalBound bitwise_and ClassType
-| bitwise_and ClassType
+  AdditionalBound bitwise_and ClassType {string t1=$2; $$=$1; $$->add(new Node(mymap[t1],t1)); $$->add($3);}
+| bitwise_and ClassType {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
 
 
@@ -475,7 +477,7 @@ ClassType:
 */
 
 ClassType:
-TypeName
+TypeName {$$=$1;}
 | TypeName TypeArguments {$$=new Node();}
 | TypeName dot Identifier {$$=new Node();}
 | TypeName dot Identifier TypeArguments {$$=new Node();}
@@ -523,8 +525,8 @@ PrimitiveType:
 ;
 
 ClassModifier:
- class_modifiers {cout<<"classModifier \n";}
-|  ClassModifier class_modifiers {cout<<"classModifier \n";}
+ class_modifiers {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
+|  ClassModifier class_modifiers {$$=new Node("ClassModifier"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
 ;
 
 class_modifiers:
@@ -533,7 +535,7 @@ class_modifiers:
 | class_access
 | key_SEAL
 | STATIC
-| FINAL
+| FINAL 
 ;
 
 Expression : 
@@ -564,6 +566,7 @@ Primary dot Identifier {cout<<"PrimdotId\n";}
 
 Primary:
 PrimaryNoNewArray
+| ArrayCreationExpression
 ;
 
 PrimaryNoNewArray:
