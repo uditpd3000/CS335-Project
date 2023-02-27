@@ -1,43 +1,54 @@
-exports|opens|requires|uses|module|var||provides|to|with|open|record|transitive|yield {} /* keywords */
-
-
 class Point {}
+class kucchbhilikho permits kucchbhi {
+
+}
 class Point extends ColoredPoint {}
 class ImaginaryNumber extends Number implements Arithmetic {}
 public final class ImaginaryNumber extends Number implements Arithmetic {}
-class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T>> {}
+class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T> > {}
 class Redundant implements java.lang.Cloneable, Cloneable{}
 
-// class MyClass extends MySuperClass implements YourInterface {
-//     int x, y;
-//     int x = 3;
-//     // x = 5;
-//     private Point() {}
-//     final int baby(int ab.this,){}
-//     class rosey permits Udi{}
-//     Point(this,) { this(x instanceof y); }
-//     Point(int x) {z = a++;
-//       int[][].class.aisehi = 3;
-//       z=6;
-//       super.udit.name="ab";
-//       udit.name = (int)"mine";
-      
-//       a[4] = 5;
-//       this.name = "udit";
-//       void.class.name = you;
-//       super.name = kyaabat;
-//       udit.this.wow=3;
-//       udit.wiw.kdkkkd.super.mneeee= "rosey";
-//       a &= d*f+r;
-//       a = k%z||x;
-//       z= b++;
-//       k = ++c ;
-//       r = c== ros;
-//       kyoo= x&&y;
-//       wwwww= x instanceof y;
-//       udit(mai = mast, you = also_mast);
+public class Main {
+    int x;  // Create a class attribute
+  
+    // Create a class constructor for the Main class
+    public Main() {
+      x = 5;  // Set the initial value for the class attribute x
+    }
+     
+    public static void main(String[] args) {
+      //  Main obj = new Main() ;
+    }
+  }
 
-//     // }
-//     Test() {}
+class MyClass extends MySuperClass implements YourInterface {
+    int x, y;
+    int x = 3;
+    // x = 5;
+    private Point() {}
+    final int baby(int ab.this,){}
+    class rosey permits Udi{}
+    Point(this,) { this(x instanceof y); }
+    Point(int x) {z = a++;
+      int[][].class.aisehi = 3;
+      z=6;
+      super.udit.name="ab";
+      udit.name = (int)"mine";
       
-// }
+      a[4] = 5;
+      this.name = "udit";
+      void.class.name = you;
+      super.name = kyaabat;
+      udit.this.wow=3;
+      udit.wiw.kdkkkd.super.mneeee= "rosey";
+      a &= d*f+r;
+      a = k%z||x;
+      z= b++;
+      k = ++c ;
+      r = c== ros;
+      kyoo= x&&y;
+      wwwww= x instanceof y;
+      udit(mai = mast, you = also_mast);
+
+    }
+  }

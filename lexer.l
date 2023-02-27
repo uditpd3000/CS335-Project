@@ -13,6 +13,15 @@ FILE* pInputFile = NULL;
 
 bool flag=false; /* flag to indicate any lexical-error found */
 
+map<string, string> mymap;
+
+
+void insertMap(string lexeme, string token){
+	if(mymap.find(lexeme)==mymap.end())mymap.insert({lexeme,token});
+
+}
+
+
 %}
 
 %option yylineno 
@@ -49,73 +58,74 @@ StringLiteral \"[^\n"]+\"
 
 "/*"([^*]|\*+[^*/])*\*+"/" /* multiline comments */
 
-"::"  /* seperators */
-"(" {return brac_open;}
-")" {return brac_close;}
-"{" {yylval.sym = strdup(yytext); return curly_open;}
-"}" {yylval.sym = strdup(yytext); return curly_close;}
-"[" {return box_open;}
-"]" {return box_close;}
-"," {return comma;}
-"?" {return ques_mark;}
-"@" {return at;}
-"=="|"!=" {return EQUALNOTEQUAL;}
-"=" {return assign;}
-"." {return dot;}
-"..." {return dots;}
-"<" {return less_than;}
-">" {return greater_than;}
-";" {cout<<";\n";return semi_colon;}
-":" {return colon;}
-"||" {return OR;}
-"&&" {return AND;}
-"&" {return bitwise_and;}
-"^" {return bitwise_xor;}
-"|" {return bitwise_or;}
-"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^=" {return AssignmentOperator1;}
-"+"|"-" {return ARITHMETIC_OP_ADDITIVE;}
-"*"|"/"|"%" {return ARITHMETIC_OP_MULTIPLY;}
-"--"|"++" {return INCR_DECR;}
-"<="|">=" {return RELATIONAL_OP1;}
-"<<"|">>"|">>>" {return SHIFT_OP;}
-"~"|"!" {return LOGICAL_OP;}
+"::" {insertMap(strdup(yytext),"Seperator");} /* seperators */
+"(" {insertMap(strdup(yytext),"Seperator"); return brac_open;}
+")" {insertMap(strdup(yytext),"Seperator");return brac_close;}
+"{" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return curly_open;}
+"}" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return curly_close;}
+"[" {insertMap(strdup(yytext),"Seperator");return box_open;}
+"]" {insertMap(strdup(yytext),"Seperator");return box_close;}
+"," {insertMap(strdup(yytext),"Seperator");return comma;}
+"?" {insertMap(strdup(yytext),"Operator");return ques_mark;}
+"@" {insertMap(strdup(yytext),"Seperator");return at;}
+"=="|"!=" {insertMap(strdup(yytext),"Operator");return EQUALNOTEQUAL;}
+"=" {insertMap(strdup(yytext),"Operator");return assign;}
+"." {insertMap(strdup(yytext),"Seperator");return dot;}
+"..." {insertMap(strdup(yytext),"Seperator");return dots;}
+"<" {insertMap(strdup(yytext),"Operator");return less_than;}
+">" {insertMap(strdup(yytext),"Operator");return greater_than;}
+";" {insertMap(strdup(yytext),"Seperator");cout<<";\n";return semi_colon;}
+":" {insertMap(strdup(yytext),"Operator");return colon;}
+"||" {insertMap(strdup(yytext),"Operator");return OR;}
+"&&" {insertMap(strdup(yytext),"Operator");return AND;}
+"&" {insertMap(strdup(yytext),"Operator");return bitwise_and;}
+"^" {insertMap(strdup(yytext),"Operator");return bitwise_xor;}
+"|" {insertMap(strdup(yytext),"Operator");return bitwise_or;}
+"|="|"%="|"+="|"-="|"*="|"/="|"&="|"^=" {insertMap(strdup(yytext),"Operator");return AssignmentOperator1;}
+"+"|"-" {insertMap(strdup(yytext),"Operator");return ARITHMETIC_OP_ADDITIVE;}
+"*"|"/"|"%" {insertMap(strdup(yytext),"Operator");return ARITHMETIC_OP_MULTIPLY;}
+"--"|"++" {insertMap(strdup(yytext),"Operator");return INCR_DECR;}
+"<="|">=" {insertMap(strdup(yytext),"Operator");return RELATIONAL_OP1;}
+"<<"|">>"|">>>" {insertMap(strdup(yytext),"Operator");return SHIFT_OP;}
+"~"|"!" {insertMap(strdup(yytext),"Operator");return LOGICAL_OP;}
 
-switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {return keyword;} /* keywords */
+switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");return keyword;} /* keywords */
 
-class {return class_just_class;}
-public|private|protected {return class_access;}
-static {return STATIC;}
-final {return FINAL;}
-sealed|non-sealed {return key_SEAL;}
-abstract {return key_abstract;}
-strictfp {return key_STRICTFP;}
-transient|volatile {return field_modifier;}
-native|synchronized {return method_modifier;}
-extends {return extends;}
-super {return super;}
-enum {return enum_just_enum;}
-this {return THIS;}
-record {return record_just_record;}
-implements {yylval.sym = strdup(yytext); return implements;}
-permits {yylval.sym = strdup(yytext);return permits;}
-var {return var;}
-void {return VOID;}
-throws {return throws;}
-throw {return THROW;}
-return {return RETURN;}
-continue {return CONTINUE;}
-for {return FOR;}
-while {return WHILE;}
-if {return IF;}
-else {return ELSE;}
-byte|short|int|long|char|float|double {return literal_type;}
-instanceof {return INSTANCE_OF;}
-new {return NEW;}
+class {insertMap(strdup(yytext),"Keyword");return class_just_class;}
+public|private|protected {insertMap(strdup(yytext),"Keyword");return class_access;}
+static {insertMap(strdup(yytext),"Keyword");return STATIC;}
+final {insertMap(strdup(yytext),"Keyword");return FINAL;}
+sealed|non-sealed {insertMap(strdup(yytext),"Keyword");return key_SEAL;}
+abstract {insertMap(strdup(yytext),"Keyword");return key_abstract;}
+strictfp {insertMap(strdup(yytext),"Keyword");return key_STRICTFP;}
+transient|volatile {insertMap(strdup(yytext),"Keyword");return field_modifier;}
+native|synchronized {insertMap(strdup(yytext),"Keyword");return method_modifier;}
+extends {insertMap(strdup(yytext),"Keyword");return extends;}
+super {insertMap(strdup(yytext),"Keyword");return super;}
+enum {insertMap(strdup(yytext),"Keyword");return enum_just_enum;}
+this {insertMap(strdup(yytext),"Keyword");return THIS;}
+record {insertMap(strdup(yytext),"Keyword");return record_just_record;}
+implements {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return implements;}
+permits {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext);return permits;}
+var {insertMap(strdup(yytext),"Keyword");return var;}
+void {insertMap(strdup(yytext),"Keyword");return VOID;}
+throws {insertMap(strdup(yytext),"Keyword");return throws;}
+throw {insertMap(strdup(yytext),"Keyword");return THROW;}
+return {insertMap(strdup(yytext),"Keyword");return RETURN;}
+continue {insertMap(strdup(yytext),"Keyword");return CONTINUE;}
+for {insertMap(strdup(yytext),"Keyword");return FOR;}
+while {insertMap(strdup(yytext),"Keyword");return WHILE;}
+if {insertMap(strdup(yytext),"Keyword");return IF;}
+else {insertMap(strdup(yytext),"Keyword");return ELSE;}
+byte|short|int|long|char|float|double {insertMap(strdup(yytext),"Keyword");return literal_type;}
+instanceof {insertMap(strdup(yytext),"Keyword");return INSTANCE_OF;}
+new {insertMap(strdup(yytext),"Keyword");return NEW;}
+"System.out.println" {insertMap(strdup(yytext),"Keyword");return PRINTLN;}
 
-{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} { return literal;} /* literals */
+{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} {insertMap(strdup(yytext),"Literal"); return literal;} /* literals */
 
 
-[a-zA-Z_][a-zA-Z0-9_]*  {return Identifier;} /* identifiers */
+[a-zA-Z_][a-zA-Z0-9_]*  {insertMap(strdup(yytext),"Identifier");yylval.sym = strdup(yytext);return Identifier;} /* identifiers */
 
 . {printf("Error on line %d : read an invalid character %s\n", yylineno, yytext ); flag=true; return 0;} /* lexical error */
 

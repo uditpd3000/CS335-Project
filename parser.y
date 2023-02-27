@@ -58,7 +58,7 @@ void generatetree(Node* n){
 %token box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
 %token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
-%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK
+%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
 %type<node> ClassBody ClassPermits TypeName
 %type<node> ClassDecTillPermits ClassDecTillImplements
@@ -137,9 +137,7 @@ ConstructorDeclarationEnd:
 ;
 
 ConstructorModifier:
-  Annotation {cout<<"constructormodifier1\n";}
-| class_access {cout<<"constructormodifier2\n";}
-| Annotation ConstructorModifier {cout<<"constructormodifier3\n";}
+  class_access {cout<<"constructormodifier2\n";}
 | class_access ConstructorModifier {cout<<"constructormodifier4\n";}
 ;
 
@@ -256,9 +254,7 @@ MethodDeclarationEnd:
 
 MethodModifier:
   method_modifiers
-|  Annotation method_modifiers {cout<<"method_modifiers \n";}
 | MethodModifier method_modifiers
-|  MethodModifier Annotation method_modifiers {cout<<"method_modifiers \n";}
 ;
 
 method_modifiers:
@@ -276,9 +272,7 @@ MethodHeader:
 ;
 
 MethodHeaderStart:
-  Annotation Result MethodDeclarator {cout<<"MethodHeader3\n";}
-| Result MethodDeclarator {cout<<"MethodHeader4\n";}
-| Annotation Result MethodDeclarator Throws {cout<<"MethodHeader3\n";}
+ Result MethodDeclarator {cout<<"MethodHeader4\n";}
 | Result MethodDeclarator Throws {cout<<"MethodHeader4\n";}
 ;
 
@@ -297,7 +291,6 @@ MethodDeclarator:
 
 MethodDeclaratorTillRP:
   UnannType ReceiverParameter MethodDeclaratorTillFP
-|  Annotation UnannType ReceiverParameter MethodDeclaratorTillFP {cout<<"MethodDeclarator1\n";}
 | MethodDeclaratorTillFP 
 ;
 
@@ -330,14 +323,11 @@ VariableDeclaratorId:
 ;
 
 VariableArityParameter:
-  Annotation dots Identifier
-| dots Identifier
+ dots Identifier
 ;
 
 VariableModifier:
-  Annotation  {cout<<"VariableModifier\n";}
-| FINAL
-| Annotation VariableModifier  {cout<<"VariableModifier\n";}
+ FINAL
 | FINAL VariableModifier
 ;
 
@@ -357,9 +347,7 @@ FieldDeclaration:
 ;
 
 FieldModifier:
-   Annotation field_modifiers {cout<<"fieldModifier \n";}
-|  FieldModifier Annotation field_modifiers {cout<<"fieldModifier \n";}
-|  field_modifiers {cout<<"fieldModifier \n";}
+ field_modifiers {cout<<"fieldModifier \n";}
 |  FieldModifier field_modifiers {cout<<"fieldModifier \n";}
 ;
 
@@ -444,9 +432,7 @@ InterfaceTypeList:
 ;
 
 TypeParameter:
-  Annotation Identifier TypeBound
-| Identifier TypeBound
-| Annotation Identifier
+ Identifier TypeBound
 | Identifier
 ;
 
@@ -470,15 +456,12 @@ ClassType:
 */
 
 ClassType:
-TypeName {cout<<"typename\n";} dot ClassTypeTillPackage {cout<<"classtype1\n";}
-| ClassTypeTillPackage {cout<<"classtypetillpackage\n";}
-;
-
-ClassTypeTillPackage:
-  Annotation Identifier TypeArguments {cout<<"classtype3\n";}
-| Annotation Identifier 
-| Identifier TypeArguments
-| Identifier
+TypeName 
+| TypeName TypeArguments
+| TypeName dot Identifier
+| TypeName dot Identifier TypeArguments
+| ClassType dot Identifier
+| ClassType dot Identifier TypeArguments
 ;
 
 TypeArguments:
@@ -492,8 +475,6 @@ TypeArgumentList :
 
 TypeArgument:
   ReferenceType
-| Annotation ques_mark
-| Annotation ques_mark WildcardBounds
 | ques_mark
 | ques_mark WildcardBounds
 ;
@@ -514,21 +495,16 @@ ArrayType:
 ;
 
 Dims:
-  Annotation box_open box_close
-| box_open box_close
-| Dims Annotation box_open box_close
+box_open box_close
 | Dims box_open box_close
 ;
 
 PrimitiveType:
-  Annotation literal_type {cout<<"PrimitiveType\n";}
-| literal_type
+  literal_type
 ;
 
 ClassModifier:
-   Annotation class_modifiers {cout<<"classModifier \n";}
-|  ClassModifier Annotation class_modifiers {cout<<"classModifier \n";}
-|  class_modifiers {cout<<"classModifier \n";}
+ class_modifiers {cout<<"classModifier \n";}
 |  ClassModifier class_modifiers {cout<<"classModifier \n";}
 ;
 
@@ -539,44 +515,6 @@ class_modifiers:
 | key_SEAL
 | STATIC
 | FINAL
-;
-
-Annotation:
-  NormalAnnotation
-| at TypeName
-| at TypeName brac_open ElementValue brac_close
-;
-
-NormalAnnotation:
-  at TypeName brac_open ElementValuePairList brac_close
-;
-
-ElementValuePairList:
-  ElementValuePair
-| ElementValuePairList comma ElementValuePair
-;
-
-ElementValuePair:
-  Identifier assign ElementValue
-;
-
-
-ElementValue:
-  ConditionalExpression
-  ElementValueArrayInitializer
-  Annotation
-;
-
-ElementValueArrayInitializer:
-  curly_open ElementValueList comma curly_close
-| curly_open ElementValueList curly_close
-| curly_open comma curly_close
-| curly_open curly_close
-;
-
-ElementValueList:
-  ElementValue
-| ElementValueList comma ElementValue
 ;
 
 Expression : 
@@ -748,8 +686,8 @@ ClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpression:
-  NEW {cout<<"1\n";} TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen
-| NEW {cout<<"2..\n";} ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen {cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
+  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen
+| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen {cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
@@ -764,15 +702,6 @@ ClassOrInterfaceTypeToInstantiate:
 | Identifier TypeArgumentsOrDiamond
 | Identifier ClassOrInterfaceType2
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
-| Annotations Identifier 
-| Annotations Identifier TypeArgumentsOrDiamond
-| Annotations Identifier ClassOrInterfaceType2
-| Annotations Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond
-;
-
-Annotations:
-  Annotation 
-| Annotations Annotation
 ;
 
 TypeArgumentsOrDiamond:
@@ -782,9 +711,7 @@ TypeArgumentsOrDiamond:
 
 ClassOrInterfaceType2:
   dot Identifier
-| dot Annotations Identifier
 | ClassOrInterfaceType2 dot Identifier
-| ClassOrInterfaceType2 dot Annotations Identifier
 ;
 
 Statement:
@@ -794,6 +721,7 @@ StatementWithoutTrailingSubstatement
 | IfThenElseStatement
 | WhileStatement
 | ForStatement
+| PRINTLN brac_open TypeName brac_close
 ;
 
 StatementWithoutTrailingSubstatement:
@@ -932,7 +860,7 @@ LocalVariableType VariableDeclaratorList
 ;
 
 ArrayCreationExpression: 
-newclasstype ArrayCreationExpressionAfterType
+newclasstype {cout<<"Arraycreation\n";} ArrayCreationExpressionAfterType
 | newprimtype ArrayCreationExpressionAfterType
 ;
 
@@ -951,14 +879,12 @@ NEW ClassType
 ;
 
 DimExprs:
-DimExpr 
+  DimExpr
 | DimExprs DimExpr
 ;
 
 DimExpr:
-Annotations 
-| Annotations Expression
-;
+box_open Expression box_close
 
 ArrayInitializer: 
 curly_open VariableInitializerList curly_close
