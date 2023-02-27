@@ -64,7 +64,10 @@ void generatetree(Node* n){
 %type<node> input ClassDeclaration ClassModifier ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument TypeParameters TypeParameterList
 %type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassDecTillExtends ClassDecTillTypeParameters ClassExtends
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType TypeParameter TypeBound AdditionalBound
-
+%type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
+%type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType VariableModifier LocalClassOrInterfaceDeclaration InstanceInitializer
+%type<node> VariableDeclarator VariableDeclaratorList VariableInitializer
+ 
 %type<sym> class_modifiers
 
 %left OR
@@ -96,7 +99,7 @@ ClassDeclaration:
 
 ClassDecTillTypeParameters:
   TypeParameters ClassDecTillExtends {$$=$1; $$->add($2->objects);}
-| ClassDecTillExtends {$$=$1; cout<<" ===\n";}
+| ClassDecTillExtends {$$=$1;}
 ;
 
 ClassDecTillExtends:
@@ -200,17 +203,17 @@ StaticInitializer:
 ;
 
 InstanceInitializer:
- Block {cout<<"";}
+ Block {$$ = $1;}
 ;
 
 Block:
-  curly_open BlockStatements curly_close {cout<<"Block1\n";}
-| curly_open curly_close {cout<<"Block2\n";}
+  curly_open BlockStatements curly_close {$$=new Node("Block"); string t1=$1,t2=$3; vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))}; $$->add(v); cout<<"Block1\n";}
+| curly_open curly_close {$$=new Node("Block"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v); cout<<"Block2\n";}
 ;
 
 BlockStatements:
-  BlockStatement {cout<<"BlockStatements1\n";}
-| BlockStatement BlockStatements {cout<<"BlockStatements2\n";}
+  BlockStatement {$$=new Node("BlockStatements"); $$->add($1); cout<<"BlockStatements1\n";}
+| BlockStatements BlockStatement {$$=$1; $$->add($2); cout<<"BlockStatements2\n";}
 ;
 
 /* BlockStatement:
@@ -221,19 +224,19 @@ BlockStatements:
 
 BlockStatement:
   Assignment semi_colon {cout<<"mo2222222222222222222\n";}
-| LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
-| LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
+| LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); cout<<"LocalClassOrInterfaceDeclaration";}
+| LocalVariableDeclarationStatement semi_colon {$$ =$1; string t1=$2; cout<<t1<<"==\n"; $$->add(new Node(mymap[t1],t1));  cout<<"LocalVariableDeclarationStatement\n";}
 | Statement
 ;
 
 LocalVariableDeclarationStatement:
-  VariableModifier LocalVariableType VariableDeclaratorList {cout<<"LocalVariableDeclarationStatement1\n";}
-| LocalVariableType VariableDeclaratorList {cout<<"LocalVariableDeclarationStatement2\n";}
+  VariableModifier LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2,$3}; $$->add(v); cout<<"LocalVariableDeclarationStatement1\n";}
+| LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2}; $$->add(v); cout<<"LocalVariableDeclarationStatement2\n";}
 ;
 
 LocalVariableType:
-  UnannType {cout<<"LocalVariableType1\n";}
-| var
+  UnannType {$$=$1; cout<<"LocalVariableType1\n";}
+| var {string t1= $1; $$=new Node(mymap[t1],t1);}
 ;
 
 /* LocalClassOrInterfaceDeclaration:
@@ -241,7 +244,7 @@ LocalVariableType:
 | NormalInterfaceDeclaration
 ; */
 LocalClassOrInterfaceDeclaration:
-  ClassDeclaration
+  ClassDeclaration {$$=$1;}
 ;
 
 /* ClassMemberDeclaration:
@@ -348,8 +351,7 @@ VariableArityParameter:
 ;
 
 VariableModifier:
- FINAL
-| FINAL VariableModifier
+ FINAL {string t1 = $1; $$= new Node(mymap[t1],t1);}
 ;
 
 ReceiverParameter:
@@ -363,8 +365,8 @@ Result:
 ;
 
 FieldDeclaration:
-  FieldModifier UnannType VariableDeclaratorList {cout<<"fd1\n";} semi_colon {cout<<"FieldDeclaration1\n";}
-| UnannType VariableDeclaratorList {cout<<"fd2\n";} semi_colon {cout<<"FieldDeclaration2\n";}
+  FieldModifier UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration1\n";}
+| UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration2\n";}
 ;
 
 FieldModifier:
@@ -380,41 +382,41 @@ field_modifiers:
 ;
 
 VariableDeclaratorList:
-  VariableDeclarator {cout<<"VariableDeclaratorList1\n";}
-| VariableDeclarator comma VariableDeclaratorList {cout<<"VariableDeclaratorList2\n";}
+  VariableDeclarator {$$= new Node("VariableDeclaratorList"); $$->add($1); cout<<"VariableDeclaratorList1\n";}
+| VariableDeclaratorList comma VariableDeclarator { $$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3}; $$->add(v); cout<<"VariableDeclaratorList2\n";}
 ;
 
 UnannType:
-  UnannPrimitiveType {cout<<"UnannType1\n";}
-| UnannReferenceType {cout<<"UnannType2\n";}
+  UnannPrimitiveType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType1\n";}
+| UnannReferenceType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType2\n";}
 ;
 
 UnannPrimitiveType:
-  boolean
-| literal_type {cout<<"UnannPrimitiveType\n";}
+  boolean {string t1= $1; $$=new Node(mymap[t1],t1);}
+| literal_type {string t1= $1; $$=new Node(mymap[t1],t1); cout<<"UnannPrimitiveType\n";}
 ;
 
 UnannReferenceType:
-  ClassType
-| Identifier
-| UnannArrayType
+  ClassType {$$=$1;}
+| Identifier {string t1= $1; $$=new Node(mymap[t1],t1);}
+| UnannArrayType {$$=$1;}
 ;
 
 UnannArrayType:
-  UnannPrimitiveType Dims
-| ClassType Dims
-| Identifier Dims
+  UnannPrimitiveType Dims {$$ = new Node("UnannArrayType"); vector<Node*>v{$1,$2}; $$->add(v);}
+| ClassType Dims {$$ = new Node("UnannArrayType"); vector<Node*>v{$1,$2}; $$->add(v);}
+| Identifier Dims {$$ = new Node("UnannArrayType"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v);}
 ;
 
 VariableDeclarator:
-  Identifier
-| Identifier Dims {cout<<"kakka";}
-| Identifier assign {cout<<"vardec=\n";} VariableInitializer {cout<<"VariableDeclarator1\n";}
-| Identifier Dims assign VariableInitializer
+  Identifier {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v);}
+| Identifier Dims {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v);}
+| Identifier assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; $$->add(v); cout<<"VariableDeclarator1\n";}
+| Identifier Dims assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; $$->add(v); cout<<"VariableDeclarator1\n";}
 ;
 
 VariableInitializer:
-  Expression {cout<<"Varinit\n";}
+  Expression {$$ = new Node(); cout<<"Varinit\n";}
 // | ArrayInitializer
 ; 
 

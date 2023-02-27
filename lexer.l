@@ -74,7 +74,7 @@ StringLiteral \"[^\n"]+\"
 "..." {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return dots;}
 "<" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return less_than;}
 ">" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return greater_than;}
-";" {insertMap(strdup(yytext),"Seperator");cout<<";\n";return semi_colon;}
+";" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return semi_colon;}
 ":" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return colon;}
 "||" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return OR;}
 "&&" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return AND;}

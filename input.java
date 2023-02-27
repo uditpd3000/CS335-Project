@@ -1,4 +1,9 @@
-class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T> > {}
+class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T> > {
+    {
+        int a,b,c[][];
+        public class ok{}
+    }
+}
 // class Point extends ColoredPoint {}
 // class ImaginaryNumber extends Number implements Arithmetic {}
 // public final class ImaginaryNumber extends Number implements Arithmetic {}
