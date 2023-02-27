@@ -722,6 +722,7 @@ StatementWithoutTrailingSubstatement
 | WhileStatement
 | ForStatement
 | PRINTLN brac_open TypeName brac_close
+| PRINTLN brac_open literal brac_close
 ;
 
 StatementWithoutTrailingSubstatement:
@@ -807,26 +808,23 @@ BasicForStatementNoShortIf
 ;
 
 BasicForStatement:
-FOR curly_open semi_colon semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close Statement
+BasicForStatementStart Statement
 ;
 
 BasicForStatementNoShortIf:
-FOR curly_open semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+BasicForStatementStart StatementNoShortIf
+
+BasicForStatementStart:
+FOR curly_open semi_colon semi_colon brac_close 
+| FOR curly_open ForInit semi_colon semi_colon brac_close 
+| FOR curly_open semi_colon Expression semi_colon brac_close 
+| FOR curly_open semi_colon semi_colon ForUpdate brac_close
+| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close
+| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close
+| FOR curly_open ForInit semi_colon Expression semi_colon brac_close
+| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close
 ;
+
 
 ForInit:
 StatementExpressionList
