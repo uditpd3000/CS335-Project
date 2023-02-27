@@ -45,18 +45,15 @@ int num=0;
 %left dot
 %left super
 
+%error-verbose
 %%
-input: Expression semi_colon
-| input Expression semi_colon
-;
-
 input:
 | ClassDeclaration input
 ;
 
 ClassDeclaration:
-  ClassModifier class_just_class Identifier ClassDecTillTypeParameters ClassBody {cout<<"class declared yayy!!1\n";}
-| class_just_class Identifier ClassDecTillTypeParameters ClassBody {cout<<"class declared yayy!!2\n";}
+  ClassModifier class_just_class Identifier ClassDecTillTypeParameters {cout<<"class declared yayy!!1\n";}
+| class_just_class Identifier ClassDecTillTypeParameters {cout<<"class declared yayy!!2\n";}
 ;
 
 ClassDecTillTypeParameters:
@@ -75,13 +72,13 @@ ClassDecTillImplements:
 ;
 
 ClassDecTillPermits:
-  permits ClassPermits curly_open
-| curly_open
+  permits ClassPermits ClassBody
+| ClassBody
 ;
 
 ClassBody:
-  ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
-| curly_close {cout<<"classbody2\n";}
+  curly_open ClassBodyDeclaration curly_close {cout<<"classbody1\n";}
+| curly_open curly_close {cout<<"classbody2\n";}
 ;
 
 ClassBodyDeclaration:
@@ -187,14 +184,15 @@ BlockStatements:
 ; */
 
 BlockStatement:
-  Assignment semi_colon
-| LocalClassOrInterfaceDeclaration {cout<<"";}
-| LocalVariableDeclarationStatement semi_colon {cout<<"";}
+  Assignment semi_colon {cout<<"mo2222222222222222222\n";}
+| LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
+| LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
+| MethodInvocation semi_colon
 ;
 
 LocalVariableDeclarationStatement:
-  VariableModifier LocalVariableType VariableDeclaratorList
-| LocalVariableType VariableDeclaratorList
+  VariableModifier LocalVariableType VariableDeclaratorList {cout<<"LocalVariableDeclarationStatement1\n";}
+| LocalVariableType VariableDeclaratorList {cout<<"LocalVariableDeclarationStatement2\n";}
 ;
 
 LocalVariableType:
@@ -320,9 +318,9 @@ VariableArityParameter:
 ;
 
 VariableModifier:
-  Annotation
+  Annotation  {cout<<"VariableModifier\n";}
 | FINAL
-| Annotation VariableModifier
+| Annotation VariableModifier  {cout<<"VariableModifier\n";}
 | FINAL VariableModifier
 ;
 
@@ -337,8 +335,8 @@ Result:
 ;
 
 FieldDeclaration:
-  FieldModifier UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration1\n";}
-| UnannType VariableDeclaratorList semi_colon {cout<<"FieldDeclaration2\n";}
+  FieldModifier UnannType VariableDeclaratorList {cout<<"fd1\n";} semi_colon {cout<<"FieldDeclaration1\n";}
+| UnannType VariableDeclaratorList {cout<<"fd2\n";} semi_colon {cout<<"FieldDeclaration2\n";}
 ;
 
 FieldModifier:
@@ -384,13 +382,13 @@ UnannArrayType:
 
 VariableDeclarator:
   Identifier
-| Identifier Dims
-| Identifier assign VariableInitializer {cout<<"VariableDeclarator1\n";}
+| Identifier Dims {cout<<"kakka";}
+| Identifier assign {cout<<"vardec=\n";} VariableInitializer {cout<<"VariableDeclarator1\n";}
 | Identifier Dims assign VariableInitializer
 ;
 
 VariableInitializer:
-  Expression
+  Expression {cout<<"Varinit\n";}
 // | ArrayInitializer
 ; 
 
@@ -581,7 +579,7 @@ Assignment             {cout<<"Assignment\n";}
 ;
 
 Assignment:
-  LeftHandSide AssignmentOperator Expression 
+  LeftHandSide {cout<<"LEFTHAND-------------------------------------------\n";} AssignmentOperator Expression 
 ;
 
 LeftHandSide:
@@ -609,7 +607,7 @@ PrimaryNoNewArray:
 | FieldAccess
 | ArrayAccess
 | MethodInvocation
-| ClassInstanceCreationExpression
+| ClassInstanceCreationExpression {cout<<"ClassInstance\n";}
 ;
 
 TypeName:
@@ -617,8 +615,17 @@ TypeName:
 | TypeName dot Identifier 
 ;
 
+Idboxopen:
+Identifier box_open
+;
+
+Typenameboxopen:
+Idboxopen 
+| TypeName dot Idboxopen
+;
+
 ArrayAccess:
-TypeName box_open Expression box_close
+Typenameboxopen Expression box_close
 | PrimaryNoNewArray box_open Expression box_close
 ;
 
@@ -674,7 +681,7 @@ UnaryExpressionNotPlusMinus:
 ;
 
 PostfixExpression:
-  Primary
+  Primary {cout<<"PostfixExpression\n";}
 | TypeName
 | PostIncrDecrExpression
 ;
@@ -710,9 +717,9 @@ MethodInvocation:
   Identifier brac_open ArgumentList brac_close
 | Identifier brac_open brac_close
 | MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close
-| FieldAccess brac_open ArgumentList brac_close
-| FieldAccess brac_open brac_close
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close
+| MethodIncovationStart Identifier  brac_open brac_close {cout<<"methodinvocation\n";}
+| MethodIncovationStart Identifier  brac_open ArgumentList brac_close
 ;
 
 MethodIncovationStart:
@@ -729,18 +736,19 @@ ClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpression:
-  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close ClassBody
-| NEW ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close ClassBody
-| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open  brac_close ClassBody
-| NEW ClassOrInterfaceTypeToInstantiate brac_open brac_close ClassBody
-| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open  brac_close 
-| NEW ClassOrInterfaceTypeToInstantiate brac_open brac_close 
-| NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close
-| NEW ClassOrInterfaceTypeToInstantiate brac_open ArgumentList brac_close 
+  NEW {cout<<"1\n";} TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen
+| NEW {cout<<"2..\n";} ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen {cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
+;
+
+UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
+  ArgumentList brac_close ClassBody
+| brac_close ClassBody {cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
+| brac_close
+| ArgumentList brac_close
 ;
 
 ClassOrInterfaceTypeToInstantiate:
- Identifier 
+ Identifier {cout<<"ClassOrInterfaceTypeToInstantiate\n";}
 | Identifier TypeArgumentsOrDiamond
 | Identifier ClassOrInterfaceType2
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond

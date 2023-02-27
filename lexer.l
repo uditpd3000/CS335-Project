@@ -63,7 +63,7 @@ StringLiteral \"[^\n"]+\"
 "..." {return dots;}
 "<" {return less_than;}
 ">" {return greater_than;}
-";" {return semi_colon;}
+";" {cout<<";\n";return semi_colon;}
 ":" {return colon;}
 "||" {return OR;}
 "&&" {return AND;}
