@@ -78,7 +78,7 @@ StringLiteral \"[^\n"]+\"
 "<<"|">>"|">>>" {return SHIFT_OP;}
 "~"|"!" {return LOGICAL_OP;}
 
-continue|for|switch|assert|default|if|package|synchronized|boolean|do|goto|break|throw|else|import|case|return|catch|try|interface|finally|const|while|"_" {return keyword;} /* keywords */
+switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {return keyword;} /* keywords */
 
 class {return class_just_class;}
 public|private|protected {return class_access;}
@@ -99,6 +99,13 @@ permits {return permits;}
 var {return var;}
 void {return VOID;}
 throws {return throws;}
+throw {return THROW;}
+return {return RETURN;}
+continue {return CONTINUE;}
+for {return FOR;}
+while {return WHILE;}
+if {return IF;}
+else {return ELSE;}
 byte|short|int|long|char|float|double {return literal_type;}
 instanceof {return INSTANCE_OF;}
 new {return NEW;}

@@ -25,7 +25,7 @@ int num=0;
 %token curly_open curly_close box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
 %token Identifier extends super implements permits enum_just_enum record_just_record 
-%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW
+%token ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK
 
 
 
@@ -119,13 +119,6 @@ ConstructorBodyEnd:
 | curly_close
 ;
 
-/* ExplicitConstructorInvocation:
-| TypeArguments this brac_open ArgumentList brac_close semi_colon
-| TypeArguments super brac_open ArgumentList brac_close semi_colon
-| ExpressionName dot TypeArguments super brac_open ArgumentList brac_close semi_colon
-| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon
-; */
-
  ExplicitConstructorInvocation:
   TypeArguments ExplicitConsInvTillTypeArgs
 | ExplicitConsInvTillTypeArgs
@@ -177,17 +170,12 @@ BlockStatements:
 | BlockStatement BlockStatements {cout<<"BlockStatements2\n";}
 ;
 
-/* BlockStatement:
-  LocalClassOrInterfaceDeclaration {cout<<"";}
-| LocalVariableDeclarationStatement {cout<<"";}
-| Statement {cout<<"";}
-; */
 
 BlockStatement:
   Assignment semi_colon {cout<<"mo2222222222222222222\n";}
 | LocalClassOrInterfaceDeclaration {cout<<"LocalClassOrInterfaceDeclaration";}
 | LocalVariableDeclarationStatement {printf("====\n");} semi_colon {cout<<"LocalVariableDeclarationStatement";}
-| MethodInvocation semi_colon
+| Statement
 ;
 
 LocalVariableDeclarationStatement:
@@ -302,11 +290,6 @@ FormalParameter:
 ;
 
 
-// FormalParameter:
-//   VariableDeclaratorId {cout<<"FormalParameter1\n";}
-// | VariableArityParameter {cout<<"FormalParameter2\n";}
-// ;
-
 VariableDeclaratorId:
   Identifier Dims
 | Identifier {cout<<"VariableDeclaratorId2\n";}
@@ -389,7 +372,7 @@ VariableDeclarator:
 
 VariableInitializer:
   Expression {cout<<"Varinit\n";}
-// | ArrayInitializer
+| ArrayInitializer
 ; 
 
 TypeParameters:
@@ -401,7 +384,7 @@ ClassExtends:
 ;
 
 ClassImplements:
- implements InterfaceTypeList {cout<<"implements\n";}
+ implements {cout<<"impl\n";} InterfaceTypeList {cout<<"implements\n";}
 ;
 
 ClassPermits:
@@ -423,7 +406,7 @@ InterfaceTypeList:
 
 InterfaceTypeList:
  ClassType {cout<<"interfacetypelist1\n";}
-| InterfaceTypeList comma ClassType {cout<<"interfacetypelist2\n";}
+| InterfaceTypeList {cout<<"intface\n"; } comma ClassType {cout<<"interfacetypelist2\n";}
 ;
 
 TypeParameter:
@@ -453,8 +436,8 @@ ClassType:
 */
 
 ClassType:
-TypeName dot ClassTypeTillPackage {cout<<"classtype1\n";}
-| ClassTypeTillPackage
+TypeName {cout<<"typename\n";} dot ClassTypeTillPackage {cout<<"classtype1\n";}
+| ClassTypeTillPackage {cout<<"classtypetillpackage\n";}
 ;
 
 ClassTypeTillPackage:
@@ -492,7 +475,7 @@ ReferenceType:
 ;
 
 ArrayType:
-  PrimitiveType Dims {cout<<"primdims\n";}
+  PrimitiveType Dims {cout<<"primDims\n";}
 | ClassType Dims
 ;
 
@@ -543,17 +526,11 @@ ElementValuePair:
   Identifier assign ElementValue
 ;
 
-/* 
+
 ElementValue:
   ConditionalExpression
   ElementValueArrayInitializer
   Annotation
-;
-*/
-
-ElementValue:
-  ElementValueArrayInitializer
-| Annotation
 ;
 
 ElementValueArrayInitializer:
@@ -596,6 +573,7 @@ Primary dot Identifier {cout<<"PrimdotId\n";}
 
 Primary:
 PrimaryNoNewArray
+| ArrayCreationExpression
 ;
 
 PrimaryNoNewArray:
@@ -611,8 +589,8 @@ PrimaryNoNewArray:
 ;
 
 TypeName:
-  Identifier
-| TypeName dot Identifier 
+  Identifier {cout<<"typename1\n";}
+| TypeName dot Identifier {cout<<"typename2\n";}
 ;
 
 Idboxopen:
@@ -775,6 +753,188 @@ ClassOrInterfaceType2:
 | ClassOrInterfaceType2 dot Annotations Identifier
 ;
 
+Statement:
+StatementWithoutTrailingSubstatement
+| LabeledStatement
+| IfThenStatement
+| IfThenElseStatement
+| WhileStatement
+| ForStatement
+;
+
+StatementWithoutTrailingSubstatement:
+Block
+| semi_colon
+| ExpressionStatement
+| BreakStatement
+| ContinueStatement
+| ReturnStatement
+| ThrowStatement
+;
+
+BreakStatement:
+BREAK
+| BREAK Identifier
+;
+
+ContinueStatement:
+CONTINUE
+| CONTINUE Identifier
+;
+
+ReturnStatement:
+RETURN
+| RETURN Expression
+;
+
+ThrowStatement:
+THROW Expression 
+;
+
+StatementExpression:
+Assignment
+| PreIncrDecrExpression
+| PostIncrDecrExpression
+| MethodInvocation
+| ClassInstanceCreationExpression
+;
+
+ExpressionStatement:
+StatementExpression semi_colon
+;
+
+LabeledStatement:
+Identifier colon Statement
+;
+IfThenStatement:
+IF brac_open Expression brac_close Statement
+;
+
+IfThenElseStatement:
+IF brac_open Expression brac_close StatementNoShortIf ELSE Statement
+;
+
+IfThenElseStatementNoShortIf:
+IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf
+;
+
+StatementNoShortIf:
+StatementWithoutTrailingSubstatement
+| LabeledStatementNoShortIf
+| IfThenElseStatementNoShortIf
+| WhileStatementNoShortIf
+| ForStatementNoShortIf
+;
+
+LabeledStatementNoShortIf:
+Identifier colon StatementNoShortIf
+;
+
+WhileStatementNoShortIf:
+WHILE curly_open Expression curly_close StatementNoShortIf
+;
+
+ForStatement:
+BasicForStatement
+| EnhancedForStatement
+;
+
+ForStatementNoShortIf:
+BasicForStatementNoShortIf
+| EnhancedForStatementNoShortIf
+;
+
+BasicForStatement:
+FOR curly_open semi_colon semi_colon brac_close Statement
+| FOR curly_open ForInit semi_colon semi_colon brac_close Statement
+| FOR curly_open semi_colon Expression semi_colon brac_close Statement
+| FOR curly_open semi_colon semi_colon ForUpdate brac_close Statement
+| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close Statement
+| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close Statement
+| FOR curly_open ForInit semi_colon Expression semi_colon brac_close Statement
+| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close Statement
+;
+
+BasicForStatementNoShortIf:
+FOR curly_open semi_colon semi_colon brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon semi_colon brac_close StatementNoShortIf
+| FOR curly_open semi_colon Expression semi_colon brac_close StatementNoShortIf
+| FOR curly_open semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon Expression semi_colon brac_close StatementNoShortIf
+| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+;
+
+ForInit:
+StatementExpressionList
+| LocalVariableDeclaration
+;
+
+ForUpdate:
+StatementExpressionList
+;
+
+StatementExpressionList:
+StatementExpression
+| StatementExpressionList comma StatementExpression
+;
+
+EnhancedForStatement:
+FOR curly_open LocalVariableDeclaration colon Expression brac_close Statement
+;
+
+EnhancedForStatementNoShortIf:
+FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf
+;
+
+WhileStatement:
+WHILE brac_open Expression brac_close Statement
+;
+
+LocalVariableDeclaration:
+LocalVariableType VariableDeclaratorList
+| VariableModifier LocalVariableType VariableDeclaratorList
+;
+
+ArrayCreationExpression: 
+newclasstype ArrayCreationExpressionAfterType
+| newprimtype ArrayCreationExpressionAfterType
+;
+
+ArrayCreationExpressionAfterType:
+DimExprs
+| DimExprs Dims
+| Dims ArrayInitializer
+;
+
+newprimtype:
+NEW PrimitiveType
+;
+
+newclasstype:
+NEW ClassType
+;
+
+DimExprs:
+DimExpr 
+| DimExprs DimExpr
+;
+
+DimExpr:
+Annotations 
+| Annotations Expression
+;
+
+ArrayInitializer: 
+curly_open VariableInitializerList curly_close
+| curly_open VariableInitializerList comma curly_close
+;
+
+VariableInitializerList:
+VariableInitializer 
+| VariableInitializer VariableInitializerList
+;
 
 %%
 

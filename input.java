@@ -1,3 +1,10 @@
+class Point {}
+class Point extends ColoredPoint {}
+class ImaginaryNumber extends Number implements Arithmetic {}
+public final class ImaginaryNumber extends Number implements Arithmetic {}
+// class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T>> {}
+// class Redundant implements java.lang.Cloneable, Cloneable{}
+
 public class Main {
     int x;  // Create a class attribute
   
@@ -7,6 +14,6 @@ public class Main {
     }
      
     public static void main(String[] args) {
-       Main obj = new Main() ;
+      //  Main obj = new Main() ;
     }
   }
