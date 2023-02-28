@@ -65,6 +65,7 @@ void generatetree(Node* n){
 %type<node> ClassDeclaration ClassBody ClassPermits InterfaceTypeList ClassType ClassBodyDeclaration
 %type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassDecTillExtends ClassDecTillTypeParameters ClassExtends
 %type<node> StaticInitializer InstanceInitializer
+%type<node> ClassMemberDeclaration MethodAndFieldStart FieldDeclaration
 %type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
@@ -72,6 +73,7 @@ void generatetree(Node* n){
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers
 %type<node> ConstructorBody ConstructorBodyEnd ConstructorDeclaration ConstructorDeclarationEnd ConstructorDeclarator ConstructorDeclaratorStart ExplicitConstructorInvocation ConstructorDeclaratorEnd
 %type<node> Throws ExceptionTypeList ExplicitConsInvTillTypeArgs ArgumentList Primary ReceiverParameter FormalParameter FormalParameterList VariableDeclaratorId VariableArityParameter
+%type<node> MethodDeclaration MethodDeclarationEnd MethodDeclarator MethodDeclaratorEnd MethodDeclaratorTillFP MethodDeclaratorTillRP MethodHeader MethodHeaderStart
 
 %type<sym> CommonModifier
 
@@ -131,11 +133,11 @@ ClassBody:
 ;
 
 ClassBodyDeclaration:
-  ClassMemberDeclaration {$$=new Node("ClassBodyDeclaration"); cout<<"classbodydeclaration1\n";}
+  ClassMemberDeclaration {$$=new Node("ClassBodyDeclaration"); $$->add($1); cout<<"classbodydeclaration1\n";}
 | InstanceInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1); cout<<"classbodydeclaration2\n";}
 | StaticInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1);  cout<<"classbodydeclaration3\n";}
 | ConstructorDeclaration {$$=new Node("ClassBodyDeclaration");$$->add($1); cout<<"classbodydeclaration4\n";}
-| ClassBodyDeclaration ClassMemberDeclaration {$$=$1; cout<<"classbodydeclaration5\n";}
+| ClassBodyDeclaration ClassMemberDeclaration {$$=$1; $$->add($2); cout<<"classbodydeclaration5\n";}
 | ClassBodyDeclaration InstanceInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration6\n";}
 | ClassBodyDeclaration StaticInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration7\n";}
 | ClassBodyDeclaration ConstructorDeclaration {$$=$1; $$->add($2); cout<<"classbodydeclaration8\n";}
@@ -255,37 +257,37 @@ LocalClassOrInterfaceDeclaration:
 ; */
 
 ClassMemberDeclaration:
-  FieldDeclaration {cout<<"ClassMemberDeclaration1\n";}
-| MethodDeclaration {cout<<"ClassMemberDeclaration2\n";}
-| ClassDeclaration {cout<<"ClassMemberDeclaration3\n";}
-| semi_colon {cout<<"ClassMemberDeclaration4\n";}
+  FieldDeclaration {$$=$1; cout<<"ClassMemberDeclaration1\n";}
+| MethodDeclaration {$$=$1;  cout<<"ClassMemberDeclaration2\n";}
+| ClassDeclaration {$$=$1;  cout<<"ClassMemberDeclaration3\n";}
+| semi_colon {string t1=$1; $$= new Node(mymap[t1],t1); cout<<"ClassMemberDeclaration4\n";}
 ;
 
 MethodAndFieldStart:
-Modifiers UnannType
-| UnannType
+Modifiers UnannType {$$=new Node(); $$->add($1); $$->add($2);}
+| UnannType {$$=new Node(); $$->add($1);}
 ;
 
 MethodDeclaration:
-  MethodAndFieldStart MethodDeclarator MethodDeclarationEnd
-| Modifiers MethodHeader MethodDeclarationEnd
-| MethodHeader MethodDeclarationEnd
+  MethodAndFieldStart MethodDeclarator MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($3->objects); }
+| Modifiers MethodHeader MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($3->objects); }
+| MethodHeader MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($2->objects); }
 ;
 
 MethodDeclarationEnd:
-  Block {cout<<"MethodDeclaration1\n";}
-| semi_colon {cout<<"MethodDeclaration2\n";}
+  Block {$$=$1; cout<<"MethodDeclaration1\n";}
+| semi_colon {string t1=$1; $$=new Node(mymap[t1],t1); cout<<"MethodDeclaration2\n";}
 ;
 
 
 MethodHeader:
-  TypeParameters MethodHeaderStart {cout<<"MethodHeader1\n";}
-| MethodHeaderStart {cout<<"MethodHeader2\n";}
+  TypeParameters MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1); $$->add($2->objects); cout<<"MethodHeader1\n";}
+| MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1->objects); cout<<"MethodHeader2\n";}
 ;
 
 MethodHeaderStart:
- VOID MethodDeclarator {cout<<"MethodHeader4\n";}
-| VOID MethodDeclarator Throws {cout<<"MethodHeader4\n";}
+ VOID MethodDeclarator {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); cout<<"MethodHeader4\n";}
+| VOID MethodDeclarator Throws {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add($3);  cout<<"MethodHeader4\n";}
 ;
 
 Throws:
@@ -298,22 +300,22 @@ ExceptionTypeList:
 ;
 
 MethodDeclarator:
-  Identifier brac_open MethodDeclaratorTillRP
+  Identifier brac_open MethodDeclaratorTillRP {string t1=$1,t2=$2; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add(new Node(mymap[t2],t2)); $$->add($3->objects);}
 ;
 
 MethodDeclaratorTillRP:
-  UnannType ReceiverParameter MethodDeclaratorTillFP
-| MethodDeclaratorTillFP 
+  UnannType ReceiverParameter MethodDeclaratorTillFP {$$=new Node(); $$->add($1); $$->add($2); $$->add($3->objects);}
+| MethodDeclaratorTillFP {$$=new Node(); $$->add($1->objects);}
 ;
 
 MethodDeclaratorTillFP:
-  FormalParameterList MethodDeclaratorEnd {cout<<"MethodDeclarator2\n";}
-| MethodDeclaratorEnd {cout<<"MethodDeclarator3\n";}
+  FormalParameterList MethodDeclaratorEnd {$$=new Node(); $$->add($1); $$->add($2->objects); cout<<"MethodDeclarator2\n";}
+| MethodDeclaratorEnd {$$=new Node(); $$->add($1->objects); cout<<"MethodDeclarator3\n";}
 ;
 
 MethodDeclaratorEnd:
-  brac_close
-| brac_close Dims
+  brac_close {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1));}
+| brac_close Dims {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
 
 FormalParameterList:
@@ -343,7 +345,7 @@ ReceiverParameter:
 ;
 
 FieldDeclaration:
-  MethodAndFieldStart VariableDeclaratorList semi_colon {cout<<"FieldDeclaration2\n";}
+  MethodAndFieldStart VariableDeclaratorList semi_colon {string t1=$3; $$=new Node("FieldDeclaration"); $$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1)}; $$->add(v); cout<<"FieldDeclaration2\n";}
 ;
 
 
