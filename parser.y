@@ -70,8 +70,8 @@ void generatetree(Node* n){
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType LocalClassOrInterfaceDeclaration
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers
-%type<node> ConstructorBody ConstructorBodyEnd ConstructorDeclaration ConstructorDeclarationEnd ConstructorDeclarator ConstructorDeclaratorStart ExplicitConstructorInvocation
-%type<node> Throws
+%type<node> ConstructorBody ConstructorBodyEnd ConstructorDeclaration ConstructorDeclarationEnd ConstructorDeclarator ConstructorDeclaratorStart ExplicitConstructorInvocation ConstructorDeclaratorEnd
+%type<node> Throws ExceptionTypeList ExplicitConsInvTillTypeArgs ArgumentList Primary ReceiverParameter FormalParameter FormalParameterList VariableDeclaratorId VariableArityParameter
 
 %type<sym> CommonModifier
 
@@ -169,36 +169,37 @@ ConstructorBodyEnd:
 ; */
 
 ExplicitConstructorInvocation:
-  TypeArguments ExplicitConsInvTillTypeArgs {$$= new Node("ExplicitConstructorInvocation");}
-| ExplicitConsInvTillTypeArgs {$$= new Node("ExplicitConstructorInvocation");}
-| TypeName dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation");}
-| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation");}
+  TypeArguments ExplicitConsInvTillTypeArgs {$$= new Node("ExplicitConstructorInvocation"); $$->add($1); $$->add($2);}
+| ExplicitConsInvTillTypeArgs {$$= $1;}
+| TypeName dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation"); string t1=$2,t2=$4,t3=$5,t4=$7,t5=$8; vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),new Node(mymap[t3],t3),$6,new Node(mymap[t4],t4),new Node(mymap[t5],t5)}; $$->add(v);}
+| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation"); string t1=$2,t2=$4,t3=$5,t4=$7,t5=$8; vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),new Node(mymap[t3],t3),$6,new Node(mymap[t4],t4),new Node(mymap[t5],t5)}; $$->add(v);}
 ;
 
 ExplicitConsInvTillTypeArgs:
-  THIS brac_open ArgumentList brac_close semi_colon
-| super brac_open ArgumentList brac_close semi_colon
+  THIS brac_open ArgumentList brac_close semi_colon {$$ = new Node("ExplicitConstructorInvocation"); string t1=$1,t2=$2,t3=$4,t4=$5; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v);}
+| super brac_open ArgumentList brac_close semi_colon {$$ = new Node("ExplicitConstructorInvocation"); string t1=$1,t2=$2,t3=$4,t4=$5; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v);}
 ;
 
+/* fixme */
 ArgumentList:
-  Expression
-| ArgumentList comma Expression
+  Expression {$$=new Node();}
+| ArgumentList comma Expression {$$=new Node();}
 ;
 
 ConstructorDeclarator:
-  ConstructorDeclaratorStart ConstructorDeclaratorEnd {$$ = new Node("ConstructorDeclarator");}
+  ConstructorDeclaratorStart ConstructorDeclaratorEnd {$$ = new Node("ConstructorDeclarator"); $$->add($1->objects); $$->add($2->objects); }
 ;
 
 ConstructorDeclaratorStart:
-  TypeParameters Identifier brac_open 
-| Identifier brac_open {cout<<"ConstructorDeclaratorStart\n";}
+  TypeParameters Identifier brac_open {$$ = new Node(); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
+| Identifier brac_open {$$ = new Node(); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); cout<<"ConstructorDeclaratorStart\n";}
 ;
 
 ConstructorDeclaratorEnd:
-  ReceiverParameter FormalParameterList brac_close {cout<<"ConstructorDeclarator1\n";}
-| FormalParameterList brac_close {cout<<"ConstructorDeclarator2\n";}
-| ReceiverParameter brac_close {cout<<"ConstructorDeclarator1\n";}
-| brac_close {cout<<"ConstructorDeclarator2\n";}
+  ReceiverParameter FormalParameterList brac_close {$$ = new Node(); string t1=$3; vector<Node*>v{$1,$2,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator1\n";}
+| FormalParameterList brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator2\n";}
+| ReceiverParameter brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator1\n";}
+| brac_close {$$ = new Node(); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator2\n";}
 ;
 
 StaticInitializer:
@@ -288,12 +289,12 @@ MethodHeaderStart:
 ;
 
 Throws:
-  throws ExceptionTypeList semi_colon {$$=new Node("Throws");}
+  throws ExceptionTypeList semi_colon {$$=new Node("Throws"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),}; $$->add(v); }
 ;
 
 ExceptionTypeList:
-  ClassType
-| ClassType comma ExceptionTypeList
+  ClassType {$$= new Node("ExceptionTypeList"); $$->add($1);}
+| ExceptionTypeList comma ClassType {$$=$1; string t1=$2; $$->add(new Node(mymap[t1],t1)); $$->add($3);}
 ;
 
 MethodDeclarator:
@@ -316,29 +317,29 @@ MethodDeclaratorEnd:
 ;
 
 FormalParameterList:
-  FormalParameter
-| FormalParameter comma FormalParameterList 
+  FormalParameter {$$= new Node("FormalParameterList"); $$->add($1);}
+| FormalParameterList comma FormalParameter {$$=$1; string t1=$2; $$->add(new Node(mymap[t1],t1)); $$->add($3);}
 ;
 
 FormalParameter:
-  FINAL UnannType VariableDeclaratorId
-| UnannType VariableDeclaratorId
-| VariableArityParameter
+  FINAL UnannType VariableDeclaratorId {$$= new Node("FormalParameter"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2,$3}; $$->add(v);}
+| UnannType VariableDeclaratorId {$$= new Node("FormalParameter"); vector<Node*>v{$1,$2}; $$->add(v);}
+| VariableArityParameter {$$= $1;}
 ;
 
 
 VariableDeclaratorId:
-  Identifier Dims
-| Identifier {cout<<"VariableDeclaratorId2\n";}
+  Identifier Dims {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2}; $$->add(v);}
+| Identifier {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1))}; $$->add(v); cout<<"VariableDeclaratorId2\n";}
 ;
 
 VariableArityParameter:
- dots Identifier
+ dots Identifier {$$= new Node("VariableArityParameter"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v);}
 ;
 
 ReceiverParameter:
-  THIS comma {cout<<"ReceiverParameter1\n";}
-| Identifier dot THIS comma  {cout<<"ReceiverParameter2\n";}
+  THIS comma {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); cout<<"ReceiverParameter1\n";}
+| Identifier dot THIS comma  {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2,t3=$3,t4=$4; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v); cout<<"ReceiverParameter2\n";}
 ;
 
 FieldDeclaration:
@@ -515,9 +516,10 @@ Primary dot Identifier {cout<<"PrimdotId\n";}
 | TypeName dot super dot Identifier
 ;
 
+/* fixmme */
 Primary:
-PrimaryNoNewArray
-| ArrayCreationExpression
+PrimaryNoNewArray {$$=new Node();}
+| ArrayCreationExpression {$$=new Node();}
 ;
 
 PrimaryNoNewArray:
