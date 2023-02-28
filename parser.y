@@ -70,7 +70,9 @@ void generatetree(Node* n){
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType LocalClassOrInterfaceDeclaration
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers
- 
+%type<node> ConstructorBody ConstructorBodyEnd ConstructorDeclaration ConstructorDeclarationEnd ConstructorDeclarator ConstructorDeclaratorStart ExplicitConstructorInvocation
+%type<node> Throws
+
 %type<sym> CommonModifier
 
 %left OR
@@ -132,31 +134,31 @@ ClassBodyDeclaration:
   ClassMemberDeclaration {$$=new Node("ClassBodyDeclaration"); cout<<"classbodydeclaration1\n";}
 | InstanceInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1); cout<<"classbodydeclaration2\n";}
 | StaticInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1);  cout<<"classbodydeclaration3\n";}
-| ConstructorDeclaration {cout<<"classbodydeclaration4\n";}
-| ClassBodyDeclaration ClassMemberDeclaration {cout<<"classbodydeclaration5\n";}
-| ClassBodyDeclaration InstanceInitializer {cout<<"classbodydeclaration6\n";}
-| ClassBodyDeclaration StaticInitializer {cout<<"classbodydeclaration7\n";}
-| ClassBodyDeclaration ConstructorDeclaration {cout<<"classbodydeclaration8\n";}
+| ConstructorDeclaration {$$=new Node("ClassBodyDeclaration");$$->add($1); cout<<"classbodydeclaration4\n";}
+| ClassBodyDeclaration ClassMemberDeclaration {$$=$1; cout<<"classbodydeclaration5\n";}
+| ClassBodyDeclaration InstanceInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration6\n";}
+| ClassBodyDeclaration StaticInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration7\n";}
+| ClassBodyDeclaration ConstructorDeclaration {$$=$1; $$->add($2); cout<<"classbodydeclaration8\n";}
 ;
 
 ConstructorDeclaration:
-  class_access ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
-| ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared2\n";}
+  class_access ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); string t=$1; vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); $$->add($3->objects);  cout<<"constructordeclared1\n";}
+| ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); vector<Node*>v{$1}; $$->add(v); $$->add($2->objects); cout<<"constructordeclared2\n";}
 ;
 
 ConstructorDeclarationEnd:
-  Throws curly_open ConstructorBody {cout<<"constructordeclaration1\n";}
-| curly_open ConstructorBody {cout<<"constructordeclaration2\n";}
+  Throws ConstructorBody {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v); cout<<"constructordeclaration1\n";}
+| ConstructorBody {$$=new Node(); $$->add($1); cout<<"constructordeclaration2\n";}
 ;
 
 ConstructorBody:
-  ExplicitConstructorInvocation ConstructorBodyEnd {cout<<"ConstructorBody1\n";}
-| ConstructorBodyEnd {cout<<"ConstructorBody2\n";}
+  curly_open ExplicitConstructorInvocation ConstructorBodyEnd {$$=new Node("ConstructorBody"); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects); cout<<"ConstructorBody1\n";}
+| curly_open ConstructorBodyEnd {$$=new Node("ConstructorBody");string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); cout<<"ConstructorBody2\n";}
 ;
 
 ConstructorBodyEnd:
-  BlockStatements curly_close
-| curly_close
+  BlockStatements curly_close {$$= new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); }
+| curly_close {$$= new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1));}
 ;
 
 /* ExplicitConstructorInvocation:
@@ -166,11 +168,11 @@ ConstructorBodyEnd:
 | Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon
 ; */
 
- ExplicitConstructorInvocation:
-  TypeArguments ExplicitConsInvTillTypeArgs
-| ExplicitConsInvTillTypeArgs
-| TypeName dot TypeArguments super brac_open ArgumentList brac_close semi_colon
-| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon
+ExplicitConstructorInvocation:
+  TypeArguments ExplicitConsInvTillTypeArgs {$$= new Node("ExplicitConstructorInvocation");}
+| ExplicitConsInvTillTypeArgs {$$= new Node("ExplicitConstructorInvocation");}
+| TypeName dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation");}
+| Primary dot TypeArguments super brac_open ArgumentList brac_close semi_colon {$$= new Node("ExplicitConstructorInvocation");}
 ;
 
 ExplicitConsInvTillTypeArgs:
@@ -184,7 +186,7 @@ ArgumentList:
 ;
 
 ConstructorDeclarator:
-  ConstructorDeclaratorStart ConstructorDeclaratorEnd
+  ConstructorDeclaratorStart ConstructorDeclaratorEnd {$$ = new Node("ConstructorDeclarator");}
 ;
 
 ConstructorDeclaratorStart:
@@ -286,7 +288,7 @@ MethodHeaderStart:
 ;
 
 Throws:
-  throws ExceptionTypeList semi_colon
+  throws ExceptionTypeList semi_colon {$$=new Node("Throws");}
 ;
 
 ExceptionTypeList:
