@@ -18,6 +18,7 @@ public class Main {
     Main myObj2 = new Main();  // Object 2
     System.out.println(myObj1.x);
     System.out.println(myObj2.x);
+
   }
 }
 
@@ -26,6 +27,7 @@ public class IfExample {
       //defining an 'age' variable  
       int age=20;  
       //checking the age  
+      Vector<string> str = new ArrayList<>();
       if(age>18){  
           System.out.println("Age is greater than 18");  
       }  
@@ -77,10 +79,42 @@ public class IfExample {
             for(int i:arr)  
             System.out.println(i);  
             }}
-//   public static void main(String[] args) {
-//     Main myObj1 = new Main();  // Object 1
-//     Main myObj2 = new Main();  // Object 2
-//     System.out.println(myObj1.x);
-//     System.out.println(myObj2.x);
-//   }
-// }
+            public class TypeCheck1 {
+                public int a;
+                float b;
+            
+                public TypeCheck1(int a1, int b1) {
+                    this.a = a1;
+                    this.b = b1;
+                }
+            
+                public int getA() {
+                    return this.a;
+                }
+            
+                public float getB() {
+                    return this.b;
+                }
+            
+                public void setA(int a1) {
+                    this.a = a1;
+                }
+            
+                public void setB(float b1) {
+                    this.b = b1;
+                }
+            
+                public static void main(String[] args) {
+                    TypeCheck1 obj = new TypeCheck1(1, 2);
+            
+                    // Same names
+                    int a = obj.a;
+                    float b = obj.b;
+                    
+                    // Different names
+                    int c = obj.a;
+                    float d = obj.b;
+            
+                    System.out.println("a: " );
+                }
+            }
