@@ -68,7 +68,7 @@ void generatetree(Node* n){
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType VariableModifier LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer
  
-%type<sym> class_modifiers
+%type<sym> class_modifiers CommonModifiers
 
 %left OR
 %left AND
@@ -134,18 +134,13 @@ ClassBodyDeclaration:
 ;
 
 ConstructorDeclaration:
-  ConstructorModifier ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
+  class_access ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared1\n";}
 | ConstructorDeclarator ConstructorDeclarationEnd {cout<<"constructordeclared2\n";}
 ;
 
 ConstructorDeclarationEnd:
   Throws curly_open ConstructorBody {cout<<"constructordeclaration1\n";}
 | curly_open ConstructorBody {cout<<"constructordeclaration2\n";}
-;
-
-ConstructorModifier:
-  class_access {cout<<"constructormodifier2\n";}
-| class_access ConstructorModifier {cout<<"constructormodifier4\n";}
 ;
 
 ConstructorBody:
@@ -274,13 +269,12 @@ MethodDeclarationEnd:
 MethodModifier:
   method_modifiers
 | MethodModifier method_modifiers
+| CommonModifiers
+| MethodModifier CommonModifiers
 ;
 
 method_modifiers:
-  class_access
-| key_abstract
-| STATIC
-| FINAL
+ key_abstract
 | key_STRICTFP
 | method_modifier
 ;
@@ -370,16 +364,16 @@ FieldDeclaration:
 ;
 
 FieldModifier:
- field_modifiers {cout<<"fieldModifier \n";}
-|  FieldModifier field_modifiers {cout<<"fieldModifier \n";}
+ field_modifier {cout<<"fieldModifier \n";}
+|  FieldModifier field_modifier {cout<<"fieldModifier \n";}
+| CommonModifiers
+| FieldModifier CommonModifiers
 ;
 
-field_modifiers:
+CommonModifiers:
   class_access
 | STATIC
 | FINAL
-| field_modifier
-;
 
 VariableDeclaratorList:
   VariableDeclarator {$$= new Node("VariableDeclaratorList"); $$->add($1); cout<<"VariableDeclaratorList1\n";}
@@ -397,6 +391,15 @@ UnannPrimitiveType:
 ;
 
 UnannReferenceType:
+//   ClassType
+// | UnannArrayType
+// ;
+
+// UnannArrayType:
+//   UnannPrimitiveType Dims
+// | ClassType Dims
+// ;
+
   ClassType {$$=$1;}
 | Identifier {string t1= $1; $$=new Node(mymap[t1],t1);}
 | UnannArrayType {$$=$1;}
@@ -417,7 +420,7 @@ VariableDeclarator:
 
 VariableInitializer:
   Expression {$$ = new Node(); cout<<"Varinit\n";}
-// | ArrayInitializer
+| ArrayInitializer
 ; 
 
 TypeParameters:
@@ -442,12 +445,6 @@ TypeParameterList:
 | TypeParameter {$$= new Node("TypeParameterList"); $$->add($1);}
 ;
 
-/*
-InterfaceTypeList:
- InterfaceType {cout<<"interfacetypelist1\n";}
-| InterfaceTypeList comma InterfaceType {cout<<"interfacetypelist2\n";}
-;
-*/
 
 InterfaceTypeList:
  ClassType {$$=new Node("InterfaceTypeList"); $$->add($1->objects); cout<<"interfacetypelist1\n";}
@@ -468,15 +465,6 @@ AdditionalBound:
   AdditionalBound bitwise_and ClassType {string t1=$2; $$=$1; $$->add(new Node(mymap[t1],t1)); $$->add($3);}
 | bitwise_and ClassType {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
-
-
-/*
-ClassType:
-  Annotation Identifier TypeArguments {cout<<"classtype1\n";}
-| PackageName dot Annotation Identifier TypeArguments {cout<<"classtype2\n";}
-| ClassOrInterfaceType dot Annotation Annotation Identifier TypeArguments {cout<<"classtype3\n";}
-;
-*/
 
 ClassType:
 TypeName {$$=$1;}
@@ -527,17 +515,16 @@ PrimitiveType:
 ;
 
 ClassModifier:
- class_modifiers {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
+  CommonModifiers {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
+| ClassModifier CommonModifiers {$$=new Node("ClassModifier"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
+| class_modifiers {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
 |  ClassModifier class_modifiers {$$=new Node("ClassModifier"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
 ;
 
 class_modifiers:
   key_abstract
 | key_STRICTFP
-| class_access
 | key_SEAL
-| STATIC
-| FINAL 
 ;
 
 Expression : 
@@ -551,7 +538,7 @@ Assignment             {cout<<"Assignment\n";}
 ;
 
 Assignment:
-  LeftHandSide {cout<<"LEFTHAND-------------------------------------------\n";} AssignmentOperator Expression 
+  LeftHandSide AssignmentOperator Expression 
 ;
 
 LeftHandSide:
@@ -745,6 +732,7 @@ StatementWithoutTrailingSubstatement
 | WhileStatement
 | ForStatement
 | PRINTLN brac_open TypeName brac_close
+| PRINTLN brac_open literal brac_close
 ;
 
 StatementWithoutTrailingSubstatement:
@@ -830,26 +818,23 @@ BasicForStatementNoShortIf
 ;
 
 BasicForStatement:
-FOR curly_open semi_colon semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close Statement
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close Statement
+BasicForStatementStart Statement
 ;
 
 BasicForStatementNoShortIf:
-FOR curly_open semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon semi_colon ForUpdate brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon brac_close StatementNoShortIf
-| FOR curly_open ForInit semi_colon Expression semi_colon ForUpdate brac_close StatementNoShortIf
+BasicForStatementStart StatementNoShortIf
+
+BasicForStatementStart:
+FOR brac_open semi_colon semi_colon brac_close 
+| FOR brac_open ForInit semi_colon semi_colon brac_close 
+| FOR brac_open semi_colon Expression semi_colon brac_close 
+| FOR brac_open semi_colon semi_colon ForUpdate brac_close
+| FOR brac_open semi_colon Expression semi_colon ForUpdate brac_close
+| FOR brac_open ForInit semi_colon semi_colon ForUpdate brac_close
+| FOR brac_open ForInit semi_colon Expression semi_colon brac_close
+| FOR brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close
 ;
+
 
 ForInit:
 StatementExpressionList
@@ -866,7 +851,7 @@ StatementExpression
 ;
 
 EnhancedForStatement:
-FOR curly_open LocalVariableDeclaration colon Expression brac_close Statement
+FOR brac_open LocalVariableDeclaration colon Expression brac_close Statement
 ;
 
 EnhancedForStatementNoShortIf:
@@ -883,7 +868,7 @@ LocalVariableType VariableDeclaratorList
 ;
 
 ArrayCreationExpression: 
-newclasstype {cout<<"Arraycreation\n";} ArrayCreationExpressionAfterType
+newclasstype ArrayCreationExpressionAfterType
 | newprimtype ArrayCreationExpressionAfterType
 ;
 
@@ -916,12 +901,10 @@ curly_open VariableInitializerList curly_close
 
 VariableInitializerList:
 VariableInitializer 
-| VariableInitializer VariableInitializerList
+| VariableInitializerList comma VariableInitializer
 ;
 
 %%
-
-
 
 int yyerror(string s)
 {

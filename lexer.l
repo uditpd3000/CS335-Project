@@ -58,7 +58,7 @@ StringLiteral \"[^\n"]+\"
 
 "/*"([^*]|\*+[^*/])*\*+"/" /* multiline comments */
 
-"::" {insertMap(strdup(yytext),"Seperator");} /* seperators */
+"::" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext);} 
 "(" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return brac_open;}
 ")" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return brac_close;}
 "{" {insertMap(strdup(yytext),"Seperator");yylval.sym = strdup(yytext); return curly_open;}
