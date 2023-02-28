@@ -1,9 +1,26 @@
-class ReprChange<T extends ConvertibleTo<S>,S extends ConvertibleTo<T> > {
-    {
-        int a,b,c[][];
-        public class ok{}
-    }
-}
+// class ReprChange{
+    // {
+    //     int a,b,c[][];
+    //     public class ok{}
+    // }
+    // public ReprChange(idk.this,final int a,...dog){
+    //     this(a,b);
+    //     int a,b,c[][];
+    //     public class ok{}
+    // }
+    // public class EvenOdd   
+    // public static void main (String args[])  
+    // {  
+    //creating Scanner class object     
+    // Scanner scan=new Scanner(System.in);  
+    // System.out.print("Enter the number: ");  
+    // //reading value from the user  
+    // int num=scan.nextInt();  
+    // //method calling  
+    // findEvenOdd(num);  
+    // }
+//     }
+// }
 // class Point extends ColoredPoint {}
 // class ImaginaryNumber extends Number implements Arithmetic {}
 // public final class ImaginaryNumber extends Number implements Arithmetic {}
@@ -75,18 +92,18 @@ public class IfExample {
         public static void main(String args[]){  
         int a[]=new int[5];//declaration and instantiation  
         a[0]=10;//initialization  
-        a[1]=20;  
-        a[2]=70;  
-        a[3]=40;  
-        a[4]=50;  
-        int intArray[] = new int[]{ 1,2,3,4,5,6,7,8,9,10 }; 
-        //traversing array  
-        while(i<=10){  
-            System.out.println(i);  
-            i++;  
-        }  
-        for(int i=0;i<a.length;i++)//length is the property of array  
-        System.out.println(a);  
+        // a[1]=20;  
+        // a[2]=70;  
+        // a[3]=40;  
+        // a[4]=50;  
+        // int intArray[] = new int[]{ 1,2,3,4,5,6,7,8,9,10 }; 
+        // //traversing array  
+        // while(i<=10){  
+        //     System.out.println(i);  
+        //     i++;  
+        // }  
+        // for(int i=0;i<a.length;i++)//length is the property of array  
+        // System.out.println(a);  
         }
     }
 

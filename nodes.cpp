@@ -14,7 +14,6 @@ class Node {
     vector<Node*> objects;
 
     Node(){
-        cout<<"here";
         label="";
         lexeme="";
     }
