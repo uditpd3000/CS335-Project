@@ -89,7 +89,7 @@ StringLiteral \"[^\n"]+\"
 "<<"|">>"|">>>" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return SHIFT_OP;}
 "~"|"!" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return LOGICAL_OP;}
 
-switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
+enum|record|switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
 
 class {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_just_class;}
 public|private|protected {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_access;}
@@ -102,9 +102,7 @@ transient|volatile {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yyte
 native|synchronized {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return method_modifier;}
 extends {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return extends;}
 super {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return super;}
-enum {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return enum_just_enum;}
 this {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return THIS;}
-record {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return record_just_record;}
 implements {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return implements;}
 permits {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext);return permits;}
 var {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return var;}

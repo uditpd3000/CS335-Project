@@ -57,13 +57,15 @@ void generatetree(Node* n){
  
 %token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
-%token<sym> class_just_class class_modifier literal_type AssignmentOperator1 boolean literal keyword throws var
-%token<sym> Identifier extends super implements permits enum_just_enum record_just_record 
+%token<sym> class_just_class literal_type AssignmentOperator1 boolean literal keyword throws var
+%token<sym> Identifier extends super implements permits
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
-%type<node> input ClassDeclaration ClassModifier ClassBody ClassPermits TypeName InterfaceTypeList ClassType TypeArguments TypeArgumentList TypeArgument TypeParameters TypeParameterList
+%type<node> input
+%type<node> ClassDeclaration ClassModifier ClassBody ClassPermits InterfaceTypeList ClassType
 %type<node> ClassDecTillPermits ClassDecTillImplements ClassImplements ClassDecTillExtends ClassDecTillTypeParameters ClassExtends
-%type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType TypeParameter TypeBound AdditionalBound
+%type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
+%type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType VariableModifier LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer
@@ -391,15 +393,6 @@ UnannPrimitiveType:
 ;
 
 UnannReferenceType:
-//   ClassType
-// | UnannArrayType
-// ;
-
-// UnannArrayType:
-//   UnannPrimitiveType Dims
-// | ClassType Dims
-// ;
-
   ClassType {$$=$1;}
 | Identifier {string t1= $1; $$=new Node(mymap[t1],t1);}
 | UnannArrayType {$$=$1;}
@@ -419,8 +412,8 @@ VariableDeclarator:
 ;
 
 VariableInitializer:
-  Expression {$$ = new Node(); cout<<"Varinit\n";}
-| ArrayInitializer
+  Expression {$$ = new Node("VariableInitializer"); cout<<"Varinit\n";} // $$->add($1);
+| ArrayInitializer {$$ = new Node();} // $$ = $1;
 ; 
 
 TypeParameters:
@@ -604,7 +597,7 @@ ClassLiteral :
 | VOID dot class_just_class
 ;
 
-ConditionalExpression : 
+ConditionalExpression: 
   ConditionalOrExpression
 | ConditionalOrExpression ques_mark Expression colon ConditionalExpression
 ;
