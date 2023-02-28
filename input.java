@@ -30,7 +30,8 @@ public class IfExample {
       Vector<string> str = new ArrayList<>();
       if(age>18){  
           System.out.println("Age is greater than 18");  
-      }  
+      } 
+
   }  
   } 
 
@@ -43,7 +44,18 @@ public class IfExample {
             System.out.println("even number");  
         }else{  
             System.out.println("odd number");  
-        }  
+        }
+
+        while(i>0){
+            i++;
+            System.out.println(xx);
+        }
+        for(int tui=0;tui<10;i++){
+            tui--;
+            tui= one + two;
+        }
+
+       
     }  
     } 
 
@@ -67,10 +79,16 @@ public class IfExample {
         a[2]=70;  
         a[3]=40;  
         a[4]=50;  
+        int intArray[] = new int[]{ 1,2,3,4,5,6,7,8,9,10 }; 
         //traversing array  
+        while(i<=10){  
+            System.out.println(i);  
+            i++;  
+        }  
         for(int i=0;i<a.length;i++)//length is the property of array  
         System.out.println(a);  
-        }}
+        }
+    }
 
         class Testarray1{  
             public static void main(String args[]){  

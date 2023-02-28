@@ -45,6 +45,13 @@ void generatetree(Node* n){
     }
 }
 
+void generate_graph(Node *n){
+  cout<<"\n\n\ndigraph G {\n";
+  generatetree(n);
+  cout <<"\n}\n\n\n";
+
+}
+
 /* {} 0 or more
 [] 0 or 1*/
 
@@ -66,8 +73,10 @@ void generatetree(Node* n){
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType TypeParameter TypeBound AdditionalBound
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
-%type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers
- 
+%type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers CompilationUnit VariableInitializerList ArrayInitializer DimExpr DimExprs ArrayCreationExpression ArrayCreationExpressionAfterType newclasstype newprimtype WhileStatement EnhancedForStatementNoShortIf Expression
+%type<node> StatementExpressionList ForInit ForUpdate BasicForStatement BasicForStatementNoShortIf BasicForStatementStart StatementExpression EnhancedForStatement ForStatement ForStatementNoShortIf WhileStatementNoShortIf LabeledStatementNoShortIf StatementNoShortIf IfThenElseStatement IfThenElseStatementNoShortIf IfThenStatement ExpressionStatement LabeledStatement
+%type<node> StatementWithoutTrailingSubstatement ThrowStatement ReturnStatement ContinueStatement BreakStatement Statement
+
 %type<sym> CommonModifier 
 
 %left OR
@@ -91,8 +100,13 @@ void generatetree(Node* n){
 %error-verbose
 
 %%
-input:
-| ClassDeclaration input {cout<<"\n\n"; generatetree($$);}
+
+input: 
+CompilationUnit {generate_graph($$);}
+;
+
+CompilationUnit: {$$= new Node("CompilationUnit"); $$->add(new Node());}
+| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);}
 ;
 
 ClassDeclaration:
@@ -485,7 +499,7 @@ PrimitiveType:
 ;
 
 Expression : 
-  AssignmentExpression {cout<<num++<<" Khatam----------------------------------------\n";}
+  AssignmentExpression {$$= new Node();  cout<<num++<<" Khatam----------------------------------------\n";}
 
 ;
 
@@ -682,183 +696,183 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement
-| LabeledStatement
-| IfThenStatement 
-| IfThenElseStatement
-| WhileStatement
-| ForStatement
-| PRINTLN brac_open TypeName brac_close
-| PRINTLN brac_open literal brac_close
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| LabeledStatement                       {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| IfThenStatement                        {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| IfThenElseStatement                    {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| WhileStatement                         {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| ForStatement                           {$$= new Node("Statement");$$->add($1);generate_graph($$);}
+| PRINTLN brac_open TypeName brac_close  {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(), new Node(mymap[t4],$4)}; $$->add(v);}
+| PRINTLN brac_open literal brac_close   {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4)}; $$->add(v);}
 ;
 
 StatementWithoutTrailingSubstatement:
-Block
-| semi_colon
-| ExpressionStatement
-| BreakStatement
-| ContinueStatement
-| ReturnStatement
-| ThrowStatement
+Block                           {$$=new Node();}
+| semi_colon                    {$$=new Node(); string t1 = $1; $$-> add(new Node(mymap[t1],$1));}
+| ExpressionStatement           {$$=$1;}
+| BreakStatement                {$$=$1;}
+| ContinueStatement             {$$=$1;}
+| ReturnStatement               {$$=$1;}
+| ThrowStatement                {$$=$1;}
 ;
 
 BreakStatement:
-BREAK
-| BREAK Identifier
+BREAK                            {$$= new Node("ReturnStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
+| BREAK Identifier               {$$= new Node("ReturnStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
 ;
 
 ContinueStatement:
-CONTINUE
-| CONTINUE Identifier
+CONTINUE                         {$$= new Node("ContinueStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
+| CONTINUE Identifier            {$$= new Node("ContinueStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
 ;
 
 ReturnStatement:
-RETURN
-| RETURN Expression
+RETURN                           {$$= new Node("ReturnStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
+| RETURN Expression              {$$= new Node("ReturnStatement"); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
 ;
 
 ThrowStatement:
-THROW Expression 
+THROW Expression                 {$$= new Node("ThrowStatement"); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
 ;
 
 StatementExpression:
-Assignment
-| PreIncrDecrExpression
-| PostIncrDecrExpression
-| MethodInvocation
-| ClassInstanceCreationExpression
+Assignment                       {$$=new Node();}
+| PreIncrDecrExpression          {$$=new Node();}
+| PostIncrDecrExpression         {$$=new Node();}
+| MethodInvocation               {$$=new Node();}
+| ClassInstanceCreationExpression{$$=new Node();}
 ;
 
 ExpressionStatement:
-StatementExpression semi_colon
+StatementExpression semi_colon                                                {$$ = new Node("ExpressionStatement"); string t2= $2; $$->add($1);$$->add(new Node(mymap[t2],$2));}
 ;
 
 LabeledStatement:
-Identifier colon Statement
+Identifier colon Statement                                                    {$$= new Node("LabeledStatement"); string t1=$1, t2=$2; vector<Node*> v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3};$$->add(v);}
 ;
 IfThenStatement:
-IF brac_open Expression brac_close Statement
+IF brac_open Expression brac_close Statement                                  {$$ = new Node("IfThenStatement"); string t1 = $1,t2= $2,t4=$4; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5 }; $$->add(v); }   
 ;
 
 IfThenElseStatement:
-IF brac_open Expression brac_close StatementNoShortIf ELSE Statement
+IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {$$ = new Node("IfThenElseStatement"); string t1 = $1,t2= $2,t4=$4,t6=$6; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6),$7 }; $$->add(v); }
 ;
 
 IfThenElseStatementNoShortIf:
-IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf
+IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {$$ = new Node(); string t1 = $1,t2= $2,t4=$4,t6=$6; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6) } ;$$->add(v); }
 ;
 
 StatementNoShortIf:
-StatementWithoutTrailingSubstatement
-| LabeledStatementNoShortIf
-| IfThenElseStatementNoShortIf
-| WhileStatementNoShortIf
-| ForStatementNoShortIf
+StatementWithoutTrailingSubstatement {$$=$1;}
+| LabeledStatementNoShortIf         {$$=$1;}
+| IfThenElseStatementNoShortIf      {$$=$1;}
+| WhileStatementNoShortIf           {$$=$1;}
+| ForStatementNoShortIf             {$$=$1;}
 ;
 
 LabeledStatementNoShortIf:
-Identifier colon StatementNoShortIf
+Identifier colon StatementNoShortIf                                    {$$= new Node(); string t1 = $1;string t2= $2; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3 }; $$->add(v); }                      
 ;
 
 WhileStatementNoShortIf:
-WHILE curly_open Expression curly_close StatementNoShortIf
+WHILE curly_open Expression curly_close StatementNoShortIf             {$$ = new Node(); string t1= $1,t2=$2, t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };  $$->add(v);}
 ;
 
 ForStatement:
-BasicForStatement
-| EnhancedForStatement
+BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1); generate_graph($$);}
+| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);}
 ;
 
 ForStatementNoShortIf:
-BasicForStatementNoShortIf
-| EnhancedForStatementNoShortIf
+BasicForStatementNoShortIf {$$=$1;}
+| EnhancedForStatementNoShortIf {$$=$1;}
 ;
 
 BasicForStatement:
-BasicForStatementStart Statement
+BasicForStatementStart Statement                                       {$$=new Node("BasicForStatement"); $$->add($1->objects); $$->add($2);}
 ;
 
 BasicForStatementNoShortIf:
-BasicForStatementStart StatementNoShortIf
+BasicForStatementStart StatementNoShortIf                              {$$=new Node("BasicForStatementNoShortIf"); $$->add($1->objects); $$->add($2);}
 
 BasicForStatementStart:
-FOR brac_open semi_colon semi_colon brac_close 
-| FOR brac_open ForInit semi_colon semi_colon brac_close 
-| FOR brac_open semi_colon Expression semi_colon brac_close 
-| FOR brac_open semi_colon semi_colon ForUpdate brac_close
-| FOR brac_open semi_colon Expression semi_colon ForUpdate brac_close
-| FOR brac_open ForInit semi_colon semi_colon ForUpdate brac_close
-| FOR brac_open ForInit semi_colon Expression semi_colon brac_close
-| FOR brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close
+FOR brac_open semi_colon semi_colon brac_close                         {$$ = new Node(); string t1= $1,t2=$2,t3=$3, t4=$4, t5=$5; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), new Node(mymap[t5], $5) };  $$->add(v);}
+| FOR brac_open ForInit semi_colon semi_colon brac_close               {$$ = new Node(); string t1= $1,t2=$2,t4=$4, t5=$5, t6=$6; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), new Node(mymap[t6], $6) };  $$->add(v); } 
+| FOR brac_open semi_colon Expression semi_colon brac_close            {$$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t6=$6; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), new Node(mymap[t6], $6) };  $$->add(v); }
+| FOR brac_open semi_colon semi_colon ForUpdate brac_close             {$$ = new Node(); string t1= $1,t2=$2,t3=$3, t4=$4, t6=$6; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6) };  $$->add(v); }
+| FOR brac_open semi_colon Expression semi_colon ForUpdate brac_close  {$$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t7=$7; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) };  $$->add(v);}
+| FOR brac_open ForInit semi_colon semi_colon ForUpdate brac_close     {$$ = new Node(); string t1= $1,t2=$2,t4=$4, t5=$5, t7=$7; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) };  $$->add(v);}
+| FOR brac_open ForInit semi_colon Expression semi_colon brac_close    {$$ = new Node(); string t1= $1,t2=$2,t4=$4, t6=$6, t7=$7; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6),new Node(mymap[t7], $7) };  $$->add(v); }
+| FOR brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close {$$ = new Node(); string t1= $1,t2=$2,t4=$4, t6=$6, t8=$8; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), $7, new Node(mymap[t8], $8) };  $$->add(v); }
 ;
 
 
-ForInit:
-StatementExpressionList
-| LocalVariableDeclaration
+ForInit: 
+StatementExpressionList {$$=$1;}
+| LocalVariableDeclaration {$$=$1;}
 ;
 
 ForUpdate:
-StatementExpressionList
+StatementExpressionList {$$=$1;}
 ;
 
 StatementExpressionList:
-StatementExpression
-| StatementExpressionList comma StatementExpression
+StatementExpression {$$= new Node("StatementExpressionList"); $$->add($1);}
+| StatementExpressionList comma StatementExpression  {$$ = $1; string t1 = $2; $$->add(new Node(mymap[t1],$2));$$->add($3);}
 ;
 
 EnhancedForStatement:
-FOR brac_open LocalVariableDeclaration colon Expression brac_close Statement
+FOR brac_open LocalVariableDeclaration colon Expression brac_close Statement {$$ = new Node("EnhancedForStatement"); string t1= $1,t2=$2,t4=$4, t6=$6; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), new Node() };  $$->add(v); }
 ;
 
 EnhancedForStatementNoShortIf:
-FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf
+FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf {$$ = new Node("EnhancedForStatementNoShortIf"); string t1= $1,t2=$2,t4=$4, t6=$6; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), new Node() };  $$->add(v);}
 ;
 
 WhileStatement:
-WHILE brac_open Expression brac_close Statement
+WHILE brac_open Expression brac_close Statement {$$ = new Node("WhileStatement"); string t1= $1,t2=$2,t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node() };  $$->add(v); }
 ;
 
 LocalVariableDeclaration:
-LocalVariableType VariableDeclaratorList
-| Modifiers LocalVariableType VariableDeclaratorList
+LocalVariableType VariableDeclaratorList {$$= new Node ("LocalVariableDeclaration"); $$->add($1->objects); $$->add($2);}
+| Modifiers LocalVariableType VariableDeclaratorList {$$= new Node ("LocalVariableDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($3);}
 ;
 
 ArrayCreationExpression: 
-newclasstype ArrayCreationExpressionAfterType
-| newprimtype ArrayCreationExpressionAfterType
+newclasstype ArrayCreationExpressionAfterType  {$$= new Node("ArrayCreationExpression"); $$->add($1->objects); $$->add($2->objects); }
+| newprimtype ArrayCreationExpressionAfterType {$$= new Node("ArrayCreationExpression"); $$->add($1->objects); $$->add($2->objects); }
 ;
 
 ArrayCreationExpressionAfterType:
-DimExprs
-| DimExprs Dims
-| Dims ArrayInitializer
+DimExprs { $$=$1; }
+| DimExprs Dims {$$= new Node(); $$->add($1);$$->add($2);}
+| Dims ArrayInitializer {$$=new Node(); $$->add($1);$$->add($2);}
 ;
 
 newprimtype:
-NEW PrimitiveType
+NEW PrimitiveType {$$=new Node(); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
 ;
 
 newclasstype:
-NEW ClassType
+NEW ClassType {$$=new Node(); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
 ;
 
 DimExprs:
-  DimExpr
-| DimExprs DimExpr
+  DimExpr {$$=$1;}
+| DimExprs DimExpr {$$=$1; $$->add($2);}
 ;
 
-DimExpr:
-box_open Expression box_close
+DimExpr:  
+box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(new Node(mymap[t1],$1)); $$->add(new Node()); t1=$3; $$->add(new Node(mymap[t1],$1));}
 
 ArrayInitializer: 
-curly_open VariableInitializerList curly_close 
-| curly_open VariableInitializerList comma curly_close 
+curly_open VariableInitializerList curly_close {string t1=$1; $$=new Node("ArrayInitializer"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1));}
+| curly_open VariableInitializerList comma curly_close {string t1=$1; $$=new Node("ArrayInitializer"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1)); t1=$4; $$->add(new Node(mymap[t1],$1));}
 ;
 
 VariableInitializerList:
-VariableInitializer
-| VariableInitializerList comma VariableInitializer 
+VariableInitializer {$$= new Node("VariableInitializerList"); $$->add($1);}
+| VariableInitializerList comma VariableInitializer {$$= $1; string t1=$2;  $$->add(new Node(mymap[t1],$2)); $$->add($3); }
 ;
 
 %%
