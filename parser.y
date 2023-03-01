@@ -15,41 +15,47 @@ extern void close_output_file();
 
 int num=0;
 
+ofstream fout;
+
 void generatetree(Node* n){
   int ptr=num;
     num++;
-
 
     if(n->objects.size()){
 
         for(auto x : n->objects){
 
-            cout<<n->label<<ptr<<"->";
+            fout<<n->label<<ptr<<"->";
             generatetree(x);
             // cout<<";\n";
         }
 
-        cout<<n->label<<ptr;
-        cout<<"[label=\"";
+        fout<<n->label<<ptr;
+        fout<<"[label=\"";
         n->print();
-        cout<<"\"];"<<endl;
+        fout<<"\"];"<<endl;
         
     }
     else{
-      cout<<n->label<<ptr<<";\n";
+      fout<<n->label<<ptr<<";\n";
 
-      cout<<n->label<<ptr;
-          cout<<"[label=\"";
+      fout<<n->label<<ptr;
+          fout<<"[label=\"";
           n->print();
-          cout<<"\"];"<<endl;
+          fout<<"\"];"<<endl;
     }
+
 }
 
 void generate_graph(Node *n){
-  cout<<"\n\n\ndigraph G {\n";
-  generatetree(n);
-  cout <<"\n}\n\n\n";
 
+  fout.open("graph.dot");
+
+  fout<<"digraph G {\n";
+  generatetree(n);
+  fout <<"\n}";
+
+  fout.close();
 }
 
 /* {} 0 or more
