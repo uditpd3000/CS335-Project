@@ -19,18 +19,18 @@ build : # generate files for the executable
 	@rm error.txt
 
 .PHONY: run
-run: # run the executable using input like `make run input-file-path.java` or else run with terminal input
-	@./$(TARGET) $(input)
+run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
+	@./$(TARGET) $(input) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
-	@dot -Tps graph.dot -o graph.ps
+	@dot -Tps $(output) -o graph.ps
 
 .PHONY: verbose
-verbose: # run the executable in verbose
-	@ ./$(TARGET) $(input)
+verbose: # run the executable in verbose like `make run input=filepath output=dotfilepath`
+	@ ./$(TARGET) $(input) $(output)
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
 	@ rm $(VERBOSE)
-	@dot -Tps graph.dot -o graph.ps
+	@dot -Tps $(output) -o graph.ps
 
 .PHONY: graph
 graph: # to show dot file
