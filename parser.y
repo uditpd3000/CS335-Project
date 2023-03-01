@@ -109,7 +109,7 @@ void generate_graph(Node *n){
 %right RETURN
 %right ques_mark colon
 
-%error-verbose
+%define parse.error verbose
 
 %%
 
@@ -390,7 +390,7 @@ VariableDeclaratorList:
 
 UnannType:
   UnannPrimitiveType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType1\n";}
-| UnannReferenceType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType2\n";}
+| UnannReferenceType {$$ = $1; cout<<"UnannType2\n";}
 ;
 
 UnannPrimitiveType:
@@ -468,7 +468,7 @@ AdditionalBound:
 ClassType:
 TypeName {$$=new Node("ClassType"); $$->add($1);}
 | TypeName TypeArguments {$$=new Node("ClassType"); vector<Node*>v{$1,$2}; $$->add(v);}
-| ClassType dot Identifier {$$=new Node(); $$=new Node("ClassType"); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
+| ClassType dot Identifier { $$=new Node("ClassType"); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
 | ClassType dot Identifier TypeArguments {$$=new Node("ClassType"); $$=new Node(); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4}; $$->add(v);}
 ;
 
