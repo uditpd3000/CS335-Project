@@ -532,12 +532,12 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=new Node("Expression");$$->add($1); cout<<num++<<" Khatam----------------------------------------\n";}
+  AssignmentExpression {$$=$1; cout<<num++<<" Khatam----------------------------------------\n";}
 ;
 
 AssignmentExpression: 
-Assignment                {$$=new Node("AssignmentExp");vector<Node*>v{$1};$$->add(v); cout<<"Assignment\n"; }
-| ConditionalExpression   {$$=new Node("AssignmentExp");$$->add($1); cout<<"Exp\n";}
+Assignment                {$$=$1; cout<<"Assignment\n"; }
+| ConditionalExpression   {$$=$1; cout<<"Exp\n";}
 ;
 
 Assignment:
@@ -609,7 +609,7 @@ ClassLiteral :
 ;
 
 ConditionalExpression: 
-  ConditionalOrExpression                                                   {cout<<"ConditionalExpression\n"; $$=new Node("ConditionalExp");$$->add($1);}
+  ConditionalOrExpression                                                   {cout<<"ConditionalExpression\n"; $$=$1;}
 | ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {$$=new Node("ConditionalExp");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
 ;
 
