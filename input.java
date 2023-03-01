@@ -53,7 +53,7 @@
 //   } 
 
   public class IfElseExample {  
-    public static void main(String[] args) {  
+    public static void main.super(String[] args) {  
         
        while(i==0){
         i=1;
