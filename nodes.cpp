@@ -37,7 +37,10 @@ class Node {
     void print(){
         cout<<label;
         if(lexeme!=""){
-            cout<<"__"<<lexeme; //seperator__}
+            if(lexeme[0]!='"' && lexeme[lexeme.length()-1]) cout<<"__"<<lexeme; //seperator__}
+            else{
+                cout<<"__\\"<<lexeme.substr(0,lexeme.length()-1)<<"\\\"";
+            }
         }
     }
 };
