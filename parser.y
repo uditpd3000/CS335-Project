@@ -16,6 +16,7 @@ extern void close_output_file();
 int num=0;
 
 ofstream fout;
+ofstream vout;
 
 void generatetree(Node* n){
   int ptr=num;
@@ -26,6 +27,9 @@ void generatetree(Node* n){
         for(auto x : n->objects){
 
             fout<<n->label<<ptr<<"->";
+            
+            if(x->lexeme!="") vout<<"generating tree for the "<< x->lexeme <<" lexeme"<<endl;
+
             generatetree(x);
             // cout<<";\n";
         }
@@ -50,11 +54,17 @@ void generatetree(Node* n){
 void generate_graph(Node *n){
 
   fout.open("graph.dot");
+  vout.open("verbose.txt");
+
+  vout<<"started generating the graph.dot file.\n"<<endl;
 
   fout<<"digraph G {\n";
   generatetree(n);
   fout <<"\n}";
 
+  vout<<"\n Generation of the graph.dot file completed."<<endl;
+
+  vout.close();
   fout.close();
 }
 
