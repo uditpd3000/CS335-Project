@@ -120,7 +120,7 @@ instanceof {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); ret
 new {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return NEW;}
 "System.out.println" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return PRINTLN;}
 
-{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} {insertMap(strdup(yytext),"Literal"); return literal;} /* literals */
+{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return literal;} /* literals */
 
 
 [a-zA-Z_][a-zA-Z0-9_]*  {insertMap(strdup(yytext),"Identifier");yylval.sym = strdup(yytext);return Identifier;} /* identifiers */
