@@ -81,7 +81,7 @@ void generate_graph(Node *n){
 %token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token<sym> class_just_class literal_type AssignmentOperator1 boolean literal keyword throws var
-%token<sym> Identifier extends super implements permits
+%token<sym> Identifier extends super implements permits IMPORT DOT_STAR
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
 %type<node> input
@@ -104,6 +104,8 @@ void generate_graph(Node *n){
 %type<node> PostIncrDecrExpression ClassLiteral FieldAccess ArrayAccess MethodInvocation ClassInstanceCreationExpression RELATIONAL_OP
 %type<node> Idboxopen Typenameboxopen squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
 %type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2
+%type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
+
 
 %type<sym> CommonModifier 
 
@@ -127,14 +129,16 @@ void generate_graph(Node *n){
 
 %error-verbose
 
+
 %%
 
 input: 
 CompilationUnit {generate_graph($$);}
 ;
 
-CompilationUnit: {$$= new Node("CompilationUnit"); $$->add(new Node());}
+CompilationUnit: {$$= new Node("CompilationUnit");}
 | CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);}
+| CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
 ;
 
 ClassDeclaration:
@@ -903,6 +907,30 @@ VariableInitializerList:
 VariableInitializer {$$= new Node("VariableInitializerList"); $$->add($1);}
 | VariableInitializerList comma VariableInitializer {$$= $1; string t1=$2;  $$->add(new Node(mymap[t1],$2)); $$->add($3); }
 ;
+
+ImportDeclarations: 
+ImportDeclaration                      {$$= new Node("ImportDeclarations"); $$->add($1);}
+| ImportDeclarations ImportDeclaration    {$$=new Node("ImportDeclarations");vector<Node*>v{$1,$2};$$->add(v);}
+;
+
+ImportDeclaration:
+SingleTypeImportDeclaration        {$$=new Node("ImportDeclaration");$$->add($1);}
+| SingleStaticImportDeclaration    {$$=new Node("ImportDeclaration");$$->add($1);}
+| StaticImportOnDemandDeclaration  {$$=new Node("ImportDeclaration");$$->add($1);}
+;
+
+SingleTypeImportDeclaration:
+IMPORT TypeName semi_colon                        {$$=new Node("SingleTypeImportDeclaration");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
+;
+
+SingleStaticImportDeclaration:
+IMPORT STATIC TypeName dot Identifier semi_colon  {$$=new Node("SingleStaticImportDeclaration");string t1=$1,t2=$2,t3=$4,t4=$5,t5=$6;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4),new Node(mymap[t5],t5)};$$->add(v);}
+;
+
+StaticImportOnDemandDeclaration:        
+IMPORT STATIC TypeName DOT_STAR semi_colon        {$$=new Node("StaticImportOnDemandDeclaration");string t1=$1,t2=$2,t3=$4,t4=$5;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
+;
+
 
 %%
 

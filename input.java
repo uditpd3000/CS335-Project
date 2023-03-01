@@ -1,4 +1,7 @@
+import java.start;
+
 class ReprChange{
+    
     static{
         int[][].class.aisehi = 3;
         z=6;
