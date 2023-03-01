@@ -1,8 +1,4 @@
-#include <iostream>
-#include <stdlib.h>
-#include <string>
-#include <map>
-#include <list>
+#include <bits/stdc++.h>
 
 using namespace std;
 extern ofstream fout;
