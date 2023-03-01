@@ -87,7 +87,7 @@ void generate_graph(Node *n){
 %type<node> UnaryExpression InstanceofExpression PreIncrDecrExpression UnaryExpressionNotPlusMinus Primary PrimaryNoNewArray PostfixExpression CastExpression
 %type<node> PostIncrDecrExpression ClassLiteral FieldAccess ArrayAccess MethodInvocation ClassInstanceCreationExpression RELATIONAL_OP
 %type<node> Idboxopen Typenameboxopen squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
-%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2
+%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2 ConditionalOrExpressionStart ConditionalOrExpressionEnd
 
 %type<sym> CommonModifier 
 
@@ -593,19 +593,27 @@ ConditionalExpression:
 | ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {$$=new Node("ConditionalExp");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
 ;
 
-ConditionalOrExpression : 
-  UnaryExpression                                                         {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
-| ConditionalOrExpression OR ConditionalOrExpression                      {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"OR\n";}
-| ConditionalOrExpression AND ConditionalOrExpression                     {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"AND\n";}
-| ConditionalOrExpression bitwise_or ConditionalOrExpression              {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"or\n";}
-| ConditionalOrExpression bitwise_xor ConditionalOrExpression             {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"xor\n";}
-| ConditionalOrExpression bitwise_and ConditionalOrExpression             {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"and\n";}
-| ConditionalOrExpression EQUALNOTEQUAL ConditionalOrExpression           {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Equality\n";}
-| ConditionalOrExpression RELATIONAL_OP ConditionalOrExpression           {$$=new Node("CondOrExp");vector<Node*>v{$1,$2,$3};$$->add(v);cout<<"Relational\n";}
-| ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Shift\n";}
-| ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"add\n";}
-| ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"mult\n";}
-| InstanceofExpression                                                    {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
+ConditionalOrExpressionStart:
+  UnaryExpression               {$$=$1;}
+| InstanceofExpression          {$$=$1;}
+;
+
+ConditionalOrExpression :
+ConditionalOrExpressionStart                                           {$$=$1;}
+| ConditionalOrExpressionStart ConditionalOrExpressionEnd              {$$=new Node("ConditionalOrExpression"); $$->add($1->objects);$$->add($2->objects);}
+;
+
+ConditionalOrExpressionEnd:
+  OR ConditionalOrExpression                      {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| AND ConditionalOrExpression                     {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_or ConditionalOrExpression              {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_xor ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_and ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| EQUALNOTEQUAL ConditionalOrExpression           {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| RELATIONAL_OP ConditionalOrExpression           {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v); }
+| SHIFT_OP ConditionalOrExpression                {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
 ;
 
 UnaryExpression:
