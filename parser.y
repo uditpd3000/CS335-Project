@@ -76,7 +76,7 @@ void generate_graph(Node *n){
 %type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
-%type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
+%type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers CompilationUnit VariableInitializerList ArrayInitializer DimExpr DimExprs ArrayCreationExpression ArrayCreationExpressionAfterType newclasstype newprimtype WhileStatement EnhancedForStatementNoShortIf
 %type<node> StatementExpressionList ForInit ForUpdate BasicForStatement BasicForStatementNoShortIf BasicForStatementStart StatementExpression EnhancedForStatement ForStatement ForStatementNoShortIf WhileStatementNoShortIf LabeledStatementNoShortIf StatementNoShortIf IfThenElseStatement IfThenElseStatementNoShortIf IfThenStatement ExpressionStatement LabeledStatement
 %type<node> StatementWithoutTrailingSubstatement ThrowStatement ReturnStatement ContinueStatement BreakStatement Statement
@@ -250,14 +250,14 @@ BlockStatements:
 BlockStatement:
   Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); cout<<"mo2222222222222222222\n";}
 | LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); cout<<"LocalClassOrInterfaceDeclaration";}
-| LocalVariableDeclarationStatement semi_colon {$$ =$1; string t1=$2; cout<<t1<<"==\n"; $$->add(new Node(mymap[t1],t1));  cout<<"LocalVariableDeclarationStatement\n";}
+| LocalVariableDeclaration semi_colon {$$ =$1; string t1=$2; cout<<t1<<"==\n"; $$->add(new Node(mymap[t1],t1));  cout<<"LocalVariableDeclarationStatement\n";}
 | Statement {cout<<"BlockStatement4\n"; $$=new Node("BlockStatement"); $$->add($1);}
 ;
 
-LocalVariableDeclarationStatement:
-  Modifiers LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2,$3}; $$->add(v); cout<<"LocalVariableDeclarationStatement1\n";}
-| LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2}; $$->add(v); cout<<"LocalVariableDeclarationStatement2\n";}
-;
+// LocalVariableDeclarationStatement:
+//   Modifiers LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2,$3}; $$->add(v); cout<<"LocalVariableDeclarationStatement1\n";}
+// | LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2}; $$->add(v); cout<<"LocalVariableDeclarationStatement2\n";}
+// ;
 
 LocalVariableType:
   UnannType {$$=$1; cout<<"LocalVariableType1\n";}
@@ -654,7 +654,7 @@ assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Nod
 
 InstanceofExpression:
   ConditionalOrExpression INSTANCE_OF ReferenceType                      {$$=new Node("InstanceofExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v); cout<<"Instance//////////////////\n";}
-| ConditionalOrExpression INSTANCE_OF LocalVariableDeclarationStatement  {$$=new Node("InstanceofExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Instance||||||||||||||||||\n";}
+| ConditionalOrExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Instance||||||||||||||||||\n";}
 ; 
 
 MethodInvocation:
@@ -887,6 +887,10 @@ VariableInitializerList:
 VariableInitializer {$$= new Node("VariableInitializerList"); $$->add($1);}
 | VariableInitializerList comma VariableInitializer {$$= $1; string t1=$2;  $$->add(new Node(mymap[t1],$2)); $$->add($3); }
 ;
+
+// DimsIdentifier:
+// Dims Identifier {$$= new Node();$$->add($1);$$->add()}
+// ;
 
 %%
 
