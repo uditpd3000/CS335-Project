@@ -88,8 +88,10 @@ StringLiteral \"[^\n"]+\"
 "<="|">=" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return RELATIONAL_OP1;}
 "<<"|">>"|">>>" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return SHIFT_OP;}
 "~"|"!" {insertMap(strdup(yytext),"Operator");yylval.sym = strdup(yytext); return LOGICAL_OP;}
+".*" {insertMap(strdup(yytext),"DotStar");yylval.sym = strdup(yytext); return DOT_STAR;}
 
-enum|record|switch|assert|default|package|synchronized|boolean|do|goto|import|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
+
+enum|record|switch|assert|default|package|synchronized|boolean|do|goto|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
 
 class {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_just_class;}
 public|private|protected {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_access;}
@@ -118,6 +120,7 @@ else {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return EL
 byte|short|int|long|char|float|double {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return literal_type;}
 instanceof {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return INSTANCE_OF;}
 new {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return NEW;}
+import {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return IMPORT;}
 "System.out.println" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return PRINTLN;}
 
 {FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return literal;} /* literals */

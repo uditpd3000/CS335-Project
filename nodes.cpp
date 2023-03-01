@@ -1,10 +1,7 @@
-#include <iostream>
-#include <stdlib.h>
-#include <string>
-#include <map>
-#include <list>
+#include <bits/stdc++.h>
 
 using namespace std;
+extern ofstream fout;
 
 class Node {
   public:
@@ -34,12 +31,13 @@ class Node {
     }
 
     void print(){
-        cout<<label;
+        fout<<label;
         if(lexeme!=""){
-            if(lexeme[0]!='"' && lexeme[lexeme.length()-1]) cout<<"__"<<lexeme; //seperator__}
+            if(lexeme[0]!='"' && lexeme[lexeme.length()-1]) fout<<"__"<<lexeme; //seperator__}
             else{
-                cout<<"__\\"<<lexeme.substr(0,lexeme.length()-1)<<"\\\"";
+                fout<<"__\\"<<lexeme.substr(0,lexeme.length()-1)<<"\\\"";
             }
         }
+
     }
 };
