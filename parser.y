@@ -512,12 +512,12 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=new Node("Expression");$$->add($1); cout<<num++<<" Khatam----------------------------------------\n";}
+  AssignmentExpression {$$=$1; cout<<num++<<" Khatam----------------------------------------\n";}
 ;
 
 AssignmentExpression: 
-Assignment                {$$=new Node("AssignmentExp");vector<Node*>v{$1};$$->add(v); cout<<"Assignment\n"; }
-| ConditionalExpression   {$$=new Node("AssignmentExp");$$->add($1); cout<<"Exp\n";}
+Assignment                {$$=$1; cout<<"Assignment\n"; }
+| ConditionalExpression   {$$=$1; cout<<"Exp\n";}
 ;
 
 Assignment:
@@ -525,9 +525,9 @@ Assignment:
 ;
 
 LeftHandSide:
-FieldAccess      {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Fieldacc\n";}
-| TypeName       {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Expname\n";}
-| ArrayAccess    {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Arraceess\n";}
+FieldAccess      {$$=$1; cout<<"Fieldacc\n";}
+| TypeName       {$$=$1; cout<<"Expname\n";}
+| ArrayAccess    {$$=$1; cout<<"Arraceess\n";}
 ;
 
 FieldAccess:
@@ -538,25 +538,25 @@ Primary dot Identifier              {$$=new Node("FieldAc");string t1=$2,t2=$3;v
 
 /* fixmme */
 Primary:
-PrimaryNoNewArray                   {$$=new Node("Primary");vector<Node*>v{$1};$$->add(v);}
-| ArrayCreationExpression           {$$=new Node("Primary");vector<Node*>v{new Node("ArrayCreationexp")};$$->add(v);}
+PrimaryNoNewArray                   {$$=$1;}
+| ArrayCreationExpression           {$$=$1;}
 ;
 
 PrimaryNoNewArray:
-  literal                           {$$=new Node("PrimaryNoNewArray1");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| ClassLiteral                      {$$=new Node("PrimaryNoNewArray2");vector<Node*>v{$1};$$->add(v); cout<<"Classliteral\n";}
-| THIS                              {$$=new Node("PrimaryNoNewArray3");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
+  literal                           {string t1=$1; $$= new Node(mymap[t1],t1);}
+| ClassLiteral                      {$$=$1; cout<<"Classliteral\n";}
+| THIS                              {string t1=$1; $$= new Node(mymap[t1],t1);}
 | TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray4");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray5");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
-| FieldAccess                       {$$=new Node("PrimaryNoNewArray6");vector<Node*>v{$1};$$->add(v);}
-| ArrayAccess                       {$$=new Node("PrimaryNoNewArray7");vector<Node*>v{$1};$$->add(v);}
-| MethodInvocation                  {$$=new Node("PrimaryNoNewArray8");vector<Node*>v{$1};$$->add(v);}
-| ClassInstanceCreationExpression   {$$=new Node("PrimaryNoNewArray9");vector<Node*>v{$1};$$->add(v);cout<<"ClassInstance\n";}
+| FieldAccess                       {$$=$1;} 
+| ArrayAccess                       {$$=$1;} 
+| MethodInvocation                  {$$=$1;} 
+| ClassInstanceCreationExpression   {$$=$1;} 
 ;
 
 TypeName:
-  Identifier {string t1=$1; $$=new Node("Identifier",t1);}
-| TypeName dot Identifier {string t2 =$3; $$=$1; $$->lexeme=$$->lexeme+"."+t2;}
+  Identifier {string t1=$1; $$=new Node("TypeName"); $$->add(new Node(mymap[t1],t1));}
+| TypeName dot Identifier {string t1 =$2,t2=$3; $$=$1; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v); }
 ;
 
 Idboxopen:
@@ -564,13 +564,13 @@ Identifier box_open                {$$=new Node("IdboxOpen");string t1=$1,t2=$2;
 ;
 
 Typenameboxopen:
-Idboxopen                           {$$=new Node("Typenamebox");vector<Node*>v{$1};$$->add(v);}
-| TypeName dot Idboxopen            {$$=new Node("ArrayAcc");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+Idboxopen                           {$$=new Node("Typenamebox");$$->add($1->objects);}
+| TypeName dot Idboxopen            {$$=new Node("Typenamebox");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);$$->add($3->objects);}
 ;
 
 ArrayAccess:
-Typenameboxopen Expression box_close                 {$$=new Node("ArrayAcc");string t1=$3;vector<Node*>v{$1,$2,new Node(mymap[t1],t1)};$$->add(v);}
-| PrimaryNoNewArray box_open Expression box_close    {$$=new Node("ArrayAcc");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2)};$$->add(v);}
+Typenameboxopen Expression box_close                 {$$=new Node("ArrayAccess");$$->add($1->objects); string t1=$3;vector<Node*>v{$2,new Node(mymap[t1],t1)};$$->add(v);}
+| PrimaryNoNewArray box_open Expression box_close    {$$=new Node("ArrayAccess"); string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2)};$$->add(v);}
 ;
 
 squarebox: 
@@ -589,12 +589,12 @@ ClassLiteral :
 ;
 
 ConditionalExpression: 
-  ConditionalOrExpression                                                   {cout<<"ConditionalExpression\n"; $$=new Node("ConditionalExp");$$->add($1);}
+  ConditionalOrExpression                                                   {cout<<"ConditionalExpression\n"; $$=$1;}
 | ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {$$=new Node("ConditionalExp");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
 ;
 
 ConditionalOrExpression : 
-  UnaryExpression                                                         {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
+  UnaryExpression                                                         {$$=$1;}
 | ConditionalOrExpression OR ConditionalOrExpression                      {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"OR\n";}
 | ConditionalOrExpression AND ConditionalOrExpression                     {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"AND\n";}
 | ConditionalOrExpression bitwise_or ConditionalOrExpression              {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"or\n";}
@@ -605,13 +605,13 @@ ConditionalOrExpression :
 | ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Shift\n";}
 | ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"add\n";}
 | ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"mult\n";}
-| InstanceofExpression                                                    {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
+| InstanceofExpression                                                    {$$=$1;}
 ;
 
 UnaryExpression:
-  PreIncrDecrExpression                     {$$=new Node("UnaryExp");vector<Node*>v{$1};$$->add(v); cout<<"IncrDecr\n";}
+  PreIncrDecrExpression                     {$$=$1; cout<<"IncrDecr\n";}
 | ARITHMETIC_OP_ADDITIVE UnaryExpression    {$$=new Node("UnaryExp");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| UnaryExpressionNotPlusMinus               {$$=new Node("UnaryExp");vector<Node*>v{$1};$$->add(v);}
+| UnaryExpressionNotPlusMinus               {$$=$1;}
 ;
 
 PreIncrDecrExpression:
@@ -620,14 +620,14 @@ INCR_DECR UnaryExpression                   {$$=new Node("PreIncDecExp");string 
 
 UnaryExpressionNotPlusMinus:
   LOGICAL_OP UnaryExpression                {$$=new Node("UnaryExpNotPlMin");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| PostfixExpression                         {$$=new Node("UnaryExpNotPlMin");vector<Node*>v{$1};$$->add(v);}
-| CastExpression                            {$$=new Node("UnaryExpNotPlMin");vector<Node*>v{$1};$$->add(v); cout<<"C---a----s---t\n";}
+| PostfixExpression                         {$$=$1;}
+| CastExpression                            {$$=$1; cout<<"C---a----s---t\n";}
 ;
 
 PostfixExpression:
-  Primary                                   {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v); cout<<"PostfixExpression\n";}
-| TypeName                                  {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v);}
-| PostIncrDecrExpression                    {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v);}
+  Primary                                   {$$=$1; cout<<"PostfixExpression\n";}
+| TypeName                                  {$$=$1;}
+| PostIncrDecrExpression                    {$$=$1;}
 ;
 
 PostIncrDecrExpression:
@@ -648,8 +648,8 @@ CastExpression:
 ;
 
 AssignmentOperator:
-assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| AssignmentOperator1 {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
+assign                {string t1=$1; $$=new Node(mymap[t1],t1);}
+| AssignmentOperator1 {string t1=$1; $$=new Node(mymap[t1],t1);}
 ;
 
 InstanceofExpression:
@@ -660,10 +660,10 @@ InstanceofExpression:
 MethodInvocation:
   Identifier brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
 | Identifier brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
-| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
+| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
 MethodIncovationStart:
@@ -692,7 +692,7 @@ UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
 ;
 
 ClassOrInterfaceTypeToInstantiate:
- Identifier                                                 {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); cout<<"ClassOrInterfaceTypeToInstantiate\n";}
+ Identifier                                                 {string t1=$1; $$=(new Node(mymap[t1],t1)); cout<<"ClassOrInterfaceTypeToInstantiate\n";}
 | Identifier TypeArgumentsOrDiamond                         {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}
 | Identifier ClassOrInterfaceType2                          {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond   {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects);}
@@ -772,7 +772,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
 ;
 
 IfThenElseStatementNoShortIf:
-IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {$$ = new Node(); string t1 = $1,t2= $2,t4=$4,t6=$6; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6) } ;$$->add(v); }
+IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {$$ = new Node("IfThenElseStatementNoShortIf"); string t1 = $1,t2= $2,t4=$4,t6=$6; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6) } ;$$->add(v); }
 ;
 
 StatementNoShortIf:
@@ -784,11 +784,11 @@ StatementWithoutTrailingSubstatement {$$=$1;}
 ;
 
 LabeledStatementNoShortIf:
-Identifier colon StatementNoShortIf                                    {$$= new Node(); string t1 = $1;string t2= $2; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3 }; $$->add(v); }                      
+Identifier colon StatementNoShortIf                                    {$$= new Node("LabeledStatementNoShortIf"); string t1 = $1;string t2= $2; vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3 }; $$->add(v); }                      
 ;
 
 WhileStatementNoShortIf:
-WHILE curly_open Expression curly_close StatementNoShortIf             {$$ = new Node(); string t1= $1,t2=$2, t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };  $$->add(v);}
+WHILE curly_open Expression curly_close StatementNoShortIf             {$$ = new Node("WhileStatementNoShortIf"); string t1= $1,t2=$2, t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };  $$->add(v);}
 ;
 
 ForStatement:
