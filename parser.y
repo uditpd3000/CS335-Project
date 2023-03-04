@@ -389,7 +389,7 @@ CommonModifier:
 ;
 
 Modifiers:
-CommonModifier {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1));}
+CommonModifier {string t1=$1; $$ = new Node("Modifiers"); $$->add(new Node(mymap[t1],t1));}
 | Modifiers CommonModifier {$$=new Node("Modifiers"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1));}
 ;
 
@@ -610,7 +610,7 @@ ConditionalOrExpressionStart:
 
 ConditionalOrExpression :
 ConditionalOrExpressionStart                                           {$$=$1;}
-| ConditionalOrExpressionStart ConditionalOrExpressionEnd              {$$=new Node("ConditionalOrExpression"); $$->add($1->objects);$$->add($2->objects);}
+| ConditionalOrExpressionStart ConditionalOrExpressionEnd              {$$=new Node("ConditionalOrExpression"); $$->add($1);$$->add($2->objects);}
 ;
 
 ConditionalOrExpressionEnd:
@@ -676,11 +676,11 @@ InstanceofExpression:
 ; 
 
 MethodInvocation:
-  Identifier brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
-| Identifier brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t2=$2,t3=$4;vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
+| TypeName brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t2=$2,t3=$3;vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
 | MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
@@ -704,8 +704,8 @@ UnqualifiedClassInstanceCreationExpression:
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
   ArgumentList brac_close ClassBody      {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| brac_close ClassBody                   {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); }
-| brac_close                             {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
+| brac_close ClassBody                   {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
+| brac_close                             {string t1=$1; $$=new Node(mymap[t1],t1);}
 | ArgumentList brac_close                {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
 ;
 
@@ -733,8 +733,8 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1);}
 | WhileStatement                         {$$= new Node("Statement");$$->add($1);}
 | ForStatement                           {$$= new Node("Statement");$$->add($1);}
-| PRINTLN brac_open TypeName brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
-| PRINTLN brac_open literal brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
+| PRINTLN brac_open Expression brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
+// | PRINTLN brac_open literal brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
 ;
 
 StatementWithoutTrailingSubstatement:
