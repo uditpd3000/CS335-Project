@@ -1,6 +1,7 @@
 TARGET = myASTgenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
+output=graph.dot
 
 default: help
 

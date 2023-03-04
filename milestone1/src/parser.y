@@ -951,7 +951,11 @@ int main(int argc, char *argv[])
     fout.open(argv[2]);
     
 	}
-  else{
+  else if(argc==2){
+    set_input_file(argv[1]);
+    fout.open("graph.dot");
+  }
+  else {
     fout.open("graph.dot");
   }
 	

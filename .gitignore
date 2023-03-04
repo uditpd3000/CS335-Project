@@ -9,8 +9,8 @@
 *.yy.c
 *.yy.cc
 *.txt
-a.out
 *.java
 *.out
 *.output
-
+*.dot
+*.ps
