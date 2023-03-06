@@ -81,7 +81,7 @@ void generate_graph(Node *n){
  
 %token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
-%token<sym> class_just_class literal_type AssignmentOperator1 literal keyword throws var
+%token<sym> class_just_class literal_type AssignmentOperator1 boolean literal keyword throws var
 %token<sym> Identifier extends super implements permits IMPORT DOT_STAR
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
@@ -92,7 +92,7 @@ void generate_graph(Node *n){
 %type<node> ClassMemberDeclaration MethodAndFieldStart FieldDeclaration
 %type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
-%type<node> UnannType ClassTypeWithArgs
+%type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers CompilationUnit VariableInitializerList ArrayInitializer DimExpr DimExprs ArrayCreationExpression ArrayCreationExpressionAfterType newclasstype newprimtype WhileStatement EnhancedForStatementNoShortIf
 %type<node> StatementExpressionList ForInit ForUpdate BasicForStatement BasicForStatementNoShortIf BasicForStatementStart StatementExpression EnhancedForStatement ForStatement ForStatementNoShortIf WhileStatementNoShortIf LabeledStatementNoShortIf StatementNoShortIf IfThenElseStatement IfThenElseStatementNoShortIf IfThenStatement ExpressionStatement LabeledStatement
@@ -128,13 +128,7 @@ void generate_graph(Node *n){
 %right RETURN
 %right ques_mark colon
 
-
-%left Identifier
-%left brac_close box_close curly_close
-%right brac_open box_open semi_colon curly_open
-%left class_just_class field_modifier method_modifier literal_type extends implements permits
-
-%define parse.error verbose
+%error-verbose
 
 
 %%
@@ -406,8 +400,25 @@ VariableDeclaratorList:
 ;
 
 UnannType:
-  PrimitiveType {$$ = new Node("UnannType"); $$->add($1); }
-| ReferenceType {$$ = new Node("UnannType"); $$->add($1); }
+  UnannPrimitiveType {$$ = new Node("UnannType"); $$->add($1); }
+| UnannReferenceType {$$ = new Node("UnannType"); $$->add($1); }
+;
+
+UnannPrimitiveType:
+  boolean {string t1= $1; $$=new Node(mymap[t1],t1);}
+| literal_type {string t1= $1; $$=new Node(mymap[t1],t1); }
+;
+
+UnannReferenceType:
+  ClassType {$$=$1;}
+// | Identifier {string t1= $1; $$=new Node(mymap[t1],t1);}
+| UnannArrayType {$$=$1;}
+;
+
+UnannArrayType:
+  UnannPrimitiveType Dims {$$ = new Node("UnannArrayType"); vector<Node*>v{$1,$2}; $$->add(v);}
+| ClassType Dims {$$ = new Node("UnannArrayType"); vector<Node*>v{$1,$2}; $$->add(v);}
+// | Identifier Dims {$$ = new Node("UnannArrayType"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v);}
 ;
 
 VariableDeclarator:
@@ -466,14 +477,10 @@ AdditionalBound:
 ;
 
 ClassType:
-TypeName {$$=$1;}
-| ClassTypeWithArgs {$$=new Node("ClassType"); $$->add($1->objects);}
-| ClassTypeWithArgs dot Identifier {$$=new Node("ClassType"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
-| ClassTypeWithArgs dot Identifier TypeArguments {$$=new Node("ClassType"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4}; $$->add(v);}
-;
-
-ClassTypeWithArgs:
-  TypeName TypeArguments {$$=new Node(); $$->add($1);  $$->add($2);}
+TypeName {$$=new Node("ClassType"); $$->add($1);}
+| TypeName TypeArguments {$$=new Node("ClassType"); vector<Node*>v{$1,$2}; $$->add(v);}
+| ClassType dot Identifier {$$=new Node(); $$=new Node("ClassType"); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
+| ClassType dot Identifier TypeArguments {$$=new Node("ClassType"); $$=new Node(); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4}; $$->add(v);}
 ;
 
 TypeArguments:
@@ -587,6 +594,8 @@ ClassLiteral :
 | TypeName dot class_just_class                      {$$=new Node("Classliteral");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | literal_type squarebox dot class_just_class        {$$=new Node("Classliteral");string t1=$1,t2=$3,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | literal_type dot class_just_class                  {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| boolean squarebox dot class_just_class             {$$=new Node("Classliteral");string t1=$1,t2=$3,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| boolean dot class_just_class                       {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | VOID dot class_just_class                          {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
@@ -663,11 +672,9 @@ assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Nod
 ;
 
 InstanceofExpression:
-  UnaryExpression INSTANCE_OF ReferenceType {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| UnaryExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| InstanceofExpression INSTANCE_OF ReferenceType {$$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3};$$->add(v);}
-| InstanceofExpression INSTANCE_OF LocalVariableDeclaration  {$$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3};$$->add(v);}
-;
+  ConditionalOrExpression INSTANCE_OF ReferenceType                      {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v); }
+| ConditionalOrExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+; 
 
 MethodInvocation:
   TypeName brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t2=$2,t3=$4;vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}

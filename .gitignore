@@ -13,4 +13,6 @@ a.out
 *.java
 *.out
 *.output
+*.dot
+*.ps
 
