@@ -15,6 +15,9 @@ extern void close_output_file();
 
 int num=0;
 
+ofstream fout;
+ofstream vout;
+
 void generatetree(Node* n){
   int ptr=num;
     num++;
@@ -24,9 +27,12 @@ void generatetree(Node* n){
 
         for(auto x : n->objects){
 
-            cout<<n->label<<ptr<<"->";
+            fout<<n->label<<ptr<<"->";
+            
+            if(x->lexeme!="") vout<<"generating tree for the "<< x->lexeme <<" lexeme"<<endl;
+
             generatetree(x);
-            // cout<<";\n";
+           
         }
 
         cout<<n->label<<ptr;
@@ -43,13 +49,24 @@ void generatetree(Node* n){
           n->print();
           cout<<"\"];"<<endl;
     }
+
 }
 
 void generate_graph(Node *n){
-  cout<<"\n\n\ndigraph G {\n";
-  generatetree(n);
-  cout <<"\n}\n\n\n";
 
+  
+  vout.open("verbose.txt");
+
+  vout<<"started generating the graph.dot file.\n"<<endl;
+
+  fout<<"digraph G {\n";
+  generatetree(n);
+  fout <<"\n}";
+
+  vout<<"\n Generation of the graph.dot file completed."<<endl;
+
+  vout.close();
+  fout.close();
 }
 
 /* {} 0 or more
@@ -65,7 +82,7 @@ void generate_graph(Node *n){
 %token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
 %token<sym> class_just_class literal_type AssignmentOperator1 boolean literal keyword throws var
-%token<sym> Identifier extends super implements permits
+%token<sym> Identifier extends super implements permits IMPORT DOT_STAR
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
 
 %type<node> input
@@ -76,7 +93,7 @@ void generate_graph(Node *n){
 %type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
 %type<node> UnannArrayType UnannPrimitiveType UnannReferenceType UnannType
-%type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableDeclarationStatement LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
+%type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers CompilationUnit VariableInitializerList ArrayInitializer DimExpr DimExprs ArrayCreationExpression ArrayCreationExpressionAfterType newclasstype newprimtype WhileStatement EnhancedForStatementNoShortIf
 %type<node> StatementExpressionList ForInit ForUpdate BasicForStatement BasicForStatementNoShortIf BasicForStatementStart StatementExpression EnhancedForStatement ForStatement ForStatementNoShortIf WhileStatementNoShortIf LabeledStatementNoShortIf StatementNoShortIf IfThenElseStatement IfThenElseStatementNoShortIf IfThenStatement ExpressionStatement LabeledStatement
 %type<node> StatementWithoutTrailingSubstatement ThrowStatement ReturnStatement ContinueStatement BreakStatement Statement
@@ -87,7 +104,9 @@ void generate_graph(Node *n){
 %type<node> UnaryExpression InstanceofExpression PreIncrDecrExpression UnaryExpressionNotPlusMinus Primary PrimaryNoNewArray PostfixExpression CastExpression
 %type<node> PostIncrDecrExpression ClassLiteral FieldAccess ArrayAccess MethodInvocation ClassInstanceCreationExpression RELATIONAL_OP
 %type<node> Idboxopen Typenameboxopen squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
-%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2
+%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2 ConditionalOrExpressionStart ConditionalOrExpressionEnd
+%type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
+
 
 %type<sym> CommonModifier 
 
@@ -111,19 +130,21 @@ void generate_graph(Node *n){
 
 %error-verbose
 
+
 %%
 
 input: 
 CompilationUnit {generate_graph($$);}
 ;
 
-CompilationUnit: {$$= new Node("CompilationUnit"); $$->add(new Node());}
+CompilationUnit: {$$= new Node("CompilationUnit");}
 | CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);}
+| CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
 ;
 
 ClassDeclaration:
-  Modifiers class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($4->objects); cout<<"class declared yayy!!1\n";}
-| class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($3->objects); cout<<"class declared yayy!!2\n";}
+  Modifiers class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($4->objects); }
+| class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($3->objects); }
 ;
 
 ClassDecTillTypeParameters:
@@ -147,34 +168,34 @@ ClassDecTillPermits:
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody"); vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v); cout<<"classbody1\n";}
-| curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);  cout<<"\n---classbody2\n";}
+  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody"); vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);}
+| curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
 ;
 
 ClassBodyDeclaration:
-  ClassMemberDeclaration {$$=new Node("ClassBodyDeclaration"); $$->add($1); cout<<"classbodydeclaration1\n";}
-| InstanceInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1); cout<<"classbodydeclaration2\n";}
-| StaticInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1);  cout<<"classbodydeclaration3\n";}
-| ConstructorDeclaration {$$=new Node("ClassBodyDeclaration");$$->add($1); cout<<"classbodydeclaration4\n";}
-| ClassBodyDeclaration ClassMemberDeclaration {$$=$1; $$->add($2); cout<<"classbodydeclaration5\n";}
-| ClassBodyDeclaration InstanceInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration6\n";}
-| ClassBodyDeclaration StaticInitializer {$$=$1; $$->add($2); cout<<"classbodydeclaration7\n";}
-| ClassBodyDeclaration ConstructorDeclaration {$$=$1; $$->add($2); cout<<"classbodydeclaration8\n";}
+  ClassMemberDeclaration {$$=new Node("ClassBodyDeclaration"); $$->add($1); }
+| InstanceInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1); }
+| StaticInitializer {$$=new Node("ClassBodyDeclaration"); $$->add($1);  }
+| ConstructorDeclaration {$$=new Node("ClassBodyDeclaration");$$->add($1); }
+| ClassBodyDeclaration ClassMemberDeclaration {$$=$1; $$->add($2); }
+| ClassBodyDeclaration InstanceInitializer {$$=$1; $$->add($2); }
+| ClassBodyDeclaration StaticInitializer {$$=$1; $$->add($2); }
+| ClassBodyDeclaration ConstructorDeclaration {$$=$1; $$->add($2); }
 ;
 
 ConstructorDeclaration:
-  class_access ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); string t=$1; vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); $$->add($3->objects);  cout<<"constructordeclared1\n";}
-| ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); vector<Node*>v{$1}; $$->add(v); $$->add($2->objects); cout<<"constructordeclared2\n";}
+  class_access ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); string t=$1; vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); $$->add($3->objects); }
+| ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); vector<Node*>v{$1}; $$->add(v); $$->add($2->objects); }
 ;
 
 ConstructorDeclarationEnd:
-  Throws ConstructorBody {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v); cout<<"constructordeclaration1\n";}
-| ConstructorBody {$$=new Node(); $$->add($1); cout<<"constructordeclaration2\n";}
+  Throws ConstructorBody {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v);}
+| ConstructorBody {$$=new Node(); $$->add($1);}
 ;
 
 ConstructorBody:
-  curly_open ExplicitConstructorInvocation ConstructorBodyEnd {$$=new Node("ConstructorBody"); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects); cout<<"ConstructorBody1\n";}
-| curly_open ConstructorBodyEnd {$$=new Node("ConstructorBody");string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); cout<<"ConstructorBody2\n";}
+  curly_open ExplicitConstructorInvocation ConstructorBodyEnd {$$=new Node("ConstructorBody"); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects); }
+| curly_open ConstructorBodyEnd {$$=new Node("ConstructorBody");string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}
 ;
 
 ConstructorBodyEnd:
@@ -213,18 +234,18 @@ ConstructorDeclarator:
 
 ConstructorDeclaratorStart:
   TypeParameters Identifier brac_open {$$ = new Node(); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
-| Identifier brac_open {$$ = new Node(); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); cout<<"ConstructorDeclaratorStart\n";}
+| Identifier brac_open {$$ = new Node(); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
 ;
 
 ConstructorDeclaratorEnd:
-  ReceiverParameter FormalParameterList brac_close {$$ = new Node(); string t1=$3; vector<Node*>v{$1,$2,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator1\n";}
-| FormalParameterList brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator2\n";}
-| ReceiverParameter brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator1\n";}
-| brac_close {$$ = new Node(); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v); cout<<"ConstructorDeclarator2\n";}
+  ReceiverParameter FormalParameterList brac_close {$$ = new Node(); string t1=$3; vector<Node*>v{$1,$2,new Node(mymap[t1],t1)}; $$->add(v);}
+| FormalParameterList brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v);}
+| ReceiverParameter brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); }
+| brac_close {$$ = new Node(); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v); }
 ;
 
 StaticInitializer:
-  STATIC Block {string t1=$1; $$ =new Node("StaticInitializer");vector<Node*>v{new Node("Keyword",t1),$2};$$->add(v); cout<<"StaticInitializer\n";}
+  STATIC Block {string t1=$1; $$ =new Node("StaticInitializer");vector<Node*>v{new Node("Keyword",t1),$2};$$->add(v); }
 ;
 
 InstanceInitializer:
@@ -232,35 +253,25 @@ InstanceInitializer:
 ;
 
 Block:
-  curly_open BlockStatements curly_close {$$=new Node("Block"); string t1=$1,t2=$3; vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))}; $$->add(v); cout<<"Block1\n";}
-| curly_open curly_close {$$=new Node("Block"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v); cout<<"Block2\n";}
+  curly_open BlockStatements curly_close {$$=new Node("Block"); string t1=$1,t2=$3; vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))}; $$->add(v);}
+| curly_open curly_close {$$=new Node("Block"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v);}
 ;
 
 BlockStatements:
-  BlockStatement {$$=new Node("BlockStatements"); $$->add($1); cout<<"BlockStatements1\n";}
-| BlockStatements BlockStatement {$$=$1; $$->add($2); cout<<"BlockStatements2\n";}
+  BlockStatement {$$=new Node("BlockStatements"); $$->add($1); }
+| BlockStatements BlockStatement {$$=$1; $$->add($2);}
 ;
 
-/* BlockStatement:
-  LocalClassOrInterfaceDeclaration {cout<<"";}
-| LocalVariableDeclarationStatement {cout<<"";}
-| Statement {cout<<"";}
-; */
 
 BlockStatement:
-  Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); cout<<"mo2222222222222222222\n";}
-| LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); cout<<"LocalClassOrInterfaceDeclaration";}
-| LocalVariableDeclarationStatement semi_colon {$$ =$1; string t1=$2; cout<<t1<<"==\n"; $$->add(new Node(mymap[t1],t1));  cout<<"LocalVariableDeclarationStatement\n";}
-| Statement {cout<<"BlockStatement4\n"; $$=new Node("BlockStatement"); $$->add($1);}
-;
-
-LocalVariableDeclarationStatement:
-  Modifiers LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2,$3}; $$->add(v); cout<<"LocalVariableDeclarationStatement1\n";}
-| LocalVariableType VariableDeclaratorList {$$ = new Node("LocalVariableDeclarationStatement"); vector<Node*>v{$1,$2}; $$->add(v); cout<<"LocalVariableDeclarationStatement2\n";}
+  Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); }
+| LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); }
+| LocalVariableDeclaration semi_colon {$$ =$1; string t1=$2; $$->add(new Node(mymap[t1],t1));  }
+| Statement { $$=new Node("BlockStatement"); $$->add($1);}
 ;
 
 LocalVariableType:
-  UnannType {$$=$1; cout<<"LocalVariableType1\n";}
+  UnannType {$$=$1;}
 | var {string t1= $1; $$=new Node(mymap[t1],t1);}
 ;
 
@@ -276,10 +287,10 @@ LocalClassOrInterfaceDeclaration:
 ; */
 
 ClassMemberDeclaration:
-  FieldDeclaration {$$=$1; cout<<"ClassMemberDeclaration1\n";}
-| MethodDeclaration {$$=$1;  cout<<"ClassMemberDeclaration2\n";}
-| ClassDeclaration {$$=$1;  cout<<"ClassMemberDeclaration3\n";}
-| semi_colon {string t1=$1; $$= new Node(mymap[t1],t1); cout<<"ClassMemberDeclaration4\n";}
+  FieldDeclaration {$$=$1; }
+| MethodDeclaration {$$=$1; }
+| ClassDeclaration {$$=$1; }
+| semi_colon {string t1=$1; $$= new Node(mymap[t1],t1);}
 ;
 
 MethodAndFieldStart:
@@ -294,19 +305,19 @@ MethodDeclaration:
 ;
 
 MethodDeclarationEnd:
-  Block {$$=$1; cout<<"MethodDeclaration1\n";}
-| semi_colon {string t1=$1; $$=new Node(mymap[t1],t1); cout<<"MethodDeclaration2\n";}
+  Block {$$=$1;}
+| semi_colon {string t1=$1; $$=new Node(mymap[t1],t1); }
 ;
 
 
 MethodHeader:
-  TypeParameters MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1); $$->add($2->objects); cout<<"MethodHeader1\n";}
-| MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1->objects); cout<<"MethodHeader2\n";}
+  TypeParameters MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1); $$->add($2->objects);}
+| MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1->objects); }
 ;
 
 MethodHeaderStart:
- VOID MethodDeclarator {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); cout<<"MethodHeader4\n";}
-| VOID MethodDeclarator Throws {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add($3);  cout<<"MethodHeader4\n";}
+ VOID MethodDeclarator {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); }
+| VOID MethodDeclarator Throws {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add($3); }
 ;
 
 Throws:
@@ -328,8 +339,8 @@ MethodDeclaratorTillRP:
 ;
 
 MethodDeclaratorTillFP:
-  FormalParameterList MethodDeclaratorEnd {$$=new Node(); $$->add($1); $$->add($2->objects); cout<<"MethodDeclarator2\n";}
-| MethodDeclaratorEnd {$$=new Node(); $$->add($1->objects); cout<<"MethodDeclarator3\n";}
+  FormalParameterList MethodDeclaratorEnd {$$=new Node(); $$->add($1); $$->add($2->objects);}
+| MethodDeclaratorEnd {$$=new Node(); $$->add($1->objects);}
 ;
 
 MethodDeclaratorEnd:
@@ -351,7 +362,7 @@ FormalParameter:
 
 VariableDeclaratorId:
   Identifier Dims {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2}; $$->add(v);}
-| Identifier {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1))}; $$->add(v); cout<<"VariableDeclaratorId2\n";}
+| Identifier {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1))}; $$->add(v); }
 ;
 
 VariableArityParameter:
@@ -359,12 +370,12 @@ VariableArityParameter:
 ;
 
 ReceiverParameter:
-  THIS comma {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); cout<<"ReceiverParameter1\n";}
-| Identifier dot THIS comma  {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2,t3=$3,t4=$4; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v); cout<<"ReceiverParameter2\n";}
+  THIS comma {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
+| Identifier dot THIS comma  {$$ = new Node("ReceiverParameter"); string t1=$1,t2=$2,t3=$3,t4=$4; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v);}
 ;
 
 FieldDeclaration:
-  MethodAndFieldStart VariableDeclaratorList semi_colon {string t1=$3; $$=new Node("FieldDeclaration"); $$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1)}; $$->add(v); cout<<"FieldDeclaration2\n";}
+  MethodAndFieldStart VariableDeclaratorList semi_colon {string t1=$3; $$=new Node("FieldDeclaration"); $$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1)}; $$->add(v);}
 ;
 
 
@@ -379,23 +390,23 @@ CommonModifier:
 ;
 
 Modifiers:
-CommonModifier {string t1=$1; $$ = new Node(); $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
-| Modifiers CommonModifier {$$=new Node("Modifiers"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1)); cout<<"classModifier \n";}
+CommonModifier {string t1=$1; $$ = new Node("Modifiers"); $$->add(new Node(mymap[t1],t1));}
+| Modifiers CommonModifier {$$=new Node("Modifiers"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1));}
 ;
 
 VariableDeclaratorList:
-  VariableDeclarator {$$= new Node("VariableDeclaratorList"); $$->add($1); cout<<"VariableDeclaratorList1\n";}
-| VariableDeclaratorList comma VariableDeclarator { $$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3}; $$->add(v); cout<<"VariableDeclaratorList2\n";}
+  VariableDeclarator {$$= new Node("VariableDeclaratorList"); $$->add($1); }
+| VariableDeclaratorList comma VariableDeclarator { $$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3}; $$->add(v); }
 ;
 
 UnannType:
-  UnannPrimitiveType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType1\n";}
-| UnannReferenceType {$$ = new Node("UnannType"); $$->add($1); cout<<"UnannType2\n";}
+  UnannPrimitiveType {$$ = new Node("UnannType"); $$->add($1); }
+| UnannReferenceType {$$ = new Node("UnannType"); $$->add($1); }
 ;
 
 UnannPrimitiveType:
   boolean {string t1= $1; $$=new Node(mymap[t1],t1);}
-| literal_type {string t1= $1; $$=new Node(mymap[t1],t1); cout<<"UnannPrimitiveType\n";}
+| literal_type {string t1= $1; $$=new Node(mymap[t1],t1); }
 ;
 
 UnannReferenceType:
@@ -413,25 +424,25 @@ UnannArrayType:
 VariableDeclarator:
   Identifier {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v);}
 | Identifier Dims {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v);}
-| Identifier assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; $$->add(v); cout<<"VariableDeclarator1\n";}
-| Identifier Dims assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; $$->add(v); cout<<"VariableDeclarator1\n";}
+| Identifier assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; $$->add(v);}
+| Identifier Dims assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; $$->add(v);}
 ;
 
 VariableInitializer:
-  Expression {$$ = new Node("VariableInitializer"); $$->add($1);cout<<"Varinit\n";} // $$->add($1);
+  Expression {$$ = new Node("VariableInitializer"); $$->add($1);} // $$->add($1);
 | ArrayInitializer {$$ = new Node();$$ = $1;} // 
 ; 
 
 TypeParameters:
-  less_than TypeParameterList greater_than {$$=new Node("TypeParameters"); string t1=$1,t2=$3; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add(new Node(mymap[t2],t2)); cout<<"typeparam\n";}
+  less_than TypeParameterList greater_than {$$=new Node("TypeParameters"); string t1=$1,t2=$3; $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add(new Node(mymap[t2],t2));}
 ;
 
 ClassExtends:
-  extends ClassType {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);cout<<"extends\n";}
+  extends ClassType {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
 
 ClassImplements:
- implements InterfaceTypeList {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2); cout<<"implements\n";}
+ implements InterfaceTypeList {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
 
 ClassPermits:
@@ -446,8 +457,8 @@ TypeParameterList:
 
 
 InterfaceTypeList:
- ClassType {$$=new Node("InterfaceTypeList"); $$->add($1->objects); cout<<"interfacetypelist1\n";}
-| InterfaceTypeList comma ClassType { $$=$1; $$->add(new Node("seperator",$2)); $$->add($3->objects);  cout<<"interfacetypelist2\n";}
+ ClassType {$$=new Node("InterfaceTypeList"); $$->add($1->objects); }
+| InterfaceTypeList comma ClassType { $$=$1; $$->add(new Node("seperator",$2)); $$->add($3->objects); }
 ;
 
 TypeParameter:
@@ -456,8 +467,8 @@ TypeParameter:
 ;
 
 TypeBound:
-  extends ClassType {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); cout<<"typebound1\n";}
-| extends ClassType AdditionalBound {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects); cout<<"typebound2\n";}
+  extends ClassType {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); }
+| extends ClassType AdditionalBound {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects);}
 ;
 
 AdditionalBound:
@@ -473,7 +484,7 @@ TypeName {$$=new Node("ClassType"); $$->add($1);}
 ;
 
 TypeArguments:
-  less_than TypeArgumentList greater_than {$$=new Node("TypeArgument"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);  cout<<"typeargs\n";}
+  less_than TypeArgumentList greater_than {$$=new Node("TypeArguments"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v); }
 ;
 
 TypeArgumentList:
@@ -498,8 +509,8 @@ ReferenceType:
 ;
 
 ArrayType:
-  PrimitiveType Dims   {$$=new Node("ArrayType"); $$->add($1); $$->add($2->objects);   cout<<"primdims\n";}
-| ClassType Dims       {$$=new Node("ArrayType"); $$->add($1->objects); $$->add($2->objects);   cout<<"primdims\n";}
+  PrimitiveType Dims   {$$=new Node("ArrayType"); $$->add($1); $$->add($2->objects);   }
+| ClassType Dims       {$$=new Node("ArrayType"); $$->add($1->objects); $$->add($2->objects);  }
 ;
 
 Dims:
@@ -512,12 +523,12 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=new Node("Expression");$$->add($1); cout<<num++<<" Khatam----------------------------------------\n";}
+  AssignmentExpression {$$=$1; }
 ;
 
 AssignmentExpression: 
-Assignment                {$$=new Node("AssignmentExp");vector<Node*>v{$1};$$->add(v); cout<<"Assignment\n"; }
-| ConditionalExpression   {$$=new Node("AssignmentExp");$$->add($1); cout<<"Exp\n";}
+Assignment                {$$=$1;  }
+| ConditionalExpression   {$$=$1; }
 ;
 
 Assignment:
@@ -525,15 +536,15 @@ Assignment:
 ;
 
 LeftHandSide:
-FieldAccess      {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Fieldacc\n";}
-| TypeName       {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Expname\n";}
-| ArrayAccess    {$$=new Node("LeftHandSide");vector<Node*>v{$1};$$->add(v); cout<<"Arraceess\n";}
+FieldAccess      {$$=$1;}
+| TypeName       {$$=$1;}
+| ArrayAccess    {$$=$1;}
 ;
 
 FieldAccess:
-Primary dot Identifier              {$$=new Node("FieldAc");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); cout<<"PrimdotId\n";}
-| super dot Identifier              {$$=new Node("FieldAc");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| TypeName dot super dot Identifier {$$=new Node("FieldAc");string t1=$2,t2=$3,t3=$4,t4=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
+Primary dot Identifier              {$$=new Node("FieldAccess");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); }
+| super dot Identifier              {$$=new Node("FieldAccess");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| TypeName dot super dot Identifier {$$=new Node("FieldAccess");string t1=$2,t2=$3,t3=$4,t4=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
 ;
 
 /* fixmme */
@@ -543,15 +554,15 @@ PrimaryNoNewArray                   {$$=new Node("Primary");vector<Node*>v{$1};$
 ;
 
 PrimaryNoNewArray:
-  literal                           {$$=new Node("PrimaryNoNewArray1");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| ClassLiteral                      {$$=new Node("PrimaryNoNewArray2");vector<Node*>v{$1};$$->add(v); cout<<"Classliteral\n";}
-| THIS                              {$$=new Node("PrimaryNoNewArray3");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray4");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
-| brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray5");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
-| FieldAccess                       {$$=new Node("PrimaryNoNewArray6");vector<Node*>v{$1};$$->add(v);}
-| ArrayAccess                       {$$=new Node("PrimaryNoNewArray7");vector<Node*>v{$1};$$->add(v);}
-| MethodInvocation                  {$$=new Node("PrimaryNoNewArray8");vector<Node*>v{$1};$$->add(v);}
-| ClassInstanceCreationExpression   {$$=new Node("PrimaryNoNewArray9");vector<Node*>v{$1};$$->add(v);cout<<"ClassInstance\n";}
+  literal                           {string t1=$1; $$= new Node(mymap[t1],t1);}
+| ClassLiteral                      {$$=$1; }
+| THIS                              {string t1=$1; $$= new Node(mymap[t1],t1);}
+| TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
+| brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
+| FieldAccess                       {$$=$1;} 
+| ArrayAccess                       {$$=$1;} 
+| MethodInvocation                  {$$=$1;} 
+| ClassInstanceCreationExpression   {$$=$1;} 
 ;
 
 TypeName:
@@ -564,8 +575,8 @@ Identifier box_open                {$$=new Node("IdboxOpen");string t1=$1,t2=$2;
 ;
 
 Typenameboxopen:
-Idboxopen                           {$$=new Node("Typenamebox");vector<Node*>v{$1};$$->add(v);}
-| TypeName dot Idboxopen            {$$=new Node("ArrayAcc");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+Idboxopen                           {$$=new Node("Typenameboxopen");$$->add($1->objects);}
+| TypeName dot Idboxopen            {$$=new Node("Typenameboxopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);$$->add($3->objects);}
 ;
 
 ArrayAccess:
@@ -589,29 +600,37 @@ ClassLiteral :
 ;
 
 ConditionalExpression: 
-  ConditionalOrExpression                                                   {cout<<"ConditionalExpression\n"; $$=new Node("ConditionalExp");$$->add($1);}
-| ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {$$=new Node("ConditionalExp");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
+  ConditionalOrExpression                                                   { $$=$1;}
+| ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
 ;
 
-ConditionalOrExpression : 
-  UnaryExpression                                                         {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
-| ConditionalOrExpression OR ConditionalOrExpression                      {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"OR\n";}
-| ConditionalOrExpression AND ConditionalOrExpression                     {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"AND\n";}
-| ConditionalOrExpression bitwise_or ConditionalOrExpression              {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"or\n";}
-| ConditionalOrExpression bitwise_xor ConditionalOrExpression             {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"xor\n";}
-| ConditionalOrExpression bitwise_and ConditionalOrExpression             {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"and\n";}
-| ConditionalOrExpression EQUALNOTEQUAL ConditionalOrExpression           {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Equality\n";}
-| ConditionalOrExpression RELATIONAL_OP ConditionalOrExpression           {$$=new Node("CondOrExp");vector<Node*>v{$1,$2,$3};$$->add(v);cout<<"Relational\n";}
-| ConditionalOrExpression SHIFT_OP ConditionalOrExpression                {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Shift\n";}
-| ConditionalOrExpression ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"add\n";}
-| ConditionalOrExpression ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node("CondOrExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"mult\n";}
-| InstanceofExpression                                                    {$$=new Node("CondOrExp");vector<Node*>v{$1};$$->add(v);}
+ConditionalOrExpressionStart:
+  UnaryExpression               {$$=$1;}
+| InstanceofExpression          {$$=$1;}
+;
+
+ConditionalOrExpression :
+ConditionalOrExpressionStart                                           {$$=$1;}
+| ConditionalOrExpressionStart ConditionalOrExpressionEnd              {$$=new Node("ConditionalOrExpression"); $$->add($1);$$->add($2->objects);}
+;
+
+ConditionalOrExpressionEnd:
+  OR ConditionalOrExpression                      {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| AND ConditionalOrExpression                     {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_or ConditionalOrExpression              {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_xor ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| bitwise_and ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| EQUALNOTEQUAL ConditionalOrExpression           {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| RELATIONAL_OP ConditionalOrExpression           {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v); }
+| SHIFT_OP ConditionalOrExpression                {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
+| ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
 ;
 
 UnaryExpression:
-  PreIncrDecrExpression                     {$$=new Node("UnaryExp");vector<Node*>v{$1};$$->add(v); cout<<"IncrDecr\n";}
-| ARITHMETIC_OP_ADDITIVE UnaryExpression    {$$=new Node("UnaryExp");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| UnaryExpressionNotPlusMinus               {$$=new Node("UnaryExp");vector<Node*>v{$1};$$->add(v);}
+  PreIncrDecrExpression                     {$$=$1; }
+| ARITHMETIC_OP_ADDITIVE UnaryExpression    {$$=new Node("UnaryExpression");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
+| UnaryExpressionNotPlusMinus               {$$=$1;}
 ;
 
 PreIncrDecrExpression:
@@ -619,15 +638,15 @@ INCR_DECR UnaryExpression                   {$$=new Node("PreIncDecExp");string 
 ;
 
 UnaryExpressionNotPlusMinus:
-  LOGICAL_OP UnaryExpression                {$$=new Node("UnaryExpNotPlMin");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| PostfixExpression                         {$$=new Node("UnaryExpNotPlMin");vector<Node*>v{$1};$$->add(v);}
-| CastExpression                            {$$=new Node("UnaryExpNotPlMin");vector<Node*>v{$1};$$->add(v); cout<<"C---a----s---t\n";}
+  LOGICAL_OP UnaryExpression                {$$=new Node("UnaryExpressionNotPlusMinus");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
+| PostfixExpression                         {$$=$1;}
+| CastExpression                            {$$=$1; }
 ;
 
 PostfixExpression:
-  Primary                                   {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v); cout<<"PostfixExpression\n";}
-| TypeName                                  {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v);}
-| PostIncrDecrExpression                    {$$=new Node("PostExp");vector<Node*>v{$1};$$->add(v);}
+  Primary                                   {$$=$1; }
+| TypeName                                  {$$=$1;}
+| PostIncrDecrExpression                    {$$=$1;}
 ;
 
 PostIncrDecrExpression:
@@ -653,24 +672,24 @@ assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Nod
 ;
 
 InstanceofExpression:
-  ConditionalOrExpression INSTANCE_OF ReferenceType                      {$$=new Node("InstanceofExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v); cout<<"Instance//////////////////\n";}
-| ConditionalOrExpression INSTANCE_OF LocalVariableDeclarationStatement  {$$=new Node("InstanceofExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);cout<<"Instance||||||||||||||||||\n";}
+  ConditionalOrExpression INSTANCE_OF ReferenceType                      {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v); }
+| ConditionalOrExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 ; 
 
 MethodInvocation:
-  Identifier brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
-| Identifier brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
-| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t2=$2,t3=$4;vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
+| TypeName brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t2=$2,t3=$3;vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
+| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
 MethodIncovationStart:
-  TypeName dot                   {$$=new Node("MethodIncovationStrt");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
-| Primary dot                    {$$=new Node("MethodIncovationStrt");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
-| super dot                      {$$=new Node("MethodIncovationStrt");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); cout<<"MethodInvocationStart\n";}
-| TypeName dot super dot         {$$=new Node("MethodIncovationStrt");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
+| Primary dot                    {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
+| super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); }
+| TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
 ClassInstanceCreationExpression:
@@ -680,19 +699,19 @@ ClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpression:
-  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen  {$$=new Node("UnqalClsInstCreExp");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v);}
-| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen                {$$=new Node("UnqalClsInstCreExp");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpression2\n";}
+  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen  {$$=new Node("UnqualifiedClassInstanceCreationExpression");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v);}
+| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen                {$$=new Node("UnqualifiedClassInstanceCreationExpression");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v); }
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
-  ArgumentList brac_close ClassBody      {$$=new Node("UnqalClsInsCreExpAftBracOpe");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| brac_close ClassBody                   {$$=new Node("UnqalClsInsCreExpAftBracOpe");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
-| brac_close                             {$$=new Node("UnqalClsInsCreExpAftBracOpe");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| ArgumentList brac_close                {$$=new Node("UnqalClsInsCreExpAftBracOpe");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
+  ArgumentList brac_close ClassBody      {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+| brac_close ClassBody                   {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
+| brac_close                             {string t1=$1; $$=new Node(mymap[t1],t1);}
+| ArgumentList brac_close                {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
 ;
 
 ClassOrInterfaceTypeToInstantiate:
- Identifier                                                 {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); cout<<"ClassOrInterfaceTypeToInstantiate\n";}
+ Identifier                                                 {string t1=$1; $$=(new Node(mymap[t1],t1)); }
 | Identifier TypeArgumentsOrDiamond                         {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}
 | Identifier ClassOrInterfaceType2                          {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond   {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects);}
@@ -713,10 +732,10 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
 | LabeledStatement                       {$$= new Node("Statement");$$->add($1);}
 | IfThenStatement                        {$$= new Node("Statement");$$->add($1);}
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1);}
-| WhileStatement                         {cout<<"Statement\n"; $$= new Node("Statement");$$->add($1);}
+| WhileStatement                         {$$= new Node("Statement");$$->add($1);}
 | ForStatement                           {$$= new Node("Statement");$$->add($1);}
-| PRINTLN brac_open TypeName brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
-| PRINTLN brac_open literal brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
+| PRINTLN brac_open Expression brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
+// | PRINTLN brac_open literal brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
 ;
 
 StatementWithoutTrailingSubstatement:
@@ -730,8 +749,8 @@ Block                           {$$=$1;}
 ;
 
 BreakStatement:
-BREAK                            {$$= new Node("ReturnStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
-| BREAK Identifier               {$$= new Node("ReturnStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
+BREAK                            {$$= new Node("BreakStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
+| BREAK Identifier               {$$= new Node("BreakStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
 ;
 
 ContinueStatement:
@@ -843,7 +862,7 @@ FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoSh
 ;
 
 WhileStatement:
-WHILE brac_open Expression brac_close Statement {cout<<"WhileStatement\n"; $$ = new Node("WhileStatement"); string t1= $1,t2=$2,t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5};  $$->add(v); }
+WHILE brac_open Expression brac_close Statement {$$ = new Node("WhileStatement"); string t1= $1,t2=$2,t4=$4; vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5};  $$->add(v); }
 ;
 
 LocalVariableDeclaration:
@@ -888,6 +907,31 @@ VariableInitializer {$$= new Node("VariableInitializerList"); $$->add($1);}
 | VariableInitializerList comma VariableInitializer {$$= $1; string t1=$2;  $$->add(new Node(mymap[t1],$2)); $$->add($3); }
 ;
 
+ImportDeclarations: 
+ImportDeclaration                      {$$= new Node("ImportDeclarations"); $$->add($1);}
+| ImportDeclarations ImportDeclaration    {$$=new Node("ImportDeclarations");vector<Node*>v{$1,$2};$$->add(v);}
+;
+
+ImportDeclaration:
+SingleTypeImportDeclaration        {$$=new Node("ImportDeclaration");$$->add($1);}
+| SingleStaticImportDeclaration    {$$=new Node("ImportDeclaration");$$->add($1);}
+| StaticImportOnDemandDeclaration  {$$=new Node("ImportDeclaration");$$->add($1);}
+;
+
+SingleTypeImportDeclaration:
+IMPORT TypeName semi_colon                        {$$=new Node("SingleTypeImportDeclaration");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
+| IMPORT TypeName DOT_STAR semi_colon             {$$=new Node("SingleTypeImportDeclaration");string t1=$1,t2=$3,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+;
+
+SingleStaticImportDeclaration:
+IMPORT STATIC TypeName dot Identifier semi_colon  {$$=new Node("SingleStaticImportDeclaration");string t1=$1,t2=$2,t3=$4,t4=$5,t5=$6;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4),new Node(mymap[t5],t5)};$$->add(v);}
+;
+
+StaticImportOnDemandDeclaration:        
+IMPORT STATIC TypeName DOT_STAR semi_colon        {$$=new Node("StaticImportOnDemandDeclaration");string t1=$1,t2=$2,t3=$4,t4=$5;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
+;
+
+
 %%
 
 int yyerror(string s)
@@ -902,10 +946,15 @@ int yyerror(string s)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 2)
+    if (argc == 3)
 	{
 		set_input_file(argv[1]);
+    fout.open(argv[2]);
+    
 	}
+  else{
+    fout.open("graph.dot");
+  }
 	
 	yyparse();
 

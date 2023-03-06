@@ -1,6 +1,7 @@
 *
 !/**/
 !*.*
+!Makefile
 *.hh
 *.tab.c
 *.tab.cc
