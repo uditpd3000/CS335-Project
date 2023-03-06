@@ -128,11 +128,11 @@ void generate_graph(Node *n){
 %right RETURN
 %right ques_mark colon
 
-
+%left class_access field_modifier method_modifier
 %left Identifier
 %left brac_close box_close curly_close
-%right brac_open box_open semi_colon curly_open
-%left class_just_class field_modifier method_modifier literal_type extends implements permits
+%left brac_open box_open semi_colon curly_open
+%left class_just_class literal_type extends implements permits
 
 %define parse.error verbose
 
@@ -284,13 +284,6 @@ LocalVariableType:
 LocalClassOrInterfaceDeclaration:
   ClassDeclaration {$$=$1;}
 ;
-
-/* ClassMemberDeclaration:
-  FieldDeclaration
-| MethodDeclaration
-| ClassDeclaration
-| InterfaceDeclaration
-; */
 
 ClassMemberDeclaration:
   FieldDeclaration {$$=$1; }
@@ -543,7 +536,7 @@ Primary dot Identifier              {$$=new Node("FieldAccess");string t1=$2,t2=
 /* fixmme */
 Primary:
 PrimaryNoNewArray                   {$$=new Node("Primary");vector<Node*>v{$1};$$->add(v);}
-| ArrayCreationExpression           {$$=new Node("Primary");vector<Node*>v{new Node("ArrayCreationexp")};$$->add(v);}
+| ArrayCreationExpression           {$$=new Node("Primary");vector<Node*>v{$1};$$->add(v);}
 ;
 
 PrimaryNoNewArray:
@@ -559,8 +552,8 @@ PrimaryNoNewArray:
 ;
 
 TypeName:
-  Identifier {string t1=$1; $$=new Node("Identifier",t1);}
-| TypeName dot Identifier {string t2 =$3; $$=$1; $$->lexeme=$$->lexeme+"."+t2;}
+  Identifier {string t1=$1; $$=new Node("TypeName"); $$->add(new Node("Identifier",t1));}
+| TypeName dot Identifier {$$=$1; string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
 ;
 
 Idboxopen:
@@ -582,7 +575,7 @@ squarebox:
 | squarebox box_open box_close                       {$$=new Node("sqbox");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 ;
 
-ClassLiteral : 
+ClassLiteral: 
   TypeName squarebox dot class_just_class            {$$=new Node("Classliteral");string t1=$3,t2=$4;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | TypeName dot class_just_class                      {$$=new Node("Classliteral");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | literal_type squarebox dot class_just_class        {$$=new Node("Classliteral");string t1=$1,t2=$3,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
@@ -742,22 +735,22 @@ Block                           {$$=$1;}
 ;
 
 BreakStatement:
-BREAK                            {$$= new Node("BreakStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
-| BREAK Identifier               {$$= new Node("BreakStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
+BREAK  semi_colon                        {$$= new Node("BreakStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
+| BREAK Identifier semi_colon             {$$= new Node("BreakStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
 ;
 
 ContinueStatement:
-CONTINUE                         {$$= new Node("ContinueStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
-| CONTINUE Identifier            {$$= new Node("ContinueStatement"); string t1= $1, t2=$2; $$->add(new Node(mymap[t1],$1));$$->add(new Node(mymap[t2],$2));}
+CONTINUE semi_colon                     {$$= new Node("ContinueStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
+| CONTINUE Identifier semi_colon           {$$= new Node("ContinueStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
 ;
 
 ReturnStatement:
-RETURN                           {$$= new Node("ReturnStatement");string t1= $1;$$->add(new Node(mymap[t1],$1));}
-| RETURN Expression              {$$= new Node("ReturnStatement"); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
+RETURN  semi_colon                         {$$= new Node("ReturnStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
+| RETURN Expression semi_colon           {$$= new Node("ReturnStatement"); string t1= $1,t2=$3; $$->add(new Node(mymap[t1],$1));$$->add($2);$$->add(new Node(mymap[t2],t2));}
 ;
 
 ThrowStatement:
-THROW Expression                 {$$= new Node("ThrowStatement"); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
+THROW Expression semi_colon               {$$= new Node("ThrowStatement"); string t1= $1,t2=$3; $$->add(new Node(mymap[t1],$1));$$->add($2);$$->add(new Node(mymap[t2],t2));}
 ;
 
 StatementExpression:
