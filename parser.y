@@ -585,7 +585,7 @@ ClassLiteral:
 
 
 ConditionalExpression:
-    ConditionalOrExpression                                                          {$$=new Node();}
+    ConditionalOrExpression                                                          {$$=$1;}
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
     ;
 
@@ -622,7 +622,7 @@ EqualityExpression:
 RelationalExpression:
     ShiftExpression                                                                  {$$=$1;}
     // | InstanceofExpression                                                           {$$=$1;}
-    | RelationalExpression RELATIONAL_OP ShiftExpression                             {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    | RelationalExpression RELATIONAL_OP ShiftExpression                             {$$=new Node("ConditionalExpression");vector<Node*>v{$1,$2,$3};$$->add(v);}
     | RelationalExpression INSTANCE_OF ReferenceType                                 {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
     // | RelationalExpression INSTANCE_OF LocalVariableDeclaration                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
     ;
@@ -645,17 +645,17 @@ MultiplicativeExpression:
 UnaryExpression:
     PreIncrDecrExpression                                                            {$$=$1;}
     | UnaryExpressionNotPlusMinus                                                    {$$=$1;}
-    | ARITHMETIC_OP_ADDITIVE UnaryExpression                                         {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2)};$$->add(v);}
+    | ARITHMETIC_OP_ADDITIVE UnaryExpression                                         {string t1=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v);}
     ;
 
 PreIncrDecrExpression:
-    INCR_DECR UnaryExpression                                                        {$$=$1;}
+    INCR_DECR UnaryExpression                                                        {string t1=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v);}
     ;
 
 UnaryExpressionNotPlusMinus:
     PostfixExpression                                                                {$$=$1;}
     | CastExpression                                                                 {$$=$1; }
-    | LOGICAL_OP UnaryExpression                                                     {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2)};$$->add(v);}
+    | LOGICAL_OP UnaryExpression                                                     {string t1=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v);}
     ;
 
 PostfixExpression:
@@ -910,7 +910,7 @@ DimExprs:
 ;
 
 DimExpr:  
-box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1));}
+box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$3));}
 
 ArrayInitializer: 
 curly_open VariableInitializerList curly_close {string t1=$1; $$=new Node("ArrayInitializer"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1));}
