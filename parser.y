@@ -8,10 +8,13 @@ extern map<string, string> mymap;
 extern void insertMap(string, string );
 int yylex (void);
 int yyerror (char const *);
+extern int yylineno;
 
 extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
+
+GlobalSymbolTable* sym_table = new GlobalSymbolTable(); 
 
 int num=0;
 
@@ -140,7 +143,7 @@ void generate_graph(Node *n){
 %%
 
 input: 
-CompilationUnit {generate_graph($$);}
+CompilationUnit {generate_graph($$);sym_table->printAll();}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
@@ -149,8 +152,34 @@ CompilationUnit: {$$= new Node("CompilationUnit");}
 ;
 
 ClassDeclaration:
-  Modifiers class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($4->objects); }
-| class_just_class Identifier ClassDecTillTypeParameters {$$= new Node("ClassDeclaration"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->add($3->objects); }
+  Modifiers class_just_class Identifier {
+
+    Class *classs = new Class($3,$1->var->modifiers,yylineno);
+
+    sym_table->insert(classs);
+    sym_table->makeTable();
+  } 
+  ClassDecTillTypeParameters {
+    $$= new Node("ClassDeclaration"); 
+    $$->add($1->objects); 
+    string t1=$2,t2=$3; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v); 
+    $$->add($5->objects); 
+    sym_table->end_scope();
+  }
+| class_just_class Identifier {
+    vector<string> mod;
+    Class* classs =  new Class($2,mod,yylineno);
+    sym_table->insert(classs);
+    sym_table->makeTable();
+  } 
+  ClassDecTillTypeParameters {
+    $$= new Node("ClassDeclaration"); 
+    string t1=$1,t2=$2; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v); 
+    $$->add($4->objects); }
 ;
 
 ClassDecTillTypeParameters:
@@ -190,8 +219,31 @@ ClassBodyDeclaration:
 ;
 
 ConstructorDeclaration:
-  class_access ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); string t=$1; vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); $$->add($3->objects); }
-| ConstructorDeclarator ConstructorDeclarationEnd {$$=new Node("ConstructorDeclaration"); vector<Node*>v{$1}; $$->add(v); $$->add($2->objects); }
+  class_access ConstructorDeclarator {
+    vector<string> mod;
+    mod.push_back($1);
+    Method* method = new Method($2->method->name,"",$2->method->parameters,mod,yylineno);
+    sym_table->insert(method);
+    sym_table->makeTable();
+
+  } ConstructorDeclarationEnd {
+    $$=new Node("ConstructorDeclaration"); 
+    string t=$1; 
+    vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); 
+    $$->add($4->objects);
+    sym_table->end_scope(); 
+  }
+| ConstructorDeclarator {
+
+    Method* method = new Method($1->method->name,"",$1->method->parameters,{},yylineno);
+    sym_table->insert(method);
+    sym_table->makeTable();
+  } ConstructorDeclarationEnd {
+    $$=new Node("ConstructorDeclaration"); 
+    vector<Node*>v{$1}; $$->add(v); 
+    $$->add($3->objects);
+    sym_table->end_scope(); 
+  }
 ;
 
 ConstructorDeclarationEnd:
@@ -235,17 +287,47 @@ ArgumentList:
 ;
 
 ConstructorDeclarator:
-  ConstructorDeclaratorStart ConstructorDeclaratorEnd {$$ = new Node("ConstructorDeclarator"); $$->add($1->objects); $$->add($2->objects); }
+  ConstructorDeclaratorStart ConstructorDeclaratorEnd {
+    $$ = new Node("ConstructorDeclarator"); 
+    $$->add($1->objects); 
+    $$->add($2->objects); 
+    $$->method = $2->method;
+    $$->method->name = $1->method->name;
+    }
 ;
 
 ConstructorDeclaratorStart:
-  TypeParameters Identifier brac_open {$$ = new Node(); string t1=$2,t2=$3; vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
-| Identifier brac_open {$$ = new Node(); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
+  TypeParameters Identifier brac_open {
+    $$ = new Node(); 
+    string t1=$2,t2=$3; 
+    vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v); 
+    $$->method = new Method($2,"",{},{},yylineno);
+    }
+| Identifier brac_open {
+    $$ = new Node(); 
+    string t1=$1,t2=$2; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v); 
+    $$->method = new Method($1,"",{},{},yylineno);
+  }
 ;
 
 ConstructorDeclaratorEnd:
-  ReceiverParameter FormalParameterList brac_close {$$ = new Node(); string t1=$3; vector<Node*>v{$1,$2,new Node(mymap[t1],t1)}; $$->add(v);}
-| FormalParameterList brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v);}
+  ReceiverParameter FormalParameterList brac_close {
+    $$ = new Node(); 
+    string t1=$3; 
+    vector<Node*>v{$1,$2,new Node(mymap[t1],t1)}; 
+    $$->add(v);
+    $$->method = $2->method;
+    }
+| FormalParameterList brac_close {
+    $$ = new Node(); 
+    string t1=$2; 
+    vector<Node*>v{$1,new Node(mymap[t1],t1)}; 
+    $$->add(v);
+    $$->method = $1->method;
+  }
 | ReceiverParameter brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); }
 | brac_close {$$ = new Node(); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v); }
 ;
@@ -293,14 +375,44 @@ ClassMemberDeclaration:
 ;
 
 MethodAndFieldStart:
-Modifiers UnannType {$$=new Node(); $$->add($1); $$->add($2);}
-| UnannType {$$=new Node(); $$->add($1);}
+Modifiers UnannType {
+  $$=new Node(); 
+  $$->add($1); 
+  $$->add($2);
+  // cout<<"ModifiersUnannnn";
+  $$->method = new Method("",$2->var->type,{},$1->var->modifiers,yylineno);
+  // $$->var=$2->var;
+  // $$->var->modifiers = $1->var->modifiers;
+  }
+| UnannType {$$=new Node(); 
+  $$->add($1); 
+  // $$->var = $1->var;
+  $$->method = new Method("",$1->var->type,{},{},yylineno);
+  }
 ;
 
 MethodDeclaration:
-  MethodAndFieldStart MethodDeclarator MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($3->objects); }
-| Modifiers MethodHeader MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($3->objects); }
-| MethodHeader MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($2->objects); }
+  MethodAndFieldStart MethodDeclarator {
+    Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
+    sym_table->insert(_method);
+    sym_table->makeTable();
+  }
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); sym_table->end_scope(); }
+
+| Modifiers MethodHeader {
+    // cout<<"aayayaya";
+    Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
+    sym_table->insert(_method);
+    sym_table->makeTable();
+  }
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);sym_table->end_scope(); }
+
+| MethodHeader{
+    Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
+    sym_table->insert(_method);
+    sym_table->makeTable();
+  } 
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); sym_table->end_scope();}
 ;
 
 MethodDeclarationEnd:
@@ -310,13 +422,37 @@ MethodDeclarationEnd:
 
 
 MethodHeader:
-  TypeParameters MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1); $$->add($2->objects);}
-| MethodHeaderStart {$$= new Node("MethodHeader"); $$->add($1->objects); }
+  TypeParameters MethodHeaderStart {
+    $$= new Node("MethodHeader"); 
+    $$->add($1); 
+    $$->add($2->objects);
+    $$->method = $2->method;
+    }
+| MethodHeaderStart {
+    $$= new Node("MethodHeader"); 
+    $$->add($1->objects); 
+    $$->method = $1->method;
+    }
 ;
 
 MethodHeaderStart:
- VOID MethodDeclarator {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); }
-| VOID MethodDeclarator Throws {string t1=$1; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects); $$->add($3); }
+ VOID MethodDeclarator {
+  string t1=$1; 
+  $$=new Node(); 
+  $$->add(new Node(mymap[t1],t1)); 
+  $$->add($2->objects);
+  $$->method = $2->method;
+  $$->method->ret_type = $1;
+  }
+| VOID MethodDeclarator Throws {
+  string t1=$1; 
+  $$=new Node(); 
+  $$->add(new Node(mymap[t1],t1)); 
+  $$->add($2->objects); 
+  $$->add($3); 
+  $$->method = $2->method;
+  $$->method->ret_type = $1;
+  }
 ;
 
 Throws:
@@ -329,16 +465,38 @@ ExceptionTypeList:
 ;
 
 MethodDeclarator:
-  Identifier brac_open MethodDeclaratorTillRP {string t1=$1,t2=$2; $$=new Node(); $$->add(new Node(mymap[t1],t1)); $$->add(new Node(mymap[t2],t2)); $$->add($3->objects);}
+  Identifier brac_open MethodDeclaratorTillRP {
+    string t1=$1,t2=$2; 
+    $$=new Node(); 
+    $$->add(new Node(mymap[t1],t1)); 
+    $$->add(new Node(mymap[t2],t2)); 
+    $$->add($3->objects);
+    $$->method = $3->method;
+    $$->method->name = $1;
+    }
 ;
 
 MethodDeclaratorTillRP:
-  UnannType ReceiverParameter MethodDeclaratorTillFP {$$=new Node(); $$->add($1); $$->add($2); $$->add($3->objects);}
-| MethodDeclaratorTillFP {$$=new Node(); $$->add($1->objects);}
+  UnannType ReceiverParameter MethodDeclaratorTillFP {
+    $$=new Node(); 
+    $$->add($1); $$->add($2); 
+    $$->add($3->objects);
+    $$->method=$3->method;
+    }
+| MethodDeclaratorTillFP {
+    $$=new Node(); 
+    $$->add($1->objects);
+    $$->method = $1->method;
+  }
 ;
 
 MethodDeclaratorTillFP:
-  FormalParameterList MethodDeclaratorEnd {$$=new Node(); $$->add($1); $$->add($2->objects);}
+  FormalParameterList MethodDeclaratorEnd {
+    $$=new Node(); 
+    $$->add($1); 
+    $$->add($2->objects);
+    $$->method = $1->method;
+    }
 | MethodDeclaratorEnd {$$=new Node(); $$->add($1->objects);}
 ;
 
@@ -348,20 +506,53 @@ MethodDeclaratorEnd:
 ;
 
 FormalParameterList:
-  FormalParameter {$$= new Node("FormalParameterList"); $$->add($1);}
-| FormalParameterList comma FormalParameter {$$=$1; string t1=$2; $$->add(new Node(mymap[t1],t1)); $$->add($3);}
+  FormalParameter {
+    $$= new Node("FormalParameterList"); 
+    $$->add($1);
+    vector<Variable*> varss;
+    varss.push_back($1->var);
+    $$->method = new Method("","",varss,{},yylineno);
+    }
+| FormalParameterList comma FormalParameter {
+    $$=$1; 
+    string t1=$2; 
+    $$->add(new Node(mymap[t1],t1)); 
+    $$->add($3);
+    $$->method=$1->method;
+    $$->method->parameters.push_back($3->var);
+    }
 ;
 
 FormalParameter:
-  FINAL UnannType VariableDeclaratorId {$$= new Node("FormalParameter"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2,$3}; $$->add(v);}
-| UnannType VariableDeclaratorId {$$= new Node("FormalParameter"); vector<Node*>v{$1,$2}; $$->add(v);}
+  FINAL UnannType VariableDeclaratorId {
+  $$= new Node("FormalParameter"); 
+  string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2,$3}; 
+  $$->add(v);
+  $$->var=$3->var;
+  $$->var->type=$2->var->type;
+  $$->var->modifiers.push_back($1);
+  }
+
+| UnannType VariableDeclaratorId {
+  $$= new Node("FormalParameter"); 
+  vector<Node*>v{$1,$2}; 
+  $$->add(v);
+  $$->var= $2->var;
+  $$->var->type = $1->var->type;
+  }
 | VariableArityParameter {$$= $1;}
 ;
 
 
 VariableDeclaratorId:
   Identifier Dims {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2}; $$->add(v);}
-| Identifier {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1))}; $$->add(v); }
+| Identifier {
+  $$= new Node("VariableDeclaratorId"); 
+  string t1=$1; 
+  vector<Node*>v{(new Node(mymap[t1],t1))}; 
+  $$->add(v);
+  $$->var = new Variable($1,"",yylineno,{});
+  }
 ;
 
 VariableArityParameter:
@@ -389,8 +580,22 @@ CommonModifier:
 ;
 
 Modifiers:
-CommonModifier {string t1=$1; $$ = new Node("Modifiers"); $$->add(new Node(mymap[t1],t1));}
-| Modifiers CommonModifier {$$=new Node("Modifiers"); $$->add($1->objects); string t1=$2; $$->add(new Node(mymap[t1],t1));}
+CommonModifier {
+  string t1=$1; $$ = new Node("Modifiers"); $$->add(new Node(mymap[t1],t1));
+  vector<string> mod;
+  mod.push_back($1);
+  // cout<<"aaa"<<$1<<endl;
+  $$->var = new Variable($1,"",yylineno,mod);
+  }
+| Modifiers CommonModifier {
+  $$=new Node("Modifiers"); 
+  // cout<<"aab"<<$2<<endl;
+  $$->add($1->objects); 
+  string t1=$2; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->var = $1->var;
+  $$->var->modifiers.push_back($2);
+  }
 ;
 
 VariableDeclaratorList:
@@ -399,8 +604,8 @@ VariableDeclaratorList:
 ;
 
 UnannType:
-  PrimitiveType {$$ = new Node("UnannType"); $$->add($1); }
-| ReferenceType {$$ = new Node("UnannType"); $$->add($1); }
+  PrimitiveType {$$ = new Node("UnannType"); $$->add($1); $$->var = new Variable($1->lexeme,$1->lexeme,yylineno,{}); }
+| ReferenceType {$$ = new Node("UnannType"); $$->add($1); cout<<"aayeaaye"; }
 ;
 
 VariableDeclarator:
