@@ -1,5 +1,8 @@
 public static class Fibonacci { //1
-    public int memo;
+    public int memo = 9;
+    char z,y,x;
+    float ff,ff1;
+    String name = "kakka";
 
     public Fibonacci(int n) {
         memo = new int[n + 1];
@@ -20,7 +23,7 @@ public static class Fibonacci { //1
     }
 }
 class Myclass{
-
+    public int ff[][], z;
     public class Onemore{
         public static void fatak(char z){
 

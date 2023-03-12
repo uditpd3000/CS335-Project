@@ -379,14 +379,10 @@ Modifiers UnannType {
   $$=new Node(); 
   $$->add($1); 
   $$->add($2);
-  // cout<<"ModifiersUnannnn";
   $$->method = new Method("",$2->var->type,{},$1->var->modifiers,yylineno);
-  // $$->var=$2->var;
-  // $$->var->modifiers = $1->var->modifiers;
   }
 | UnannType {$$=new Node(); 
   $$->add($1); 
-  // $$->var = $1->var;
   $$->method = new Method("",$1->var->type,{},{},yylineno);
   }
 ;
@@ -565,7 +561,25 @@ ReceiverParameter:
 ;
 
 FieldDeclaration:
-  MethodAndFieldStart VariableDeclaratorList semi_colon {string t1=$3; $$=new Node("FieldDeclaration"); $$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1)}; $$->add(v);}
+  MethodAndFieldStart VariableDeclaratorList semi_colon {
+    string t1=$3; 
+    $$=new Node("FieldDeclaration"); 
+    $$->add($1->objects); 
+    vector<Node*>v{$2,new Node(mymap[t1],t1)}; 
+    $$->add(v);
+    for(auto i:$2->variables){
+      if(i->isArray){
+        Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->size);
+        sym_table->insert(varr);
+        
+      }
+      else{
+        Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers);
+        sym_table->insert(varr);
+      }
+
+    }
+  }
 ;
 
 
@@ -599,20 +613,62 @@ CommonModifier {
 ;
 
 VariableDeclaratorList:
-  VariableDeclarator {$$= new Node("VariableDeclaratorList"); $$->add($1); }
-| VariableDeclaratorList comma VariableDeclarator { $$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3}; $$->add(v); }
+  VariableDeclarator {
+    $$= new Node("VariableDeclaratorList"); 
+    $$->add($1); 
+    $$->variables.push_back($1->var);
+    }
+| VariableDeclaratorList comma VariableDeclarator { 
+    $$=$1; 
+    string t1=$2; 
+    vector<Node*>v{new Node(mymap[t1],t1),$3}; 
+    $$->add(v); 
+    $$->variables.push_back($3->var);
+    }
 ;
 
 UnannType:
-  PrimitiveType {$$ = new Node("UnannType"); $$->add($1); $$->var = new Variable($1->lexeme,$1->lexeme,yylineno,{}); }
-| ReferenceType {$$ = new Node("UnannType"); $$->add($1); cout<<"aayeaaye"; }
+  PrimitiveType {
+    $$ = new Node("UnannType"); 
+    $$->add($1); 
+    $$->var = new Variable($1->lexeme,$1->lexeme,yylineno,{}); 
+    }
+| ReferenceType {
+    $$ = new Node("UnannType"); 
+    $$->add($1); 
+    $$->var = $1->var;
+    cout<<"aayeaaye"; }
 ;
 
 VariableDeclarator:
-  Identifier {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v);}
-| Identifier Dims {$$ = new Node("VariableDeclarator"); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v);}
-| Identifier assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; $$->add(v);}
-| Identifier Dims assign VariableInitializer {$$ = new Node("VariableDeclarator"); string t1=$1,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; $$->add(v);}
+  Identifier {
+    $$ = new Node("VariableDeclarator"); 
+    string t1=$1; 
+    vector<Node*>v{new Node(mymap[t1],t1)}; 
+    $$->add(v);
+    $$->var = new Variable($1,"",yylineno,{});
+    }
+| Identifier Dims {
+    $$ = new Node("VariableDeclarator"); 
+    string t1=$1; 
+    vector<Node*>v{new Node(mymap[t1],t1),$2}; 
+    $$->add(v);
+    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
+  }
+| Identifier assign VariableInitializer {
+    $$ = new Node("VariableDeclarator"); 
+    string t1=$1,t2=$2; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
+    $$->add(v);                                                        //Change change
+    $$->var = new Variable($1,"",yylineno,{});
+  }
+| Identifier Dims assign VariableInitializer {                        // Change change
+    $$ = new Node("VariableDeclarator"); 
+    string t1=$1,t2=$3; 
+    vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
+    $$->add(v);
+    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
+    }
 ;
 
 VariableInitializer:
@@ -700,13 +756,39 @@ ReferenceType:
 ;
 
 ArrayType:
-  PrimitiveType Dims   {$$=new Node("ArrayType"); $$->add($1); $$->add($2->objects);   }
-| ClassType Dims       {$$=new Node("ArrayType"); $$->add($1->objects); $$->add($2->objects);  }
+  PrimitiveType Dims   {
+    $$=new Node("ArrayType"); 
+    $$->add($1); 
+    $$->add($2->objects);   
+    $$->var = $2->var;
+    $$->var->type = $1->lexeme;
+    }
+| ClassType Dims       {
+    $$=new Node("ArrayType"); 
+    $$->add($1->objects); 
+    $$->add($2->objects);
+    $$->var = $1->var;
+    $$->var->isArray= true;
+    $$->var->dims = $2->var->dims;
+    $$->var->size = $2->var->size;  
+    }
 ;
 
 Dims:
- box_open box_close          {$$=new Node("Dims"); string t1=$1,t2=$2; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
-| Dims box_open box_close    {$$=$1; string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
+  box_open box_close          {
+    $$=new Node("Dims"); 
+    string t1=$1,t2=$2; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v);
+    $$->var= new Variable("","",{},yylineno,true,1,{});
+    }
+| Dims box_open box_close    {
+    $$=$1; 
+    string t1=$2,t2=$3; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v);
+    $$->var->dims++;
+    }
 ;
 
 PrimitiveType:
@@ -757,8 +839,22 @@ PrimaryNoNewArray:
 ;
 
 TypeName:
-  Identifier {string t1=$1; $$=new Node("TypeName"); $$->add(new Node("Identifier",t1));}
-| TypeName dot Identifier {$$=$1; string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v);}
+  Identifier {
+    string t1=$1; 
+    $$=new Node("TypeName"); 
+    $$->add(new Node("Identifier",t1));
+    $$->var = new Variable($1,$1,yylineno,{});
+    }
+| TypeName dot Identifier {
+    $$=$1; 
+    string t1=$2,t2=$3; 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
+    $$->add(v);
+    string t = $$->var->type;
+    t+=$2;t+=$3;
+    $$->var->name=t;
+    $$->var->type=t;
+  }
 ;
 
 Idboxopen:

@@ -58,6 +58,7 @@ class Node {
 
     Variable* var;
     Method* method;
+    vector<Variable*> variables;
 
     vector<Node*> objects;
 
