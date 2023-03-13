@@ -19,6 +19,7 @@ class Variable{
         isArray = false;
         modifiers = myModifiers;
         lineNo = mylineNo;
+        dims=0;
 
     }
     Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize){
@@ -51,13 +52,31 @@ class Method{
 
 };
 
+class Class{
+    public:
+    string name;
+    vector<string> modifiers;
+    int lineNo;
+    int scope_count;
+    Class(string myname, vector<string> mymodifiers, int mylineNo){
+        name = myname;
+        modifiers = mymodifiers;
+        lineNo = mylineNo;
+        // scope_count = scope_count;
+    }
+};
+
 class Node {
   public:
     string label; //seperator
     string lexeme; //}
 
+    string type;
+
     Variable* var;
     Method* method;
+    Class* cls;
+    int dims=0;
     vector<Variable*> variables;
 
     vector<Node*> objects;
@@ -94,19 +113,6 @@ class Node {
     }
 };
 
-class Class{
-    public:
-    string name;
-    vector<string> modifiers;
-    int lineNo;
-    int scope_count;
-    Class(string myname, vector<string> mymodifiers, int mylineNo){
-        name = myname;
-        modifiers = mymodifiers;
-        lineNo = mylineNo;
-        scope_count = scope_count;
-    }
-};
 
 class SymbolTable {
 
@@ -143,6 +149,10 @@ class SymbolTable {
         cout<<"Variables coming\n\n";
         for(auto i:vars){
             cout<<"Name: "<<i->name<<" Type: "<<i->type<<endl;
+            cout<<"Array? "<<i->isArray;
+            cout<<"Mod: ";
+            for(auto j:i->modifiers){cout<<j<<" ";}
+            cout<<endl;
         }
         cout<<"Methods coming\n\n";
         for(auto i:methods){
@@ -188,7 +198,7 @@ class GlobalSymbolTable {
     }
 
     // lookups
-    Variable* lookup_var(string s, int pp){
+    Variable* lookup_var(string s, int pp, string scope){
 
         SymbolTable* curr = current_symbol_table;
 
@@ -203,7 +213,7 @@ class GlobalSymbolTable {
         return NULL;
     }
 
-    Method* lookup_method(string s, int pp){
+    Method* lookup_method(string s, int pp, string scope){
 
         SymbolTable* curr = current_symbol_table;
 
@@ -219,11 +229,17 @@ class GlobalSymbolTable {
         
     }
 
-    Class* lookup_class(string s, int pp){
+    Class* lookup_class(string s, int pp, string scope){
 
         SymbolTable* curr = current_symbol_table;
 
-        while(curr->parent!=NULL){
+        if(s=="String"){
+            Class * Str = new Class("String",{},0);
+            return Str;
+        }
+
+        while(curr!=NULL){
+            // cout<<curr->scope<<"   "<<s<<"--";
             for(int i=0; i<curr->classes.size();i++){
                 if(curr->classes[i]->name==s)return curr->classes[i];
             }
@@ -243,7 +259,7 @@ class GlobalSymbolTable {
         tablemap[scope_count-1]=newTable;
         linkmap[scope]=newTable;
         current_symbol_table= newTable;
-        cout<<scope_count;
+        // cout<<scope_count;
         current_scope = scope;
         return newTable;
     }
@@ -273,9 +289,9 @@ class GlobalSymbolTable {
     }
 
     bool insertCheck(string symbol){
-        if(lookup_var(symbol,0)==NULL){
-            if(lookup_method(symbol,0)==NULL){
-                if(lookup_class(symbol,0)==NULL){
+        if(lookup_var(symbol,0,current_scope)==NULL){
+            if(lookup_method(symbol,0,current_scope)==NULL){
+                if(lookup_class(symbol,0,current_scope)==NULL){
                     return true;
                     
                 }
@@ -311,8 +327,8 @@ class GlobalSymbolTable {
     }
 
     bool typeCheckVar(string s1, string s2){
-        Variable* v1 = lookup_var(s1,1);
-        Variable* v2 = lookup_var(s2,1);
+        Variable* v1 = lookup_var(s1,1,current_scope);
+        Variable* v2 = lookup_var(s2,1,current_scope);
         if(v1->type!=v2->type){
             cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
             exit(1);
@@ -320,6 +336,22 @@ class GlobalSymbolTable {
         return true;
         
         
+    }
+
+    bool typeCheckVar(Variable* v1, Variable* v2){
+        if(v1->type!=v2->type){
+            cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
+            exit(1);
+        }
+        return true;   
+    }
+
+    bool typeCheckVar(Variable* v1, string myType){
+        if(v1->type!=myType){
+            cout<<"Type mismatch: Assigning"<<myType<<" to "<<v1->type;
+            exit(1);
+        }
+        return true;   
     }
 
 };
