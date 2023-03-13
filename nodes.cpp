@@ -3,10 +3,62 @@
 using namespace std;
 extern ofstream fout;
 
+class Variable{
+    public:
+    string name;
+    string type;
+    vector<string> modifiers;
+    bool isArray;
+    int dims;
+    int lineNo;
+    vector<int> size;
+
+    Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers){
+        name = myname;
+        type = mytype;
+        isArray = false;
+        modifiers = myModifiers;
+        lineNo = mylineNo;
+
+    }
+    Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize){
+        name = myname;
+        type = mytype;
+        isArray = true;
+        modifiers = myModifiers;
+        dims = mydims;
+        size = mysize;
+        lineNo = mylineNo;
+    }
+};
+
+class Method{
+    public:
+    string name;
+    string ret_type;
+    vector<Variable*> parameters; 
+    vector<string> modifiers;
+    int lineNo;
+
+    Method(string myname, string myret_type, vector<Variable*> myparameters, vector<string> mymodifiers, int mylineNo){
+        name = myname;
+        ret_type = myret_type;
+        parameters = myparameters;
+        modifiers = mymodifiers;
+        lineNo = mylineNo;
+    }
+
+
+};
+
 class Node {
   public:
     string label; //seperator
     string lexeme; //}
+
+    Variable* var;
+    Method* method;
+    vector<Variable*> variables;
 
     vector<Node*> objects;
 
@@ -42,73 +94,15 @@ class Node {
     }
 };
 
-class Variable{
-    public:
-    string name;
-    string type;
-    vector<string> modifiers;
-    bool isArray;
-    int dims;
-    int lineNo;
-    vector<int> size;
-
-    Variable(){
-        name="";
-    }
-    Variable(string name, string type, int lineNo, vector<string> Modifiers){
-        name = name;
-        type = type;
-        isArray = false;
-        modifiers = modifiers;
-        lineNo = lineNo;
-
-    }
-    Variable(string name, string type, vector<string> Modifiers, int lineNo, bool isArray, int dims, vector<int> size){
-        name = name;
-        type = type;
-        isArray = true;
-        modifiers = modifiers;
-        dims = dims;
-        size = size;
-        lineNo = lineNo;
-    }
-};
-
-class Method{
-    public:
-    string name;
-    string ret_type;
-    vector<Variable*> parameters; 
-    vector<string> modifiers;
-    int lineNo;
-
-    Method(){
-        name="";
-    }
-    Method(string name, string ret_type, vector<Variable*> parameters, vector<string> modifiers){
-        name = name;
-        ret_type = ret_type;
-        parameters = parameters;
-        modifiers = modifiers;
-        lineNo = lineNo;
-    }
-
-
-};
-
 class Class{
     public:
     string name;
     vector<string> modifiers;
     int lineNo;
-
-    Class(){
-        name="";
-    }
-    Class(string name, vector<string> modifiers, int lineNo){
-        name = name;
-        modifiers = modifiers;
-        lineNo = lineNo;
+    Class(string myname, vector<string> mymodifiers, int mylineNo){
+        name = myname;
+        modifiers = mymodifiers;
+        lineNo = mylineNo;
 
     }
 
@@ -120,13 +114,15 @@ class SymbolTable {
 
     SymbolTable * parent;
     string scope;
+    int num;
     vector<Variable*> vars;
     vector<Class*> classes;
     vector<Method*> methods;
 
-    SymbolTable(SymbolTable* parent, string scope){
-        parent = parent;
-        scope = scope;
+    SymbolTable(SymbolTable* myparent, string myscope, int mynum){
+        parent = myparent;
+        scope = myscope;
+        num = mynum;
         vars = {};
         classes = {};
         methods = {};
@@ -142,6 +138,31 @@ class SymbolTable {
     void insert_class(Class* classs){
         classes.push_back(classs);
     }
+    void printTable(){
+        cout<<"Scope: "<<scope<<endl;
+        cout<<"Variables coming\n\n";
+        for(auto i:vars){
+            cout<<"Name: "<<i->name<<" Type: "<<i->type<<endl;
+        }
+        cout<<"Methods coming\n\n";
+        for(auto i:methods){
+            cout<<"Name: "<<i->name<<" Type: "<<i->ret_type<<endl;
+            cout<<"Parameters:";
+            for(auto j:i->parameters){
+                cout<<"Name: "<<j->name<<" Type: "<<j->type<<endl;
+            }
+            cout<<"Modifiers :";
+            for(auto j:i->modifiers){
+                cout<<j<<" ";
+            }
+            cout<<"\n\n";
+        }
+        cout<<"Classes coming\n\n";
+        for(auto i:classes){
+            cout<<"Name: "<<i->name<<" Line: "<<i->lineNo<<endl;
+        }
+        cout<<"\n\n---Table end---\n\n";
+    }
     
 
 
@@ -153,11 +174,13 @@ class GlobalSymbolTable {
     string current_scope;
     SymbolTable* current_symbol_table;
     int scope_count=0;
+    map<int,SymbolTable*> tablemap;
 
     GlobalSymbolTable(){
 
         current_scope="Yayyy";
-        SymbolTable* initial = new SymbolTable(NULL, current_scope);
+        SymbolTable* initial = new SymbolTable(NULL, current_scope, scope_count++);
+        tablemap[scope_count-1]=initial;
         current_symbol_table = initial;
     }
 
@@ -212,7 +235,10 @@ class GlobalSymbolTable {
 
         // SymbolTable* nnn = current_symbol_table
 
-        SymbolTable *newTable = new SymbolTable(current_symbol_table, scope );
+        SymbolTable *newTable = new SymbolTable(current_symbol_table, scope, scope_count++ );
+        tablemap[scope_count-1]=newTable;
+        current_symbol_table= newTable;
+        cout<<scope_count;
         current_scope = scope;
         return newTable;
     }
@@ -226,11 +252,20 @@ class GlobalSymbolTable {
     }
 
     SymbolTable* makeTable(){
+        string scopee = generate_scopename();
 
-        SymbolTable *newTable = new SymbolTable(current_symbol_table, generate_scopename());
-        // current_scope
+        SymbolTable *newTable = new SymbolTable(current_symbol_table, scopee, scope_count);
+        current_scope = scopee;
+        current_symbol_table = newTable;
+        // cout<<scope_count;
+        tablemap[scope_count-1]=newTable;
         return newTable;
 
+    }
+
+    void end_scope(){
+        current_scope= current_symbol_table->parent->scope;
+        current_symbol_table=current_symbol_table->parent;
     }
 
     bool insertCheck(string symbol){
@@ -253,234 +288,23 @@ class GlobalSymbolTable {
         }
         
     }
-     void insert(Method* method){
+    void insert(Method* method){
         if(insertCheck(method->name)){
            current_symbol_table->insert_method(method);
         }
         
     }
-     void insert(Class* classs){
+    void insert(Class* classs){
+        // cout<<classs->name<<"k";
         if(insertCheck(classs->name)){
            current_symbol_table->insert_class(classs);
         }
         
     }
+    void printAll(){
+        for(int i=0;i<scope_count;i++){
+            tablemap[i]->printTable();
+        }
+    }
 
 };
-
-// #include <bits/stdc++.h>
-
-// using namespace std;
-// extern ofstream fout;
-
-// class Symbol{
-//     public:
-//         string name; // x
-//         string token; // identifier
-//         string type; // int
-//         string value; // 5
-//         string lineNo; // 2
-
-//         vector<string> modifiers; // public, static
-
-//         // if array type
-//         int dims; // max 3
-//         vector<int> size; // of size equal to dims
-//         map<string,Symbol*> vals; // array access // parameters in case of functions
-
-//         Symbol(){
-
-//         }
-//         Symbol(string lexeme, string myType, string myVal){
-//             name=lexeme;
-//             // token=mymap[lexeme].token;
-//             type=myType;
-//             value=myVal;
-//             // lineNo=mymap[lexeme].lineNo;
-//         }
-//         Symbol(string lexeme, string RetType, vector<Symbol*>parameters){
-//             name=lexeme;
-//             type=RetType;
-
-//             for(auto x:parameters){
-//                 vals.insert({x->name,x});
-//             }
-//         }
-
-//         void addModifiers(string myMod){
-//             modifiers.push_back(myMod);
-//         }
-//         void addModifiers(vector<string> myMods){
-//             for(auto x:myMods) modifiers.push_back(x);
-//         }
-
-//         void addDims(vector<int>mySizes){
-//             // int x[]={1,2,3};
-//             // int sum[][]= new int[rows][columns]; dim=2, rows,clm
-//             dims=mySizes.size();
-//             size= mySizes;
-//         }
-
-//         Symbol* getArrayAcess(string index){
-//             // sum[1][2]=5;
-//             // sum + [1][2]
-//             return vals[index];
-//         }
-
-// };
-
-// // class Function{
-
-// //     map<string,Symbol*>params;
-// //     string retType;
-
-// //     vector<string> modifiers; // public, static
-
-// // };
-
-// class SymbolTable{
-//     public:
-//     string label;
-//     string scope;
-//     string parent=""; // scope of parent
-//     map<string,Symbol*> syms;
-//     map<string,Symbol*> functions;
-//     map<string,string> blocks;
-
-//     SymbolTable(string myLabel, string myScope){
-//         label=myLabel;
-//         scope=myScope;
-//     }
-
-//     void addSym(string lexeme, string myType, string myVal, vector<string>modifs, vector<int>mySizes){
-//         if(syms.find(lexeme)==syms.end()){
-//             auto x = new Symbol(lexeme,myType,myVal);
-//             syms.insert({lexeme,x});
-//             // add Modifiers, dims
-//             if(modifs.size()) x->addModifiers(modifs);
-//             if(mySizes.size()) x->addDims(mySizes);
-//         }
-//         else {
-//             cout<<"Symbol \""<<lexeme<<"\" redeclared, check your program\n";
-//             exit(-1);
-//         }
-//     }
-//     void addFunc(){}
-// };
-
-// class ScopeTable{
-//     // maintains list of symTables
-
-//     int labelCount=0;
-//     int tempVarCount=0;
-//     string scope="start";
-//     string prefix="j";
-//     SymbolTable* symTable; // parent none
-
-//     map<string,SymbolTable*> linkMap;
-
-//     ScopeTable(string label){
-//         symTable = new SymbolTable(label,scope);
-//         scope = label;
-//         linkMap.insert({scope,symTable});
-//     }
-
-//     void endScope(){
-//         scope=linkMap[scope]->parent;
-//     }
-
-//     string makeLabel(){
-//         labelCount++;
-//         return prefix+ to_string(labelCount);
-//     }
-
-//     string makeTemp(){
-//         string px = "t";
-//         tempVarCount++;
-//         return px + to_string(tempVarCount);
-//     }
-
-//     string getParentScope(){
-//         return linkMap[scope]->parent;
-//     }
-
-//     Symbol* lookup(string symbol,bool is_func=false){
-//         string curr_scope=scope;
-
-//         while(scope!=""){
-//             if(!is_func){
-//                 if(linkMap[curr_scope]->syms.find(symbol)!=linkMap[curr_scope]->syms.end())
-//                     return linkMap[curr_scope]->syms[symbol];
-//                 else{
-//                     for(auto x: linkMap[curr_scope]->functions){
-//                         if(x.second->vals.find(symbol)!=x.second->vals.end())
-//                             return x.second->vals[symbol];
-//                     }
-//                 }
-//             }
-//             else if(is_func && linkMap[curr_scope]->functions.find(symbol)!=linkMap[curr_scope]->functions.end()){
-//                 return linkMap[curr_scope]->functions[symbol];
-//             }
-//             else{
-//                 curr_scope=linkMap[curr_scope]->parent;
-//             }
-//         }
-//         return NULL;
-//     }
-
-//     //Universal function to insert any symbol into current symbol table
-//     // Returns a string representing the new scope name if a new block is
-//     // about to start; otherwise returns None
-
-//     string insert(string myName, string myType,vector<string> myModifiers, string myVal="",bool is_func=false, vector<Symbol*> args = vector<Symbol*>(),bool is_array=false,vector<int> arr_size=vector<int>(),string myScope=""){
-//         if(myScope==""){
-//             myScope=scope;
-//         }
-//         if(!is_func){
-//             linkMap[myScope]->addSym(myName, myType, myVal, myModifiers, arr_size);
-//             return "";
-//         }
-//         else{
-//             linkMap[myScope]->addFunc();
-//         }
-//     }
-// };
-
-// class Node {
-//   public:
-//     string label; //seperator
-//     string lexeme; //}
-
-//     vector<Node*> objects;
-
-//     Node(){
-//         label="";
-//         lexeme="";
-//     }
-//     Node(string l){
-//         label=l;
-//         lexeme="";
-//     }
-//     Node(string a,string b){
-//         label=a;
-//         lexeme=b;
-//     }
-
-//     void add(Node* a){
-//         objects.push_back(a);
-//     }
-//     void add(vector<Node*> a){
-//         for(auto x:a) objects.push_back(x);
-//     }
-
-//     void print(){
-//         fout<<label;
-//         if(lexeme!=""){
-//             if(lexeme[0]!='"' && lexeme[lexeme.length()-1]) fout<<"__"<<lexeme; //seperator__}
-//             else{
-//                 fout<<"__\\"<<lexeme.substr(0,lexeme.length()-1)<<"\\\"";
-//             }
-//         }
-
-//     }
-// };
