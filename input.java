@@ -8,6 +8,24 @@ public static class Fibonacci { //1
         memo = new int[n + 1];
     }
 
+    {
+        int who;
+        char love;
+        final class You{
+
+        }
+    }
+
+    static {
+        int me;
+        String dont;
+        float love;
+        final class You{
+            
+        }
+
+    }
+
     private int fib(int n, int z) {
         if (n == 0 || n == 1) {
             return n;

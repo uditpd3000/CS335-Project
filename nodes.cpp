@@ -307,4 +307,6 @@ class GlobalSymbolTable {
         }
     }
 
+    // bool typeCheck(Variable* var1)
+
 };

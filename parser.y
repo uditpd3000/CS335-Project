@@ -14,7 +14,7 @@ extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
 
-GlobalSymbolTable* sym_table = new GlobalSymbolTable(); 
+GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
 
 int num=0;
 
@@ -143,7 +143,7 @@ void generate_graph(Node *n){
 %%
 
 input: 
-CompilationUnit {generate_graph($$);sym_table->printAll();}
+CompilationUnit {generate_graph($$);global_sym_table->printAll();}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
@@ -156,8 +156,8 @@ ClassDeclaration:
 
     Class *classs = new Class($3,$1->var->modifiers,yylineno);
 
-    sym_table->insert(classs);
-    sym_table->makeTable();
+    global_sym_table->insert(classs);
+    global_sym_table->makeTable();
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -166,13 +166,13 @@ ClassDeclaration:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
     $$->add($5->objects); 
-    sym_table->end_scope();
+    global_sym_table->end_scope();
   }
 | class_just_class Identifier {
     vector<string> mod;
     Class* classs =  new Class($2,mod,yylineno);
-    sym_table->insert(classs);
-    sym_table->makeTable();
+    global_sym_table->insert(classs);
+    global_sym_table->makeTable();
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -223,26 +223,26 @@ ConstructorDeclaration:
     vector<string> mod;
     mod.push_back($1);
     Method* method = new Method($2->method->name,"",$2->method->parameters,mod,yylineno);
-    sym_table->insert(method);
-    sym_table->makeTable();
+    global_sym_table->insert(method);
+    global_sym_table->makeTable();
 
   } ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
     string t=$1; 
     vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); 
     $$->add($4->objects);
-    sym_table->end_scope(); 
+    global_sym_table->end_scope(); 
   }
 | ConstructorDeclarator {
 
     Method* method = new Method($1->method->name,"",$1->method->parameters,{},yylineno);
-    sym_table->insert(method);
-    sym_table->makeTable();
+    global_sym_table->insert(method);
+    global_sym_table->makeTable();
   } ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
     vector<Node*>v{$1}; $$->add(v); 
     $$->add($3->objects);
-    sym_table->end_scope(); 
+    global_sym_table->end_scope(); 
   }
 ;
 
@@ -333,11 +333,24 @@ ConstructorDeclaratorEnd:
 ;
 
 StaticInitializer:
-  STATIC Block {string t1=$1; $$ =new Node("StaticInitializer");vector<Node*>v{new Node("Keyword",t1),$2};$$->add(v); }
+  STATIC {
+    global_sym_table->makeTable();
+    }
+  Block {
+    string t1=$1; 
+    $$ =new Node("StaticInitializer");
+    vector<Node*>v{new Node("Keyword",t1),$3};
+    $$->add(v); 
+    global_sym_table->end_scope();
+    }
 ;
 
 InstanceInitializer:
- Block {$$ = $1;}
+ {global_sym_table->makeTable();}
+ Block {
+  $$ = $2;
+  global_sym_table->end_scope();
+  }
 ;
 
 Block:
@@ -352,15 +365,19 @@ BlockStatements:
 
 
 BlockStatement:
-  Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); }
-| LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); }
+  // Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); }
+ LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); }
 | LocalVariableDeclaration semi_colon {$$ =$1; string t1=$2; $$->add(new Node(mymap[t1],t1));  }
 | Statement { $$=new Node("BlockStatement"); $$->add($1);}
 ;
 
 LocalVariableType:
   UnannType {$$=$1;}
-| var {string t1= $1; $$=new Node(mymap[t1],t1);}
+| var {
+    string t1= $1; 
+    $$=new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    }
 ;
 
 LocalClassOrInterfaceDeclaration:
@@ -390,25 +407,25 @@ Modifiers UnannType {
 MethodDeclaration:
   MethodAndFieldStart MethodDeclarator {
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
-    sym_table->insert(_method);
-    sym_table->makeTable();
+    global_sym_table->insert(_method);
+    global_sym_table->makeTable();
   }
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); sym_table->end_scope(); }
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
 | Modifiers MethodHeader {
     // cout<<"aayayaya";
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
-    sym_table->insert(_method);
-    sym_table->makeTable();
+    global_sym_table->insert(_method);
+    global_sym_table->makeTable();
   }
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);sym_table->end_scope(); }
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);global_sym_table->end_scope(); }
 
 | MethodHeader{
     Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
-    sym_table->insert(_method);
-    sym_table->makeTable();
+    global_sym_table->insert(_method);
+    global_sym_table->makeTable();
   } 
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); sym_table->end_scope();}
+  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); global_sym_table->end_scope();}
 ;
 
 MethodDeclarationEnd:
@@ -570,12 +587,12 @@ FieldDeclaration:
     for(auto i:$2->variables){
       if(i->isArray){
         Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->size);
-        sym_table->insert(varr);
+        global_sym_table->insert(varr);
         
       }
       else{
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers);
-        sym_table->insert(varr);
+        global_sym_table->insert(varr);
       }
 
     }
@@ -1055,7 +1072,11 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
 ;
 
 StatementWithoutTrailingSubstatement:
-Block                           {$$=$1;}
+{global_sym_table->makeTable();} 
+  Block {
+    $$=$1;
+    global_sym_table->end_scope();
+  }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}
 | ExpressionStatement           {$$=$1;}
 | BreakStatement                {$$=$1;}
@@ -1182,7 +1203,23 @@ WHILE brac_open Expression brac_close Statement {$$ = new Node("WhileStatement")
 ;
 
 LocalVariableDeclaration:
-LocalVariableType VariableDeclaratorList {$$= new Node ("LocalVariableDeclaration"); $$->add($1->objects); $$->add($2);}
+LocalVariableType VariableDeclaratorList {
+  $$= new Node ("LocalVariableDeclaration"); 
+  $$->add($1->objects); 
+  $$->add($2);
+  for(auto i:$2->variables){
+      if(i->isArray){
+        Variable* varr = new Variable(i->name,$1->var->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
+        global_sym_table->insert(varr);
+        
+      }
+      else{
+        Variable* varr = new Variable(i->name,$1->var->type,yylineno,$1->var->modifiers);
+        global_sym_table->insert(varr);
+      }
+
+    }
+  }
 | Modifiers LocalVariableType VariableDeclaratorList {$$= new Node ("LocalVariableDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($3);}
 ;
 
