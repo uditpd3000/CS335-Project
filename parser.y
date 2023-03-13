@@ -84,9 +84,10 @@ void generate_graph(Node *n){
  
 %token<sym> curly_open curly_close class_access STATIC FINAL key_SEAL key_abstract key_STRICTFP field_modifier method_modifier
 %token<sym> box_open box_close dot dots less_than greater_than comma ques_mark bitwise_and at colon OR brac_open brac_close bitwise_xor bitwise_or assign semi_colon
-%token<sym> class_just_class literal_type AssignmentOperator1 literal keyword throws var
+%token<sym> class_just_class literal_type AssignmentOperator1 keyword throws var
 %token<sym> Identifier extends super implements permits IMPORT DOT_STAR
 %token<sym> ARITHMETIC_OP_ADDITIVE ARITHMETIC_OP_MULTIPLY LOGICAL_OP Equality_OP INCR_DECR VOID THIS AND EQUALNOTEQUAL SHIFT_OP INSTANCE_OF RELATIONAL_OP1 NEW THROW RETURN CONTINUE FOR IF ELSE WHILE BREAK PRINTLN
+%token<sym>   FloatingPoint BinaryInteger OctalInteger HexInteger DecimalInteger NullLiteral CharacterLiteral TextBlock StringLiteral BooleanLiteral
 
 %type<node> input
 %type<node> ClassDeclaration ClassBody ClassPermits InterfaceTypeList ClassType ClassBodyDeclaration
@@ -95,7 +96,7 @@ void generate_graph(Node *n){
 %type<node> ClassMemberDeclaration MethodAndFieldStart FieldDeclaration
 %type<node> TypeArguments TypeArgumentList TypeArgument TypeName TypeParameters TypeParameterList TypeParameter TypeBound
 %type<node> WildcardBounds ReferenceType ArrayType Dims PrimitiveType AdditionalBound
-%type<node> UnannType ClassTypeWithArgs
+%type<node> UnannType ClassTypeWithArgs literal
 %type<node> Block BlockStatements BlockStatement LocalVariableDeclaration LocalVariableType LocalClassOrInterfaceDeclaration InstanceInitializer
 %type<node> VariableDeclarator VariableDeclaratorList VariableInitializer Modifiers CompilationUnit VariableInitializerList ArrayInitializer DimExpr DimExprs ArrayCreationExpression ArrayCreationExpressionAfterType newclasstype newprimtype WhileStatement EnhancedForStatementNoShortIf
 %type<node> StatementExpressionList ForInit ForUpdate BasicForStatement BasicForStatementNoShortIf BasicForStatementStart StatementExpression EnhancedForStatement ForStatement ForStatementNoShortIf WhileStatementNoShortIf LabeledStatementNoShortIf StatementNoShortIf IfThenElseStatement IfThenElseStatementNoShortIf IfThenStatement ExpressionStatement LabeledStatement
@@ -111,7 +112,7 @@ void generate_graph(Node *n){
 %type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
 %type<node> ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression 
 
-%type<sym> CommonModifier 
+%type<sym> CommonModifier
 
 %left OR
 %left AND
@@ -157,7 +158,7 @@ ClassDeclaration:
     Class *classs = new Class($3,$1->var->modifiers,yylineno);
 
     global_sym_table->insert(classs);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable($3);
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -172,7 +173,7 @@ ClassDeclaration:
     vector<string> mod;
     Class* classs =  new Class($2,mod,yylineno);
     global_sym_table->insert(classs);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable($2);
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -224,9 +225,10 @@ ConstructorDeclaration:
     mod.push_back($1);
     Method* method = new Method($2->method->name,"",$2->method->parameters,mod,yylineno);
     global_sym_table->insert(method);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable("cons_"+ $2->method->name);
 
-  } ConstructorDeclarationEnd {
+  } 
+  ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
     string t=$1; 
     vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); 
@@ -237,8 +239,9 @@ ConstructorDeclaration:
 
     Method* method = new Method($1->method->name,"",$1->method->parameters,{},yylineno);
     global_sym_table->insert(method);
-    global_sym_table->makeTable();
-  } ConstructorDeclarationEnd {
+    global_sym_table->makeTable("cons_"+ $1->method->name);
+  } 
+  ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
     vector<Node*>v{$1}; $$->add(v); 
     $$->add($3->objects);
@@ -280,7 +283,6 @@ ExplicitConsInvTillTypeArgs:
 | super brac_open ArgumentList brac_close semi_colon {$$ = new Node("ExplicitConstructorInvocation"); string t1=$1,t2=$2,t3=$4,t4=$5; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3),new Node(mymap[t4],t4)}; $$->add(v);}
 ;
 
-/* fixme */
 ArgumentList:
   Expression                      {$$=new Node("Arglist");vector<Node*>v{$1};$$->add(v);}
 | ArgumentList comma Expression   {$$=new Node("Arglist");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
@@ -408,7 +410,7 @@ MethodDeclaration:
   MethodAndFieldStart MethodDeclarator {
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     global_sym_table->insert(_method);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
@@ -416,14 +418,14 @@ MethodDeclaration:
     // cout<<"aayayaya";
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     global_sym_table->insert(_method);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);global_sym_table->end_scope(); }
 
 | MethodHeader{
     Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
     global_sym_table->insert(_method);
-    global_sym_table->makeTable();
+    global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
   } 
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); global_sym_table->end_scope();}
 ;
@@ -677,7 +679,7 @@ VariableDeclarator:
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
     $$->add(v);                                                        //Change change
-    $$->var = new Variable($1,"",yylineno,{});
+    $$->var = new Variable($1,$3->var->type,yylineno,{});
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -689,7 +691,9 @@ VariableDeclarator:
 ;
 
 VariableInitializer:
-  Expression {$$ = new Node("VariableInitializer"); $$->add($1);} // $$->add($1);
+  Expression {$$ = new Node("VariableInitializer"); $$->add($1); 
+  $$->var = new Variable("","",yylineno,{});
+  } // $$->add($1);
 | ArrayInitializer {$$ = new Node();$$ = $1;} // 
 ; 
 
@@ -839,13 +843,14 @@ Primary dot Identifier              {$$=new Node("FieldAccess");string t1=$2,t2=
 
 /* fixmme */
 Primary:
-PrimaryNoNewArray                   {$$=new Node("Primary");vector<Node*>v{$1};$$->add(v);}
-| ArrayCreationExpression           {$$=new Node("Primary");vector<Node*>v{$1};$$->add(v);}
+PrimaryNoNewArray                   {$$=$1;}
+| ArrayCreationExpression           {$$=$1;}
 ;
 
+/* fixmme */
 PrimaryNoNewArray:
-  literal                           {string t1=$1; $$= new Node(mymap[t1],t1);}
-| ClassLiteral                      {$$=$1; }
+  literal                           {$$=$1;}
+| ClassLiteral                      {$$=$1;}
 | THIS                              {string t1=$1; $$= new Node(mymap[t1],t1);}
 | TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
@@ -853,6 +858,68 @@ PrimaryNoNewArray:
 | ArrayAccess                       {$$=$1;} 
 | MethodInvocation                  {$$=$1;} 
 | ClassInstanceCreationExpression   {$$=$1;} 
+;
+
+literal:
+  FloatingPoint {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="float";
+    }
+| BinaryInteger {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1);
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="int";
+    }
+| OctalInteger {string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="int";
+    }
+| HexInteger {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="int";
+    }
+| DecimalInteger {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1);
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="int";
+    }
+| NullLiteral {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1);
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="NULL";
+    }
+| CharacterLiteral {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="char";
+    }
+| TextBlock {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1);
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="String";
+    }
+| StringLiteral {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="String";
+    }
+| BooleanLiteral {
+    string t1=$1; 
+    $$= new Node(mymap[t1],t1); 
+    $$->var = new Variable($1,$1,yylineno,{});
+    $$->var->type="bool";
+    }
 ;
 
 TypeName:
@@ -894,11 +961,34 @@ squarebox:
 ;
 
 ClassLiteral: 
-  TypeName squarebox dot class_just_class            {$$=new Node("Classliteral");string t1=$3,t2=$4;vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
-| TypeName dot class_just_class                      {$$=new Node("Classliteral");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
-| literal_type squarebox dot class_just_class        {$$=new Node("Classliteral");string t1=$1,t2=$3,t3=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| literal_type dot class_just_class                  {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| VOID dot class_just_class                          {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName squarebox dot class_just_class            {
+    $$=new Node("Classliteral");string t1=$3,t2=$4;
+    vector<Node*>v{$1,$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);
+     $$->var = new Variable("","Class",yylineno,{});
+     }
+| TypeName dot class_just_class                      {
+    $$=new Node("Classliteral");string t1=$2,t2=$3;
+    vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);  
+    $$->var = new Variable("","Class",yylineno,{});
+    }
+| literal_type squarebox dot class_just_class        {
+    $$=new Node("Classliteral");string t1=$1,t2=$3,t3=$4;
+    vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+    $$->add(v); 
+    $$->var = new Variable("","Class",yylineno,{});
+    }
+| literal_type dot class_just_class                  {
+    $$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+    $$->add(v); 
+    $$->var = new Variable("","Class",yylineno,{});
+    }
+| VOID dot class_just_class         {
+    $$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+    $$->add(v);  
+    $$->var = new Variable("","Class",yylineno,{});
+    }
 ;
 
 

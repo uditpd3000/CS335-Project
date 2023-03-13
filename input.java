@@ -6,6 +6,7 @@ public static class Fibonacci { //1
 
     public Fibonacci(int n) {
         memo = new int[n + 1];
+        memo[1][2][3]=5;
     }
 
     {
@@ -28,6 +29,7 @@ public static class Fibonacci { //1
 
     private int fib(int n, int z) {
         if (n == 0 || n == 1) {
+            int jdhwxhz;
             return n;
         }
 
@@ -41,7 +43,7 @@ public static class Fibonacci { //1
     }
 }
 class Myclass{
-    public int ff[][], z;
+    public int z=1;
     public class Onemore{
         public static void fatak(char z){
 
@@ -56,6 +58,7 @@ class Myclass{
         if (n == 0 || n == 1) {
             return n;
         }
+    
 
         if (memo[n] != 0) {
             return memo[n];
