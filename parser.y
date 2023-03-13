@@ -1068,13 +1068,12 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
 | WhileStatement                         {$$= new Node("Statement");$$->add($1);}
 | ForStatement                           {$$= new Node("Statement");$$->add($1);}
 | PRINTLN brac_open Expression brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
-// | PRINTLN brac_open literal brac_close semi_colon {$$= new Node("Statement");string t1=$1,t2=$2,t3=$3,t4=$4,t5=$5; vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), new Node(mymap[t3],$3) , new Node(mymap[t4],$4),new Node(mymap[t5],$5)}; $$->add(v);}
 ;
 
 StatementWithoutTrailingSubstatement:
 {global_sym_table->makeTable();} 
   Block {
-    $$=$1;
+    $$=$2;
     global_sym_table->end_scope();
   }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}

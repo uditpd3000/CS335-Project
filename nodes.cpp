@@ -257,7 +257,6 @@ class GlobalSymbolTable {
         SymbolTable *newTable = new SymbolTable(current_symbol_table, scopee, scope_count);
         current_scope = scopee;
         current_symbol_table = newTable;
-        // cout<<scope_count;
         tablemap[scope_count-1]=newTable;
         return newTable;
 
@@ -307,6 +306,16 @@ class GlobalSymbolTable {
         }
     }
 
-    // bool typeCheck(Variable* var1)
+    bool typeCheckVar(string s1, string s2){
+        Variable* v1 = lookup_var(s1,1);
+        Variable* v2 = lookup_var(s2,1);
+        if(v1->type!=v2->type){
+            cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
+            exit(1);
+        }
+        return true;
+        
+        
+    }
 
 };
