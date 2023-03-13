@@ -42,7 +42,7 @@ HexIntegerLiteral [0][xX]{HexNumeral}{IntegerTypeSuffix}?
 OctalIntegerLiteral {OctalNumeral}{IntegerTypeSuffix}?
 BinaryIntegerLiteral {BinaryNumeral}{IntegerTypeSuffix}?
 
-DecimalFloatingPointLiteral {NonZeroDigit}{Digits}*([.]{Digits}*)?([eE][+-]?{Digits}+)?[fFdD]?
+DecimalFloatingPointLiteral {NonZeroDigit}{Digits}*([.]{Digits}*)([eE][+-]?{Digits}+)?[fFdD]?
 HexadecimalFloatingPointLiteral ([0][xX]{HexNumeral}*[.]{HexNumeral}?)[pP][+-]?{Digits}+[fFdD]?
 FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLiteral}
 
@@ -123,7 +123,16 @@ new {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return NEW
 import {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return IMPORT;}
 "System.out.println" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return PRINTLN;}
 
-{FloatingPointLiteral}|{BinaryIntegerLiteral}|{OctalIntegerLiteral}|{HexIntegerLiteral}|{DecimalIntegerLiteral}|{NullLiteral}|{CharacterLiteral}|{TextBlock}|{StringLiteral}|{BooleanLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return literal;} /* literals */
+{FloatingPointLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return FloatingPoint;} /* literals */
+{BinaryIntegerLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return BinaryInteger;}
+{OctalIntegerLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return OctalInteger;}
+{HexIntegerLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return HexInteger;}
+{DecimalIntegerLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return DecimalInteger;}
+{NullLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return NullLiteral;}
+{CharacterLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return CharacterLiteral;}
+{TextBlock} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return TextBlock;}
+{StringLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return StringLiteral;}
+{BooleanLiteral} {insertMap(strdup(yytext),"Literal");yylval.sym = strdup(yytext); return BooleanLiteral;} /* literals */
 
 
 [a-zA-Z_][a-zA-Z0-9_]*  {insertMap(strdup(yytext),"Identifier");yylval.sym = strdup(yytext);return Identifier;} /* identifiers */

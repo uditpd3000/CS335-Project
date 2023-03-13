@@ -99,13 +99,13 @@ class Class{
     string name;
     vector<string> modifiers;
     int lineNo;
+    int scope_count;
     Class(string myname, vector<string> mymodifiers, int mylineNo){
         name = myname;
         modifiers = mymodifiers;
         lineNo = mylineNo;
-
+        scope_count = scope_count;
     }
-
 };
 
 class SymbolTable {
@@ -174,16 +174,20 @@ class GlobalSymbolTable {
     string current_scope;
     SymbolTable* current_symbol_table;
     int scope_count=0;
-    map<int,SymbolTable*> tablemap;
+
+    map<int,SymbolTable*> tablemap; // scope-number maped
+    map<string,SymbolTable*> linkmap; // scope
 
     GlobalSymbolTable(){
 
         current_scope="Yayyy";
         SymbolTable* initial = new SymbolTable(NULL, current_scope, scope_count++);
         tablemap[scope_count-1]=initial;
+        linkmap[current_scope]= initial;
         current_symbol_table = initial;
     }
 
+    // lookups
     Variable* lookup_var(string s, int pp){
 
         SymbolTable* curr = current_symbol_table;
@@ -237,6 +241,7 @@ class GlobalSymbolTable {
 
         SymbolTable *newTable = new SymbolTable(current_symbol_table, scope, scope_count++ );
         tablemap[scope_count-1]=newTable;
+        linkmap[scope]=newTable;
         current_symbol_table= newTable;
         cout<<scope_count;
         current_scope = scope;
@@ -292,19 +297,20 @@ class GlobalSymbolTable {
         if(insertCheck(method->name)){
            current_symbol_table->insert_method(method);
         }
-        
     }
     void insert(Class* classs){
         // cout<<classs->name<<"k";
         if(insertCheck(classs->name)){
+            classs->scope_count=scope_count-1;
            current_symbol_table->insert_class(classs);
-        }
-        
+        }        
     }
     void printAll(){
         for(int i=0;i<scope_count;i++){
             tablemap[i]->printTable();
         }
     }
+
+    // bool typeCheck(Variable* var1)
 
 };
