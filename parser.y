@@ -101,12 +101,12 @@ void generate_graph(Node *n){
 %type<node> Throws ExceptionTypeList ExplicitConsInvTillTypeArgs ArgumentList ReceiverParameter FormalParameter FormalParameterList VariableDeclaratorId VariableArityParameter
 %type<node> MethodDeclaration MethodDeclarationEnd MethodDeclarator MethodDeclaratorEnd MethodDeclaratorTillFP MethodDeclaratorTillRP MethodHeader MethodHeaderStart
 %type<node> Assignment LeftHandSide AssignmentOperator AssignmentExpression ConditionalExpression Expression ConditionalOrExpression
-%type<node> UnaryExpression InstanceofExpression PreIncrDecrExpression UnaryExpressionNotPlusMinus Primary PrimaryNoNewArray PostfixExpression CastExpression
+%type<node> UnaryExpression PreIncrDecrExpression UnaryExpressionNotPlusMinus Primary PrimaryNoNewArray PostfixExpression CastExpression
 %type<node> PostIncrDecrExpression ClassLiteral FieldAccess ArrayAccess MethodInvocation ClassInstanceCreationExpression RELATIONAL_OP
 %type<node> Idboxopen Typenameboxopen squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
-%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2 ConditionalOrExpressionStart ConditionalOrExpressionEnd
+%type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2
 %type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
-
+%type<node> ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression 
 
 %type<sym> CommonModifier 
 
@@ -583,49 +583,80 @@ ClassLiteral:
 | VOID dot class_just_class                          {$$=new Node("Classliteral");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 ;
 
-ConditionalExpression: 
-  ConditionalOrExpression                                                   { $$=$1;}
-| ConditionalOrExpression ques_mark Expression colon ConditionalExpression  {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
-;
 
-ConditionalOrExpressionStart:
-  UnaryExpression               {$$=$1;}
-| InstanceofExpression          {$$=$1;}
-;
+ConditionalExpression:
+    ConditionalOrExpression                                                          {$$=new Node();}
+    | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
+    ;
 
-ConditionalOrExpression :
-ConditionalOrExpressionStart                                           {$$=$1;}
-| ConditionalOrExpressionStart ConditionalOrExpressionEnd              {$$=new Node("ConditionalOrExpression"); $$->add($1);$$->add($2->objects);}
-;
+ConditionalOrExpression:
+    ConditionalAndExpression                                                         {$$=$1;}
+    | ConditionalOrExpression OR ConditionalAndExpression                            {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
 
-ConditionalOrExpressionEnd:
-  OR ConditionalOrExpression                      {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| AND ConditionalOrExpression                     {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| bitwise_or ConditionalOrExpression              {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| bitwise_xor ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| bitwise_and ConditionalOrExpression             {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| EQUALNOTEQUAL ConditionalOrExpression           {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| RELATIONAL_OP ConditionalOrExpression           {$$=new Node(); vector<Node*>v{$1,$2}; $$->add(v); }
-| SHIFT_OP ConditionalOrExpression                {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| ARITHMETIC_OP_ADDITIVE ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-| ARITHMETIC_OP_MULTIPLY ConditionalOrExpression  {$$=new Node(); string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2}; $$->add(v); }
-;
+ConditionalAndExpression:
+    InclusiveOrExpression                                                            {$$=$1;}
+    | ConditionalAndExpression AND InclusiveOrExpression                             {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+InclusiveOrExpression:
+    ExclusiveOrExpression                                                            {$$=$1;}
+    | InclusiveOrExpression bitwise_or ExclusiveOrExpression                         {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+ExclusiveOrExpression:
+    AndExpression                                                                    {$$=$1;}
+    | ExclusiveOrExpression bitwise_xor AndExpression                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+AndExpression:
+    EqualityExpression                                                               {$$=$1;}
+    | AndExpression bitwise_and EqualityExpression                                   {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+EqualityExpression:
+    RelationalExpression                                                             {$$=$1;}
+    | EqualityExpression EQUALNOTEQUAL RelationalExpression                          {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+RelationalExpression:
+    ShiftExpression                                                                  {$$=$1;}
+    // | InstanceofExpression                                                           {$$=$1;}
+    | RelationalExpression RELATIONAL_OP ShiftExpression                             {$$=new Node("ConditionalExpression");vector<Node*>v{$1,$2,$3};$$->add(v);}
+    | RelationalExpression INSTANCE_OF ReferenceType                                 {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    // | RelationalExpression INSTANCE_OF LocalVariableDeclaration                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    ;
+
+ShiftExpression:
+    AdditiveExpression SHIFT_OP AdditiveExpression                                   {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    | AdditiveExpression                                                             {$$=$1;}
+    ;
+
+AdditiveExpression:
+    MultiplicativeExpression ARITHMETIC_OP_ADDITIVE AdditiveExpression               {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    | MultiplicativeExpression                                                       {$$=$1;}
+    ;
+
+MultiplicativeExpression:
+    UnaryExpression ARITHMETIC_OP_MULTIPLY MultiplicativeExpression                  {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
+    | UnaryExpression                                                                {$$=$1;}
+    ;
 
 UnaryExpression:
-  PreIncrDecrExpression                     {$$=$1; }
-| ARITHMETIC_OP_ADDITIVE UnaryExpression    {$$=new Node("UnaryExpression");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| UnaryExpressionNotPlusMinus               {$$=$1;}
-;
+    PreIncrDecrExpression                                                            {$$=$1;}
+    | UnaryExpressionNotPlusMinus                                                    {$$=$1;}
+    | ARITHMETIC_OP_ADDITIVE UnaryExpression                                         {string t2=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t2],t2)};$$->add(v);}
+    ;
 
 PreIncrDecrExpression:
-INCR_DECR UnaryExpression                   {$$=new Node("PreIncDecExp");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-;
+    INCR_DECR UnaryExpression                                                        {string t2=$1;$$=new Node("PreIncrDecrExpression");vector<Node*>v{new Node(mymap[t2],t2)};$$->add(v);}
+    ;
 
 UnaryExpressionNotPlusMinus:
-  LOGICAL_OP UnaryExpression                {$$=new Node("UnaryExpressionNotPlusMinus");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v);}
-| PostfixExpression                         {$$=$1;}
-| CastExpression                            {$$=$1; }
-;
+    PostfixExpression                                                                {$$=$1;}
+    | CastExpression                                                                 {$$=$1; }
+    | LOGICAL_OP UnaryExpression                                                     {string t2=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t2],t2)};$$->add(v);}
+    ;
 
 PostfixExpression:
   Primary                                   {$$=$1; }
@@ -646,7 +677,7 @@ RELATIONAL_OP1                   {string t1=$1;$$=(new Node(mymap[t1],t1));}
 
 CastExpression:
   brac_open literal_type brac_close UnaryExpression                               {$$=new Node("CastExp");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$4};$$->add(v);}
-| brac_open ReferenceType brac_close UnaryExpressionNotPlusMinus                  {$$=new Node("CastExp");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v);}
+| brac_open ClassType dot TypeName brac_close UnaryExpressionNotPlusMinus         {$$=new Node("CastExp");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v);}
 | brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus  {$$=new Node("CastExp");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v);}
 ;
 
@@ -655,12 +686,10 @@ assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Nod
 | AssignmentOperator1 {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
 ;
 
-InstanceofExpression:
-  UnaryExpression INSTANCE_OF ReferenceType {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| UnaryExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
-| InstanceofExpression INSTANCE_OF ReferenceType {$$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3};$$->add(v);}
-| InstanceofExpression INSTANCE_OF LocalVariableDeclaration  {$$=$1; string t1=$2; vector<Node*>v{new Node(mymap[t1],t1),$3};$$->add(v);}
-;
+// InstanceofExpression:
+//  RelationalExpression INSTANCE_OF ReferenceType {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+// | RelationalExpression INSTANCE_OF LocalVariableDeclaration  {$$=new Node("InstanceofExpression");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+// ;
 
 MethodInvocation:
   TypeName brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t2=$2,t3=$4;vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
