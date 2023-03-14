@@ -1,14 +1,16 @@
 public static class Fibonacci { //1
-    public int memo = 9;
-    char zu[];
-    float ff,ff1;
-    String name[] ;
+    // String x = "xyz";
+    // String memo = "fir se danti"+"jjs";
+    // char uu = 'o';
+    char zu[][] = {{5}};
+    // float ff,ff1;
+    // String name[];
 
     public Fibonacci(int n) {
-        this.name[0]=9;
+        // this.name[0]=9;
         int tui;
         // memo[2 = 5;
-        name[2]=4;
+        // name[2]=4;
         // memo = new int[n + 1];
         // memo[1][2][3]=5;
     }
@@ -53,7 +55,7 @@ public static class Fibonacci { //1
     }
 }
 class Myclass{
-    public int z=1;
+    // public int z=1;
     // public class Onemore{
     //     public static void fatak(char z){
 

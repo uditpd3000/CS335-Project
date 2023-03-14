@@ -437,7 +437,6 @@ MethodDeclaration:
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
 | Modifiers MethodHeader {
-    // cout<<"aayayaya";
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
@@ -572,11 +571,11 @@ FormalParameter:
   }
 
 | UnannType VariableDeclaratorId {
-  $$= new Node("FormalParameter"); 
-  vector<Node*>v{$1,$2}; 
-  $$->add(v);
-  $$->var= $2->var;
-  $$->var->type = $1->type;
+    $$= new Node("FormalParameter"); 
+    vector<Node*>v{$1,$2}; 
+    $$->add(v);
+    $$->var= $2->var;
+    $$->var->type = $1->type;
   }
 | VariableArityParameter {$$= $1;}
 ;
@@ -611,11 +610,21 @@ FieldDeclaration:
     $$->add(v);
     for(auto i:$2->variables){
       if(i->isArray){
+        if(i->type!=""){
+          // cout<<"MEko daanti\n";
+          global_sym_table->typeCheckVar(i,$1->method->ret_type);
+        }
+        
         Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->size);
         global_sym_table->insert(varr);
         
       }
       else{
+        cout<<"Meko daanti\n";
+        if(i->type!=""){
+          cout<<i->type<<endl;
+          global_sym_table->typeCheckVar(i,$1->method->ret_type);
+        }
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers);
         global_sym_table->insert(varr);
       }
@@ -679,7 +688,7 @@ UnannType:
     $$ = new Node("UnannType"); 
     $$->add($1); 
     $$->type = $1->type;
-    cout<<"aayeaaye"; }
+    }
 ;
 
 VariableDeclarator:
@@ -702,22 +711,40 @@ VariableDeclarator:
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
     $$->add(v);                                                        //Change change
-    $$->var = new Variable($1,$3->var->type,yylineno,{});
+    if($3->dims!=0){
+      throwError("TypeError: Cannot convert "+to_string($3->dims)+" dimensional Array to "+$3->type+"\n",yylineno );
+    }
+    $$->var = new Variable($1,$3->type,yylineno,{});
+    $$->dims=$3->dims;
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
     $$->add(v);
-    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
+    cout<<"qqq\n";
+    if($2->var->dims!=$4->dims){
+      throwError("TypeError: Cannot convert "+to_string($4->dims)+" dimensional Array to "+to_string($2->var->dims)+" dimesions",yylineno );
+    }
+    $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$2->var->size);
+    $$->dims=$4->dims;
     }
 ;
 
 VariableInitializer:
-  Expression {$$ = new Node("VariableInitializer"); $$->add($1); 
-  $$->var = new Variable("","",yylineno,{});
+  Expression {$$ = new Node("VariableInitializer"); $$->add($1);
+    $$->type =$1->type;
+    $$->var=$1->var;
+    $$->method=$1->method;
+    $$->cls=$1->cls; 
   } // $$->add($1);
-| ArrayInitializer {$$ = new Node();$$ = $1;} // 
+| ArrayInitializer {
+    // $$ = new Node();
+    $$ = $1;
+    cout<<"pppppppppp\n";
+    cout<<$$->dims<<" ==========";
+    $$->dims++;
+    } // 
 ; 
 
 TypeParameters:
@@ -846,7 +873,7 @@ Expression:
 
 AssignmentExpression: 
 Assignment                {$$=$1;  }
-| ConditionalExpression   {$$=$1; }
+| ConditionalExpression   {$$=$1; if($$->var->type!="")$$->type=$1->var->type; }
 ;
 
 Assignment:
@@ -925,59 +952,69 @@ literal:
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="float";
+    $$->type="float";
     }
 | BinaryInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | OctalInteger {string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | HexInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | DecimalInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | NullLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="NULL";
+    $$->type="NULL";
     }
 | CharacterLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="char";
+    $$->type="char";
     }
 | TextBlock {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="String";
+    $$->type="String";
     }
 | StringLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="String";
+    $$->type="String";
     }
 | BooleanLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="bool";
+    $$->type="bool";
     }
 ;
 
@@ -1789,13 +1826,53 @@ DimExpr:
 box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$3));}
 
 ArrayInitializer: 
-curly_open VariableInitializerList curly_close {string t1=$1; $$=new Node("ArrayInitializer"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1));}
-| curly_open VariableInitializerList comma curly_close {string t1=$1; $$=new Node("ArrayInitializer"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$1)); t1=$4; $$->add(new Node(mymap[t1],$1));}
+  curly_open VariableInitializerList curly_close {
+    string t1=$1; 
+    cout<<"ahhhhhhhhh\n";
+    $$=new Node("ArrayInitializer"); 
+    $$->add(new Node(mymap[t1],$1)); 
+    $$->add($2); 
+    t1=$3; 
+    $$->add(new Node(mymap[t1],$1));
+    // $$->variables=$2->variables;
+    $$->type = $2->type;
+    $$->dims=$2->dims;
+    // $$->var->isArray=true;
+    }
+  | curly_open VariableInitializerList comma curly_close {
+      string t1=$1; 
+      $$=new Node("ArrayInitializer"); 
+      $$->add(new Node(mymap[t1],$1)); 
+      $$->add($2); 
+      t1=$3; 
+      $$->add(new Node(mymap[t1],$1)); 
+      t1=$4; 
+      $$->add(new Node(mymap[t1],$1));
+      // $$->variables=$2->variables;
+      $$->type = $2->type;
+      $$->dims=$2->dims;
+      }
 ;
 
 VariableInitializerList:
-VariableInitializer {$$= new Node("VariableInitializerList"); $$->add($1);}
-| VariableInitializerList comma VariableInitializer {$$= $1; string t1=$2;  $$->add(new Node(mymap[t1],$2)); $$->add($3); }
+VariableInitializer {
+  $$= new Node("VariableInitializerList"); 
+  $$->add($1);
+  // $$->variables.push_back($1->var);
+  $$->type=$1->type;
+  $$->dims = $1->dims;
+  }
+| VariableInitializerList comma VariableInitializer {
+  $$= $1; 
+  string t1=$2;  
+  $$->add(new Node(mymap[t1],$2)); 
+  $$->add($3);
+  cout<<"hi\n" ;
+  if($1->type!=$3->type) throwError("kuch  bhi ",yylineno);
+  cout<<"::mo2\n";
+  // $$->variables.push_back($3->var);
+  
+  }
 ;
 
 ImportDeclarations: 
