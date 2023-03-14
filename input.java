@@ -21,17 +21,17 @@ public static class Fibonacci { //1
         }
     }
 
-    static {
-        int me;
-        String dont;
-        float love;
-        final class You{
+//     static {
+//         int me;
+//         String dont;
+//         float love;
+//         final class You{
             
-        }
+//         }
 
-    }
+//     }
 
-    private int fib(String n, String z) {
+    private int fib(int n, int z) {
         // if (n == 0 || n == 1) {
         //     int jdhwxhz;
         //     return n;
@@ -48,7 +48,7 @@ public static class Fibonacci { //1
     }
 
     {
-        this.fib("vb","def");
+        this.fib(1,3);
         // new Fibonacci (2)= 3;
     }
 }
@@ -74,10 +74,13 @@ class Myclass{
         //     return memo[n];
         // }
 
-        int result;
+        int result=0;
         // fib(n - 1) + fib(n - 2);
         // memo[n] = result;
-        return false;
+        if(result==0){
+            return n;
+        }
+            
     }
 
 }

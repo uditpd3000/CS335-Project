@@ -72,6 +72,11 @@ void generate_graph(Node *n){
   fout.close();
 }
 
+void throwError(string s, int lineno){
+  cout<<"\nSemantic Error: "<<s<<" at lineno: "<<lineno<<endl;
+  exit(1);
+}
+
 /* {} 0 or more
 [] 0 or 1*/
 
@@ -1258,8 +1263,7 @@ AdditiveExpression:
       priority["String"]=2;
 
       if(priority.find($1->var->type)==priority.end() || priority.find($3->var->type)==priority.end()){
-        cout<<"bad operand types for additive operator on line number"<<yylineno<<"\n";
-        exit(1);
+        throwError("bad operand types for additive operator on line number",yylineno);
       }
 
       int x1 = max(priority[$1->var->type],priority[$3->var->type]);
@@ -1284,8 +1288,7 @@ MultiplicativeExpression:
       priority["float"]=1;
 
       if(priority.find($1->var->type)==priority.end() || priority.find($3->var->type)==priority.end()){
-        cout<<"bad operand types for multiplicative operator \n";
-        exit(1);
+        throwError("bad operand types for additive operator on line number",yylineno);
       }
 
       int x1 = max(priority[$1->var->type],priority[$3->var->type]);
@@ -1573,16 +1576,20 @@ RETURN  semi_colon                         {
   $$->add(new Node(mymap[t1],t1));
   $$->add(new Node(mymap[t2],t2)); 
   
-  SymbolTable* parentTable = global_sym_table->current_symbol_table->parent;
-  string methodName= global_sym_table->current_symbol_table->scope;
+  SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+  while(parentTable->isMethod==false && parentTable->parent!=NULL){
+    parentTable = parentTable->parent;
+  }
+
+  string methodName= parentTable->scope;
+  parentTable = parentTable->parent;
   methodName= methodName.substr(parentTable->scope.length()+1,methodName.length() -(parentTable->scope.length()));
   for (auto x: parentTable->methods){
     if(x->name==methodName){
-      cout<<"my return should be:"<<x->ret_type<<endl;
-      // if(x->ret_type!="void"){
-      //   cout<<"unvalid return type\n";
-      //   exit(1);
-      // }
+      if(x->ret_type!="void"){
+        throwError("return type mismatch : expected \" void \" found \"" + x->ret_type + "\"",yylineno);
+      }
     }
   }
 
@@ -1593,16 +1600,20 @@ RETURN  semi_colon                         {
   $$->add(new Node(mymap[t1],$1));
   $$->add($2);$$->add(new Node(mymap[t2],t2));
 
-  SymbolTable* parentTable = global_sym_table->current_symbol_table->parent;
-  string methodName= global_sym_table->current_symbol_table->scope;
+  SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+  while(parentTable->isMethod==false && parentTable->parent!=NULL){
+    parentTable = parentTable->parent;
+  }
+
+  string methodName= parentTable->scope;
+  parentTable = parentTable->parent;
   methodName= methodName.substr(parentTable->scope.length()+1,methodName.length() -(parentTable->scope.length()));
   for (auto x: parentTable->methods){
     if(x->name==methodName){
-      cout<<"my return should be: "<<x->ret_type<<" got: "<<$2->var->type<<endl;
-      // if(x->ret_type!=$2->var->type){
-      //   cout<<"unvalid return type\n";
-      //   exit(1);
-      // }
+      if(x->ret_type!=$2->var->type){
+        throwError("return type mismatch : expected \""+ x->ret_type + "\" found \"" + $2->var->type + "\"",yylineno);
+      }
     }
   }
 
