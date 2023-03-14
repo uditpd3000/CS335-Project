@@ -42,7 +42,7 @@ HexIntegerLiteral [0][xX]{HexNumeral}{IntegerTypeSuffix}?
 OctalIntegerLiteral {OctalNumeral}{IntegerTypeSuffix}?
 BinaryIntegerLiteral {BinaryNumeral}{IntegerTypeSuffix}?
 
-DecimalFloatingPointLiteral {NonZeroDigit}{Digits}*([.]{Digits}*)([eE][+-]?{Digits}+)?[fFdD]?
+DecimalFloatingPointLiteral ([0]|({NonZeroDigit}{Digits}*))([.]{Digits}*)([eE][+-]?{Digits}+)?[fFdD]?
 HexadecimalFloatingPointLiteral ([0][xX]{HexNumeral}*[.]{HexNumeral}?)[pP][+-]?{Digits}+[fFdD]?
 FloatingPointLiteral {DecimalFloatingPointLiteral}|{HexadecimalFloatingPointLiteral}
 

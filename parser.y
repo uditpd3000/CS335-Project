@@ -679,7 +679,7 @@ UnannType:
     $$ = new Node("UnannType"); 
     $$->add($1); 
     $$->type = $1->type;
-    cout<<"aayeaaye"; }
+   }
 ;
 
 VariableDeclarator:
@@ -766,9 +766,26 @@ AdditionalBound:
 /* fixme */
 ClassType:
 TypeName {$$=$1;}
-| ClassTypeWithArgs {$$=new Node("ClassType"); $$->add($1->objects); $$->var=new Variable("",$1->var->type,yylineno,{});}
-| ClassTypeWithArgs dot Identifier {$$=new Node("ClassType"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); $$->var=new Variable("",$1->var->type,yylineno,{});}
-| ClassTypeWithArgs dot Identifier TypeArguments {$$=new Node("ClassType"); $$->add($1->objects); string t1=$2,t2=$3; vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4}; $$->add(v); $$->var=new Variable("",$1->var->type,yylineno,{});}
+| ClassTypeWithArgs {
+  $$=new Node("ClassType");
+   $$->add($1->objects); 
+   $$->var=new Variable("",$1->var->type,yylineno,{});
+   }
+| ClassTypeWithArgs dot Identifier {
+  $$=new Node("ClassType"); 
+  $$->add($1->objects); 
+  string t1=$2,t2=$3; 
+  vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); 
+  $$->var=new Variable("",$1->var->type,yylineno,{});
+  }
+| ClassTypeWithArgs dot Identifier TypeArguments {
+  $$=new Node("ClassType"); 
+  $$->add($1->objects); 
+  string t1=$2,t2=$3; 
+  vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4}; 
+  $$->add(v); 
+  $$->var=new Variable("",$1->var->type,yylineno,{});
+  }
 ;
 
 ClassTypeWithArgs:
@@ -846,11 +863,19 @@ Expression:
 
 AssignmentExpression: 
 Assignment                {$$=$1;  }
-| ConditionalExpression   {$$=$1; }
+| ConditionalExpression   {$$=$1; $$->type=$1->var->type;}
 ;
 
 Assignment:
-  LeftHandSide AssignmentOperator Expression  {$$=new Node("Assignment");vector<Node*>v{$1,$2,$3};$$->add(v);}
+  LeftHandSide AssignmentOperator Expression  {
+    $$=new Node("Assignment");
+    vector<Node*>v{$1,$2,$3};
+    $$->add(v);
+    if($1->type!=$3->type){
+      throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
+    }
+    $$->type=$1->type;
+    }
 ;
 
 LeftHandSide:
@@ -925,35 +950,41 @@ literal:
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="float";
+    $$->type="float";
     }
 | BinaryInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | OctalInteger {string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | HexInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | DecimalInteger {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="int";
+    $$->type="int";
     }
 | NullLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="NULL";
+    $$->type="NULL";
     }
 | CharacterLiteral {
     string t1=$1; 
@@ -966,18 +997,21 @@ literal:
     $$= new Node(mymap[t1],t1);
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="String";
+    $$->type="String";
     }
 | StringLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="String";
+    $$->type="String";
     }
 | BooleanLiteral {
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{});
     $$->var->type="bool";
+    $$->type="bool";
     }
 ;
 
@@ -1033,8 +1067,7 @@ TypeName:
       $$->type = var->type;
     }
     else {
-      cout<<"Error: Variable "<<$3<<" not declared in appropriate scope\n";
-      exit(1);
+      throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
     }
     
   }
@@ -1048,8 +1081,7 @@ ArrayAccess:
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
     if(v1->isArray==false){
-       cout<<"Error: "<< $1 << "is not of type Array\n";
-       exit(1);
+      throwError(t1+"is not of type Array",yylineno);
     }
     $$->var= v1;
     $$->dims=1;
@@ -1061,8 +1093,7 @@ ArrayAccess:
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($3,1,$1->cls->name);
     if(v1->isArray==false){
-       cout<<"Error: "<< $1 << "is not of type Array\n";
-       exit(1);
+      throwError(t3+" is not of type Array",yylineno);
     }
     $$->var= v1;
     $$->dims=1;
@@ -1082,13 +1113,11 @@ ArrayAccess:
       $$->dims=$1->dims+1;
       // cout<<$$->dims<<"----------";
       if($$->dims>$$->var->dims){
-        cout<<"Error: Expected dimension of "<<$$->var->name <<" is "<<$$->var->dims<<" but provided more than that\n";
-        exit(1);
+        throwError("Expected dimension of "+$$->var->name +" is "+(to_string)($$->var->dims)+" but provided more",yylineno);
       }
     }
     else{
-      cout<<"Error: "<< $1->var->name << " is not of type Array\n";
-      exit(1);
+      throwError($1->var->name+" is not of type Array",yylineno);
     }
 
     }
@@ -1236,8 +1265,16 @@ EqualityExpression:
 RelationalExpression:
     ShiftExpression                                                                  {$$=$1;}
     // | InstanceofExpression                                                           {$$=$1;}
-    | RelationalExpression RELATIONAL_OP ShiftExpression                             {$$=new Node("ConditionalExpression");vector<Node*>v{$1,$2,$3};$$->add(v); $$->var=new Variable("","bool",yylineno,{});}
-    | RelationalExpression INSTANCE_OF ReferenceType                                 {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); $$->var=new Variable("","bool",yylineno,{});}
+    | RelationalExpression RELATIONAL_OP ShiftExpression                             {
+      $$=new Node("ConditionalExpression");
+      vector<Node*>v{$1,$2,$3};$$->add(v); 
+      $$->var=new Variable("","bool",yylineno,{});
+      }
+    | RelationalExpression INSTANCE_OF ReferenceType                                 {
+      string t2=$2;$$=new Node("ConditionalExpression");
+      vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
+      $$->var=new Variable("","bool",yylineno,{});
+      }
     // | RelationalExpression INSTANCE_OF LocalVariableDeclaration                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
     ;
 
@@ -1354,9 +1391,28 @@ RELATIONAL_OP1                   {string t1=$1;$$=(new Node(mymap[t1],t1));}
 
 
 CastExpression:
-  brac_open literal_type brac_close UnaryExpression                               {$$=new Node("CastExp");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$4};$$->add(v); $$->var=new Variable("",t2,yylineno,{});}
-| brac_open ClassType dot TypeName brac_close UnaryExpressionNotPlusMinus         {$$=new Node("CastExp");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v);}
-| brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus  {$$=new Node("CastExp");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v); $$->var=new Variable("",$2->var->type,yylineno,{});}
+  brac_open literal_type brac_close UnaryExpression                               {
+    $$=new Node("CastExp");
+    string t1=$1,t2=$2,t3=$3;
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$4};$$->add(v);
+    if($4->var->type=="String"){
+      throwError("String cannot be converted to "+t2,yylineno);
+    }
+    $$->var=new Variable("",t2,yylineno,{});
+    }
+| brac_open ClassType dot TypeName brac_close UnaryExpressionNotPlusMinus         {
+  $$=new Node("CastExp");
+  string t1=$1,t2=$3;
+  vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};
+  $$->add(v);
+  }
+| brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus  {
+  $$=new Node("CastExp");
+  string t1=$1,t2=$4;
+  vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};
+  $$->add(v); 
+  $$->var=new Variable("",$2->var->type,yylineno,{});
+  }
 ;
 
 AssignmentOperator:
