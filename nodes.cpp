@@ -75,6 +75,7 @@ class Node {
     int lineno;
     string label; //seperator
     string lexeme; //}
+    string anyName;
 
     string type;
 

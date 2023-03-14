@@ -64,7 +64,7 @@
 // //     }
 // }
 class Myclass{
-    // public int z=1;
+    public int z=1;
     // public class Onemore{
     //     public static void fatak(char z){
 
@@ -77,6 +77,7 @@ class Myclass{
 
     private int fib11() {
         Myclass obj = new Myclass();
+        obj.z = "abc";
         // if (n == 0 || n == 1) {
         //     return n;
         // }

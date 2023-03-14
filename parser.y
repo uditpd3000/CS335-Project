@@ -1068,14 +1068,17 @@ TypeName:
       if(cls->name=="String"){
         $$->type="String";
       }
+      $$->anyName = $$->cls->name;
     }
     else if(met !=NULL){
       $$->method = met;
       $$->type = met->ret_type;
+      $$->anyName=$$->method->name;
     }
     else if(var!=NULL){
       $$->var = var;
       $$->type = var->type;
+      $$->anyName=$$->var->name;
     }
     else {
       cout<<"Error: Variable "<<$1<<" not declared in appropriate scope\n";
@@ -1089,12 +1092,13 @@ TypeName:
     string t1=$2,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v);
-    Class* cls = global_sym_table->lookup_class($3,0,$1->cls->name);
-    Method* met = global_sym_table->lookup_method($3,0,$1->cls->name);
-    Variable *var = global_sym_table->lookup_var($3,0,$1->cls->name);
+    Class* cls = global_sym_table->lookup_class($3,0,$1->anyName);
+    Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
+    Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
     if(cls!=NULL){
       $$->cls = cls;
-      $$->type = "class";
+      $$->type = "Class";
+
     }
     else if(met !=NULL){
       $$->method = met;
