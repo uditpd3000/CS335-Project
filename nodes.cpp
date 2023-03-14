@@ -216,7 +216,10 @@ class GlobalSymbolTable {
             curr=curr->parent;
         }
 
-        if(pp)cout<<"Error: Variable " << s << " is not declared in this scope"<<endl;
+        if(pp){
+            cout<<"Error: Variable " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
         return NULL;
     }
 
@@ -231,7 +234,10 @@ class GlobalSymbolTable {
             curr=curr->parent;
         }
 
-        if(pp)cout<<"Error: Method " << s << " is not declared in this scope"<<endl;
+        if(pp){
+            cout<<"Error: Method " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
         return NULL;
         
     }
@@ -253,7 +259,10 @@ class GlobalSymbolTable {
             curr=curr->parent;
         }
 
-        if(pp)cout<<"Error: Class " << s << " is not declared in this scope"<<endl;
+        if(pp){
+            cout<<"Error: Class " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
         return NULL;
 
     }
