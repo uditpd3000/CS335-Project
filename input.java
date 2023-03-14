@@ -77,15 +77,15 @@ class Myclass{
 
     private int fib11() {
         Myclass obj = new Myclass();
-        obj.z = "abc";
+        obj.z = 1;
         // if (n == 0 || n == 1) {
         //     return n;
-        // }
+    }
     
 
-        // if (memo[n] != 0) {
-        //     return memo[n];
-        // }
+//         // if (memo[n] != 0) {
+//         //     return memo[n];
+//         // }
 
         // int result= 0;
         // if(result==0){
@@ -102,19 +102,22 @@ class Myclass{
 
         
 
-        return 0;
-    }
+//         return 0;
+//     }
 
 
     
 
 }
 
-public class MyClass {
-    private int num;
+public class Calculator {
+  public int add(int x, int y) {
+    return x + y;
+  }
 
-    public static void main(String[] args) {
-        MyClass obj = new MyClass();
-        // obj.num = 5; // no error
-    }
+  public static void main(String[] args) {
+    Calculator calculator = new Calculator();
+    int sum = add(3, 7);
+    System.out.println("The sum of 3 and 5 is " + sum);
+  }
 }

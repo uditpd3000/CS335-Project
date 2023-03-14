@@ -442,6 +442,10 @@ MethodDeclaration:
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
+    global_sym_table->current_symbol_table->isMethod=true;
+    for(auto i:_method->parameters){
+      global_sym_table->insert(i);
+    }
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);global_sym_table->end_scope(); }
 
@@ -449,6 +453,10 @@ MethodDeclaration:
     Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
+    global_sym_table->current_symbol_table->isMethod=true;
+    for(auto i:_method->parameters){
+      global_sym_table->insert(i);
+    }
   } 
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); global_sym_table->end_scope();}
 ;
@@ -1081,8 +1089,7 @@ TypeName:
       $$->anyName=$$->var->name;
     }
     else {
-      cout<<"Error: Variable "<<$1<<" not declared in appropriate scope\n";
-      exit(1);
+      throwError("Variable "+t1 + "not declared in appropriate scope",yylineno);
     }
     
     // exit(1);
