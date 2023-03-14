@@ -76,7 +76,7 @@ class Myclass{
     // }
 
     private int fib11() {
-        // Myclass obj = new Myclass();
+        Myclass obj = new Myclass();
         // if (n == 0 || n == 1) {
         //     return n;
         // }
@@ -107,4 +107,13 @@ class Myclass{
 
     
 
+}
+
+public class MyClass {
+    private int num;
+
+    public static void main(String[] args) {
+        MyClass obj = new MyClass();
+        // obj.num = 5; // no error
+    }
 }

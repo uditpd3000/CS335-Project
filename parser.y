@@ -391,7 +391,7 @@ BlockStatement:
 ;
 
 LocalVariableType:
-  UnannType {$$=$1;}
+  UnannType {$$=$1; cout<<$$->type;}
 | var {
     string t1= $1; 
     $$=new Node(mymap[t1],t1); 
@@ -675,6 +675,7 @@ VariableDeclaratorList:
     $$= new Node("VariableDeclaratorList"); 
     $$->add($1); 
     $$->variables.push_back($1->var);
+    // cout<<"hi-- "<<$1->var->name<<" ";
     }
 | VariableDeclaratorList comma VariableDeclarator { 
     $$=$1; 
@@ -714,6 +715,7 @@ VariableDeclarator:
     $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
   }
 | Identifier assign VariableInitializer {
+  // cout<<"---\n";
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
@@ -723,6 +725,7 @@ VariableDeclarator:
     }
     $$->var = new Variable($1,$3->type,yylineno,{});
     $$->dims=$3->dims;
+    // cout<<"---\n";
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -1061,10 +1064,10 @@ TypeName:
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
       $$->cls = cls;
-      $$->type = "class";
+      $$->type = "Class";
       if(cls->name=="String"){
-      $$->type="String";
-    }
+        $$->type="String";
+      }
     }
     else if(met !=NULL){
       $$->method = met;
@@ -1409,8 +1412,8 @@ UnaryExpressionNotPlusMinus:
     ;
 
 PostfixExpression:
-  Primary                                   {$$=$1; }
-| TypeName                                  {$$=$1;}
+  Primary                                   {$$=$1;  $$->var=new Variable("",$1->type,yylineno,{});}
+| TypeName                                  {$$=$1; $$->var=new Variable("",$1->type,yylineno,{});}
 | PostIncrDecrExpression                    {$$=$1;}
 ;
 
@@ -1580,7 +1583,12 @@ ClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpression:
-  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen  {$$=new Node("UnqualifiedClassInstanceCreationExpression");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v);}
+  NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen  {
+    $$=new Node("UnqualifiedClassInstanceCreationExpression");
+    string t1=$1,t2=$4;
+    vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};
+    $$->add(v);
+    }
 | NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen                {
     $$=new Node("UnqualifiedClassInstanceCreationExpression");
     string t1=$1,t2=$3;
@@ -1704,7 +1712,7 @@ RETURN  semi_colon                         {
   while(parentTable->isMethod==false && parentTable->parent!=NULL){
     parentTable = parentTable->parent;
   }
-
+  cout<<"----\n";
   string methodName= parentTable->scope;
   parentTable = parentTable->parent;
   methodName= methodName.substr(parentTable->scope.length()+1,methodName.length() -(parentTable->scope.length()));
@@ -1931,6 +1939,7 @@ LocalVariableType VariableDeclaratorList {
         
       }
       else{
+        cout<<"---\n";
         if(i->type!=""){
           // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
