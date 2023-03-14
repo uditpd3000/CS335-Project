@@ -1,12 +1,16 @@
 public static class Fibonacci { //1
     public int memo = 9;
-    char z,y,x;
+    char zu[];
     float ff,ff1;
-    String name = "kakka";
+    String name[] ;
 
     public Fibonacci(int n) {
+        this.name[0]=9;
+        int tui;
+        // memo[2 = 5;
+        name[2]=4;
         // memo = new int[n + 1];
-        memo[1][2][3]=5;
+        // memo[1][2][3]=5;
     }
 
     {
@@ -37,8 +41,9 @@ public static class Fibonacci { //1
         //     return memo[n];
         // }
 
-        // int result = fib(n - 1) + fib(n - 2);
-        memo[n] = result;
+        int result ;
+        // = fib(n - 1) + fib(n - 2);
+        // memo[n] = result;
         return result;
     }
 }

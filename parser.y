@@ -107,7 +107,7 @@ void generate_graph(Node *n){
 %type<node> Assignment LeftHandSide AssignmentOperator AssignmentExpression ConditionalExpression Expression ConditionalOrExpression
 %type<node> UnaryExpression PreIncrDecrExpression UnaryExpressionNotPlusMinus Primary PrimaryNoNewArray PostfixExpression CastExpression
 %type<node> PostIncrDecrExpression ClassLiteral FieldAccess ArrayAccess MethodInvocation ClassInstanceCreationExpression RELATIONAL_OP
-%type<node> Idboxopen Typenameboxopen squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
+%type<node> squarebox MethodIncovationStart UnqualifiedClassInstanceCreationExpression
 %type<node> ClassOrInterfaceTypeToInstantiate UnqualifiedClassInstanceCreationExpressionAfter_bracopen TypeArgumentsOrDiamond ClassOrInterfaceType2
 %type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
 %type<node> ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression 
@@ -379,7 +379,8 @@ LocalVariableType:
 | var {
     string t1= $1; 
     $$=new Node(mymap[t1],t1); 
-    $$->var = new Variable($1,$1,yylineno,{});
+    // $$->var = new Variable($1,$1,yylineno,{});
+    $$->type="var";
     }
 ;
 
@@ -399,11 +400,11 @@ Modifiers UnannType {
   $$=new Node(); 
   $$->add($1); 
   $$->add($2);
-  $$->method = new Method("",$2->var->type,{},$1->var->modifiers,yylineno);
+  $$->method = new Method("",$2->type,{},$1->var->modifiers,yylineno);
   }
 | UnannType {$$=new Node(); 
   $$->add($1); 
-  $$->method = new Method("",$1->var->type,{},{},yylineno);
+  $$->method = new Method("",$1->type,{},{},yylineno);
   }
 ;
 
@@ -413,6 +414,9 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
+    for(auto i:_method->parameters){
+      global_sym_table->insert(i);
+    }
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
@@ -499,6 +503,7 @@ MethodDeclaratorTillRP:
     $$->add($1); $$->add($2); 
     $$->add($3->objects);
     $$->method=$3->method;
+    $$->type = $1->type;
     }
 | MethodDeclaratorTillFP {
     $$=new Node(); 
@@ -546,7 +551,7 @@ FormalParameter:
   string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2,$3}; 
   $$->add(v);
   $$->var=$3->var;
-  $$->var->type=$2->var->type;
+  $$->var->type=$2->type;
   $$->var->modifiers.push_back($1);
   }
 
@@ -555,7 +560,7 @@ FormalParameter:
   vector<Node*>v{$1,$2}; 
   $$->add(v);
   $$->var= $2->var;
-  $$->var->type = $1->var->type;
+  $$->var->type = $1->type;
   }
 | VariableArityParameter {$$= $1;}
 ;
@@ -652,12 +657,12 @@ UnannType:
   PrimitiveType {
     $$ = new Node("UnannType"); 
     $$->add($1); 
-    $$->var = new Variable($1->lexeme,$1->lexeme,yylineno,{}); 
+    $$->type=$1->lexeme; 
     }
 | ReferenceType {
     $$ = new Node("UnannType"); 
     $$->add($1); 
-    $$->var = $1->var;
+    $$->type = $1->type;
     cout<<"aayeaaye"; }
 ;
 
@@ -791,7 +796,7 @@ ArrayType:
     $$=new Node("ArrayType"); 
     $$->add($1->objects); 
     $$->add($2->objects);
-    $$->var = $1->var;
+    $$->var = new Variable($1->cls->name,$1->type,yylineno,{});
     $$->var->isArray= true;
     $$->var->dims = $2->var->dims;
     $$->var->size = $2->var->size;  
@@ -839,7 +844,18 @@ FieldAccess      {$$=$1;}
 ;
 
 FieldAccess:
-Primary dot Identifier              {$$=new Node("FieldAccess");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); }
+Primary dot Identifier              {
+  $$=new Node("FieldAccess");
+  string t1=$2,t2=$3;
+  vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};
+  $$->add(v);
+  if($1->type=="Class"){
+    $$->var=global_sym_table->lookup_var($3,1,global_sym_table->current_scope);
+    // cout<<"Duh---------------";
+  }
+
+  cout<<"ab naa hoga"; 
+  }
 | super dot Identifier              {$$=new Node("FieldAccess");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | TypeName dot super dot Identifier {$$=new Node("FieldAccess");string t1=$2,t2=$3,t3=$4,t4=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
 ;
@@ -854,7 +870,23 @@ PrimaryNoNewArray                   {$$=$1;}
 PrimaryNoNewArray:
   literal                           {$$=$1;}
 | ClassLiteral                      {$$=$1;}
-| THIS                              {string t1=$1; $$= new Node(mymap[t1],t1);}
+| THIS                              {
+    string t1=$1; 
+    cout<<"THISSSSSSSSSSSSSSSSs";
+    $$= new Node(mymap[t1],t1);
+    SymbolTable* temp;
+    temp=global_sym_table->current_symbol_table;
+    while(temp->parent->scope!="Yayyy"){
+      temp=temp->parent;
+    }
+    // cout<<"tui";
+    t1= temp->scope;
+    $$->cls= global_sym_table->lookup_class(t1,0,global_sym_table->current_scope);
+    $$->type="Class";
+
+    // exit(1);
+    
+  }
 | TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
 | brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
 | FieldAccess                       {$$=$1;} 
@@ -930,32 +962,113 @@ TypeName:
     string t1=$1; 
     $$=new Node("TypeName"); 
     $$->add(new Node("Identifier",t1));
-    $$->var = new Variable($1,$1,yylineno,{});
+    Class* cls = global_sym_table->lookup_class($1,0,global_sym_table->current_scope);
+    Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
+    Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
+    // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
+    if(cls!=NULL){
+      $$->cls = cls;
+      $$->type = "class";
+      if(cls->name=="String"){
+      $$->type="String";
+    }
+    }
+    else if(met !=NULL){
+      $$->method = met;
+      $$->type = met->ret_type;
+    }
+    else if(var!=NULL){
+      $$->var = var;
+      $$->type = var->type;
+    }
+    else {
+      cout<<"Error: Variable "<<$1<<" not declared in appropriate scope\n";
+      exit(1);
+    }
+    
+    // exit(1);
     }
 | TypeName dot Identifier {
     $$=$1; 
     string t1=$2,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v);
-    string t = $$->var->type;
-    t+=$2;t+=$3;
-    $$->var->name=t;
-    $$->var->type=t;
+    Class* cls = global_sym_table->lookup_class($3,0,$1->cls->name);
+    Method* met = global_sym_table->lookup_method($3,0,$1->cls->name);
+    Variable *var = global_sym_table->lookup_var($3,0,$1->cls->name);
+    if(cls!=NULL){
+      $$->cls = cls;
+      $$->type = "class";
+    }
+    else if(met !=NULL){
+      $$->method = met;
+      $$->type = met->ret_type;
+    }
+    else if(var!=NULL){
+      $$->var = var;
+      $$->type = var->type;
+    }
+    else {
+      cout<<"Error: Variable "<<$3<<" not declared in appropriate scope\n";
+      exit(1);
+    }
+    
   }
 ;
 
-Idboxopen:
-Identifier box_open                {$$=new Node("IdboxOpen");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
-;
-
-Typenameboxopen:
-Idboxopen                           {$$=new Node("Typenameboxopen");$$->add($1->objects);}
-| TypeName dot Idboxopen            {$$=new Node("Typenameboxopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);$$->add($3->objects);}
-;
-
 ArrayAccess:
-Typenameboxopen Expression box_close                 {$$=new Node("ArrayAcc");string t1=$3;vector<Node*>v{$1,$2,new Node(mymap[t1],t1)};$$->add(v);}
-| PrimaryNoNewArray box_open Expression box_close    {$$=new Node("ArrayAcc");string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2)};$$->add(v);}
+  Identifier box_open Expression box_close{
+    $$=new Node("ArrayAcc");
+    string t1=$1,t2=$2,t4=$4;
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
+    $$->add(v);
+    Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
+    if(v1->isArray==false){
+       cout<<"Error: "<< $1 << "is not of type Array\n";
+       exit(1);
+    }
+    $$->var= v1;
+    $$->dims=1;
+  }
+| TypeName dot Identifier box_open Expression box_close  {
+    $$=new Node("ArrayAcc");
+    string t2=$2,t3=$3,t4=$4,t6=$6;
+    vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4),$5,new Node(mymap[t6],t6)};
+    $$->add(v);
+    Variable* v1 = global_sym_table->lookup_var($3,1,$1->cls->name);
+    if(v1->isArray==false){
+       cout<<"Error: "<< $1 << "is not of type Array\n";
+       exit(1);
+    }
+    $$->var= v1;
+    $$->dims=1;
+
+    }
+| PrimaryNoNewArray box_open Expression box_close    {
+    $$=new Node("ArrayAcc");
+    string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2)};
+    $$->add(v);
+    $$->var = $1->var;
+    $$->cls = $1->cls;
+    $$->method = $1->method;
+    $$->type= $1->type;
+    cout<<"kkk";
+    if($$->var->isArray==true){
+      // cout<<"llllllllllllllllllllllll";
+      $$->dims=$1->dims+1;
+      // cout<<$$->dims<<"----------";
+      if($$->dims>$$->var->dims){
+        cout<<"Error: Expected dimension of "<<$$->var->name <<" is "<<$$->var->dims<<" but provided more than that\n";
+        exit(1);
+      }
+    }
+    else{
+      cout<<"Error: "<< $1->var->name << " is not of type Array\n";
+      exit(1);
+    }
+
+    }
+
 ;
 
 squarebox: 
@@ -1466,18 +1579,36 @@ LocalVariableType VariableDeclaratorList {
   $$->add($2);
   for(auto i:$2->variables){
       if(i->isArray){
-        Variable* varr = new Variable(i->name,$1->var->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
+        Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->size);
         global_sym_table->insert(varr);
         
       }
       else{
-        Variable* varr = new Variable(i->name,$1->var->type,yylineno,$1->var->modifiers);
+        Variable* varr = new Variable(i->name,$1->type,yylineno,{});
         global_sym_table->insert(varr);
       }
 
     }
   }
-| Modifiers LocalVariableType VariableDeclaratorList {$$= new Node ("LocalVariableDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($3);}
+| Modifiers LocalVariableType VariableDeclaratorList {
+    $$= new Node ("LocalVariableDeclaration"); 
+    $$->add($1->objects); 
+    $$->add($2->objects); 
+    $$->add($3);
+    for(auto i:$3->variables){
+      if(i->isArray){
+        Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
+        global_sym_table->insert(varr);
+        
+      }
+      else{
+        Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers);
+        global_sym_table->insert(varr);
+      }
+
+    }
+
+    }
 ;
 
 ArrayCreationExpression: 
