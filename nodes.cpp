@@ -3,6 +3,10 @@
 using namespace std;
 extern ofstream fout;
 
+extern int yylineno;
+
+extern void throwError(string, int);
+
 class Variable{
     public:
     string name;
@@ -68,6 +72,7 @@ class Class{
 
 class Node {
   public:
+    int lineno;
     string label; //seperator
     string lexeme; //}
 
@@ -328,26 +333,23 @@ class GlobalSymbolTable {
         }
     }
 
-    bool typeCheckVar(string s1, string s2){
+    bool typeCheckVar(string s1, string s2, int myLineno){
         Variable* v1 = lookup_var(s1,1,current_scope);
         Variable* v2 = lookup_var(s2,1,current_scope);
         if(v1->type!=v2->type){
-            cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
-            exit(1);
+            throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
         }
         return true;   
     }
-    bool typeCheckVar(Variable* v1, Variable* v2){
+    bool typeCheckVar(Variable* v1, Variable* v2,int myLineno){
         if(v1->type!=v2->type){
-            cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
-            exit(1);
+            throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
         }
         return true;   
     }
-    bool typeCheckVar(Variable* v1, string myType){
+    bool typeCheckVar(Variable* v1, string myType,int myLineno){
         if(v1->type!=myType){
-            cout<<"Type mismatch: Assigning"<<v1->type<<" to "<<myType;
-            exit(1);
+            throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
         }
         return true;   
     }
