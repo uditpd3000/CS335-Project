@@ -1912,11 +1912,19 @@ LocalVariableType VariableDeclaratorList {
   $$->add($2);
   for(auto i:$2->variables){
       if(i->isArray){
+        if(i->type!=""){
+          // cout<<"MEko daanti\n";
+          global_sym_table->typeCheckVar(i,$1->type,yylineno);
+        }
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->size);
         global_sym_table->insert(varr);
         
       }
       else{
+        if(i->type!=""){
+          // cout<<"MEko daanti\n";
+          global_sym_table->typeCheckVar(i,$1->type,yylineno);
+        }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{});
         global_sym_table->insert(varr);
       }
@@ -1930,11 +1938,19 @@ LocalVariableType VariableDeclaratorList {
     $$->add($3);
     for(auto i:$3->variables){
       if(i->isArray){
+        if(i->type!=""){
+          // cout<<"MEko daanti\n";
+          global_sym_table->typeCheckVar(i,$1->type,yylineno);
+        }
         Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
         global_sym_table->insert(varr);
         
       }
       else{
+        if(i->type!=""){
+          // cout<<"MEko daanti\n";
+          global_sym_table->typeCheckVar(i,$1->type,yylineno);
+        }
         Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers);
         global_sym_table->insert(varr);
       }

@@ -42,21 +42,21 @@ public static class Fibonacci { //1
 
 //     }
 
-//     private int fib(int n, int z) {
-//         // if (n == 0 || n == 1) {
-//         //     int jdhwxhz;
-//         //     return n;
-//         // }
+    private int fib(int n, int z) {
+        if (n == 0 || n == 1) {
+            int jdhwxhz;
+            return n;
+        }
 
-//         // if (memo[n] != 0) {
-//         //     return memo[n];
-//         // }
+        // if (memo[n] != 0) {
+        //     return memo[n];
+        // }
 
-//         int result ;
-//         // = fib(n - 1) + fib(n - 2);
-//         // memo[n] = result;
-//         return result;
-//     }
+        int result ;
+        // = fib(n - 1) + fib(n - 2);
+        // memo[n] = result;
+        return result;
+    }
 
 //     {
 //         this.fib(1,3);
@@ -85,8 +85,7 @@ class Myclass{
         //     return memo[n];
         // }
 
-        int result;
-        result= 66;
+        int result= "hi";
         if(result==0){
             int s=8;
             return 1;
