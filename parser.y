@@ -430,9 +430,11 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
+    cout<<_method->parameters.size();
     for(auto i:_method->parameters){
       global_sym_table->insert(i);
     }
+    cout<<"wow\n";
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
@@ -509,6 +511,7 @@ MethodDeclarator:
     $$->add($3->objects);
     $$->method = $3->method;
     $$->method->name = $1;
+    
     }
 ;
 
@@ -534,7 +537,11 @@ MethodDeclaratorTillFP:
     $$->add($2->objects);
     $$->method = $1->method;
     }
-| MethodDeclaratorEnd {$$=new Node(); $$->add($1->objects);}
+| MethodDeclaratorEnd {
+  $$=new Node(); 
+  $$->add($1->objects);
+  $$->method = new Method("","",{},{},yylineno);
+  }
 ;
 
 MethodDeclaratorEnd:
@@ -1594,8 +1601,11 @@ UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
 ClassOrInterfaceTypeToInstantiate:
  Identifier                                                 {
     string t1=$1; 
-    $$=(new Node(mymap[t1],t1)); 
+    $$=(new Node(mymap[t1],t1));
+     
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
+    $$->type = "Class";
+    
 
   }
 | Identifier TypeArgumentsOrDiamond                         {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}

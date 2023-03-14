@@ -40,8 +40,8 @@ class Variable{
 class Method{
     public:
     string name;
-    string ret_type;
-    vector<Variable*> parameters; 
+    string ret_type;    
+    vector<Variable*> parameters ; 
     vector<string> modifiers;
     int lineNo;
 
