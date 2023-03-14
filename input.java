@@ -1,16 +1,12 @@
 // public static class Fibonacci { //1
 //     public int memo = 9;
-//     char zu[];
+//     char z,y,x;
 //     float ff,ff1;
-//     String name[] ;
+//     String name = "kakka";
 
 //     public Fibonacci(int n) {
-//         this.name[0]=9;
-//         int tui;
-//         // memo[2 = 5;
-//         name[2]=4;
-//         // memo = new int[n + 1];
-//         // memo[1][2][3]=5;
+        // memo = new int[n + 1];
+        // memo[1][2][3]=5;
 //     }
 
 //     {
@@ -32,18 +28,17 @@
 //     }
 
 //     private int fib(int n, int z) {
-//         // if (n == 0 || n == 1) {
-//         //     int jdhwxhz;
-//         //     return n;
-//         // }
+//         if (n == 0 || n == 1) {
+//             int jdhwxhz;
+//             return n;
+//         }
 
-//         // if (memo[n] != 0) {
-//         //     return memo[n];
-//         // }
+//         if (memo[n] != 0) {
+//             return memo[n];
+//         }
 
-//         int result ;
-//         // = fib(n - 1) + fib(n - 2);
-//         // memo[n] = result;
+//         int result = fib(n - 1) + fib(n - 2);
+//         memo[n] = result;
 //         return result;
 //     }
 // }
@@ -69,13 +64,10 @@ class Myclass{
         //     return memo[n];
         // }
 
-        int result=0;
+        int result;
         // fib(n - 1) + fib(n - 2);
         // memo[n] = result;
-        if(result==0){
-            return n;
-        }
-            
+        return false;
     }
 
 }
