@@ -63,61 +63,65 @@
 // //         // new Fibonacci (2)= 3;
 // //     }
 // }
-class Myclass{
-    public int z=1;
-    // public class Onemore{
-    //     public static void fatak(char z){
+// class Myclass{
+//     public int z=1;
+//     // public class Onemore{
+//     //     public static void fatak(char z){
 
-    //     }
-    // }
+//     //     }
+//     // }
 
-    // public Myclass(int n) {
-    //     memo11 = new int[n + 1];
-    // }
+//     // public Myclass(int n) {
+//     //     memo11 = new int[n + 1];
+//     // }
 
-    private int fib11() {
-        Myclass obj = new Myclass();
-        obj.z = 1;
-        // if (n == 0 || n == 1) {
-        //     return n;
-    }
+//     private int fib11() {
+//         Myclass obj = new Myclass();
+//         obj.z = 1;
+//         // if (n == 0 || n == 1) {
+//         //     return n;
+//     }
     
 
-//         // if (memo[n] != 0) {
-//         //     return memo[n];
-//         // }
+// //         // if (memo[n] != 0) {
+// //         //     return memo[n];
+// //         // }
 
-        // int result= 0;
-        // if(result==0){
-        //     int s=8;
-        //     return 1;
-        // }
-        // for(int i=0;i<10;i++){
-        //     result=0;
-        // }
-        // fib(n - 1) + fib(n - 2);
-        // memo[n] = result;
+//         // int result= 0;
+//         // if(result==0){
+//         //     int s=8;
+//         //     return 1;
+//         // }
+//         // for(int i=0;i<10;i++){
+//         //     result=0;
+//         // }
+//         // fib(n - 1) + fib(n - 2);
+//         // memo[n] = result;
 
 
 
         
 
-//         return 0;
-//     }
+// //         return 0;
+// //     }
 
 
     
 
-}
+// }
 
-public class Calculator {
-  public int add(int x, int y) {
-    return x + y;
+public class OuterClass {
+  private int x = 10;
+
+  public class InnerClass {
+    public void printX() {
+      System.out.println("The value of x is " + x);
+    }
+
   }
 
-  public static void main(String[] args) {
-    Calculator calculator = new Calculator();
-    int sum = add(3, 7);
-    System.out.println("The sum of 3 and 5 is " + sum);
+  void uff(){
+    InnerClass.printy();
+    return;
   }
 }
