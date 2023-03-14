@@ -119,6 +119,8 @@ class SymbolTable {
     vector<Class*> classes;
     vector<Method*> methods;
 
+    bool isMethod=false, isClass=false;
+
     SymbolTable(SymbolTable* myparent, string myscope, int mynum){
         parent = myparent;
         scope = myscope;
@@ -317,9 +319,21 @@ class GlobalSymbolTable {
             cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
             exit(1);
         }
-        return true;
-        
-        
+        return true;   
+    }
+    bool typeCheckVar(Variable* v1, Variable* v2){
+        if(v1->type!=v2->type){
+            cout<<"Type mismatch: Assigning"<<v2->type<<" to "<<v1->type;
+            exit(1);
+        }
+        return true;   
+    }
+    bool typeCheckVar(Variable* v1, string myType){
+        if(v1->type!=myType){
+            cout<<"Type mismatch: Assigning"<<v1->type<<" to "<<myType;
+            exit(1);
+        }
+        return true;   
     }
 
 };
