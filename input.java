@@ -31,7 +31,7 @@ public static class Fibonacci { //1
 
     }
 
-    private int fib(int n, int z) {
+    private int fib(String n, String z) {
         // if (n == 0 || n == 1) {
         //     int jdhwxhz;
         //     return n;
@@ -45,6 +45,11 @@ public static class Fibonacci { //1
         // = fib(n - 1) + fib(n - 2);
         // memo[n] = result;
         return result;
+    }
+
+    {
+        this.fib("vb","def");
+        // new Fibonacci (2)= 3;
     }
 }
 class Myclass{

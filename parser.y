@@ -285,8 +285,19 @@ ExplicitConsInvTillTypeArgs:
 ;
 
 ArgumentList:
-  Expression                      {$$=new Node("Arglist");vector<Node*>v{$1};$$->add(v);}
-| ArgumentList comma Expression   {$$=new Node("Arglist");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+  Expression                      {
+    $$=new Node("Arglist");
+    vector<Node*>v{$1};
+    $$->add(v);
+    $$->variables.push_back($1->var);
+    }
+| ArgumentList comma Expression   {
+    $$=new Node("Arglist");
+    string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};
+    $$->add(v);
+    $$->variables=$1->variables;
+    $$->variables.push_back($3->var);
+    }
 ;
 
 ConstructorDeclarator:
@@ -872,7 +883,6 @@ PrimaryNoNewArray:
 | ClassLiteral                      {$$=$1;}
 | THIS                              {
     string t1=$1; 
-    cout<<"THISSSSSSSSSSSSSSSSs";
     $$= new Node(mymap[t1],t1);
     SymbolTable* temp;
     temp=global_sym_table->current_symbol_table;
@@ -888,7 +898,16 @@ PrimaryNoNewArray:
     
   }
 | TypeName dot THIS                 {$$=new Node("PrimaryNoNewArray");string t1=$2,t2=$3;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v);}
-| brac_open Expression brac_close   {$$=new Node("PrimaryNoNewArray");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};$$->add(v);}
+| brac_open Expression brac_close   {
+    $$=new Node("PrimaryNoNewArray");
+    string t1=$1,t2=$3;
+    vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)};
+    $$->add(v);
+    $$->type = $2->type;
+    $$->cls = $2->cls;
+    $$->var = $2->var;
+    $$->method = $2->method;
+    }
 | FieldAccess                       {$$=$1;} 
 | ArrayAccess                       {$$=$1;} 
 | MethodInvocation                  {$$=$1;} 
@@ -1120,7 +1139,7 @@ ConditionalOrExpression:
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
 
       global_sym_table->typeCheckVar($1->var, $3->var);
-        global_sym_table->typeCheckVar($1->var, "bool");
+      global_sym_table->typeCheckVar($1->var, "bool");
       $$->var=new Variable("","bool",yylineno,{});
       }
 ;
@@ -1289,13 +1308,24 @@ UnaryExpression:
     ;
 
 PreIncrDecrExpression:
-    INCR_DECR UnaryExpression                                                        {string t1=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v); $$->var=new Variable("",$2->var->type,yylineno,{});}
+    INCR_DECR UnaryExpression                                                        {
+      string t1=$1;
+      $$=new Node("ConditionalExpression");
+      vector<Node*>v{new Node(mymap[t1],$1),$2};
+      $$->add(v); 
+      $$->var=new Variable("",$2->var->type,yylineno,{});
+      }
     ;
 
 UnaryExpressionNotPlusMinus:
-    PostfixExpression                                                                {$$=$1;}
-    | CastExpression                                                                 {$$=$1; }
-    | LOGICAL_OP UnaryExpression                                                     {string t1=$1;$$=new Node("ConditionalExpression");vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v); $$->var=new Variable("",$2->var->type,yylineno,{});}
+  PostfixExpression                                                                {$$=$1;}
+  | CastExpression                                                                 {$$=$1; }
+  | LOGICAL_OP UnaryExpression                                                     {
+      string t1=$1;
+      $$=new Node("ConditionalExpression");
+      vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v); 
+      $$->var=new Variable("",$2->var->type,yylineno,{});
+    }
     ;
 
 PostfixExpression:
@@ -1332,17 +1362,114 @@ assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Nod
 // ;
 
 MethodInvocation:
-  TypeName brac_open ArgumentList brac_close                                         {$$=new Node("MethodInvocation");string t2=$2,t3=$4;vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};$$->add(v);}
-| TypeName brac_open brac_close                                                      {$$=new Node("MethodInvocation");string t2=$2,t3=$3;vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName brac_open ArgumentList brac_close                                         {
+    $$=new Node("MethodInvocation");
+    string t2=$2,t3=$4;
+    vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};
+    $$->add(v);
+    Method* method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
+    if(method->parameters.size()!=$3->variables.size()){
+      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$3->variables.size()<<endl;
+      exit(1);
+    }
+    for(int i=0;i<method->parameters.size();i++){
+      if(method->parameters[i]->type!=$3->variables[i]->type){
+        cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$3->variables[i]->type<<endl;
+        exit(1);
+      }
+    }
+    $$->type= method->ret_type;
+    $$->method=method;
+
+    }
+| TypeName brac_open brac_close                                                      {
+    $$=new Node("MethodInvocation");
+    string t2=$2,t3=$3;
+    vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+    $$->add(v);
+    Method* method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
+    if(method->parameters.size()!=0){
+      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
+      exit(1);
+    }
+    $$->type= method->ret_type;
+    $$->method=method;
+    }
 | MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart Identifier  brac_open brac_close                               {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$4;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); cout<<"methodinvocation\n";}
-| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {$$=new Node("MethodInvocation");string t1=$2,t2=$3,t3=$5;$$->add($1->objects); vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};$$->add(v);}
-;
+| MethodIncovationStart Identifier  brac_open brac_close                               {
+    $$=new Node("MethodInvocation");
+    string t1=$2,t2=$3,t3=$4;
+    $$->add($1->objects); 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+    $$->add(v); 
+    Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    if(method->parameters.size()!=0){
+        cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
+        exit(1);
+      }
+    $$->type= method->ret_type;
+    $$->method=method;
+    
+  }
+| MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {
+    $$=new Node("MethodInvocation");
+    string t1=$2,t2=$3,t3=$5;
+    $$->add($1->objects); 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};
+    $$->add(v);
+    Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    if(method->parameters.size()!=$4->variables.size()){
+      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$4->variables.size()<<endl;
+      exit(1);
+    }
+    for(int i=0;i<method->parameters.size();i++){
+      if(method->parameters[i]->type!=$4->variables[i]->type){
+        cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$4->variables[i]->type<<endl;
+        exit(1);
+      }
+    }
+    $$->type= method->ret_type;
+    $$->method=method;
+    }
+  | Primary dot Identifier brac_open ArgumentList brac_close {
+    $$=new Node("MethodInvocation");
+    string t1=$2,t2=$3,t3=$4,t6=$6;
+    $$->add($1->objects); 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$5,new Node(mymap[t6],t6)};
+    $$->add(v); 
+    Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    if(method->parameters.size()!=$5->variables.size()){
+      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$5->variables.size()<<endl;
+      exit(1);
+    }
+    for(int i=0;i<method->parameters.size();i++){
+      if(method->parameters[i]->type!=$5->variables[i]->type){
+        cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$5->variables[i]->type<<endl;
+        exit(1);
+      }
+    }
+    $$->type= method->ret_type;
+    $$->method=method;
+  }
+  | Primary dot Identifier brac_open brac_close {
+    $$=new Node("MethodInvocation");
+    string t1=$2,t2=$3,t3=$4,t6=$5;
+    $$->add($1->objects); 
+    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t6],t6)};
+    $$->add(v); 
+    Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    if(method->parameters.size()!=0){
+        cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
+        exit(1);
+      }
+    $$->type= method->ret_type;
+    $$->method=method;
+  }
+; 
 
 MethodIncovationStart:
   TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
-| Primary dot                    {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
 | super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); }
 | TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 ;
@@ -1355,7 +1482,14 @@ ClassInstanceCreationExpression:
 
 UnqualifiedClassInstanceCreationExpression:
   NEW TypeArguments ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen  {$$=new Node("UnqualifiedClassInstanceCreationExpression");string t1=$1,t2=$4;vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};$$->add(v);}
-| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen                {$$=new Node("UnqualifiedClassInstanceCreationExpression");string t1=$1,t2=$3;vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};$$->add(v); }
+| NEW ClassOrInterfaceTypeToInstantiate brac_open UnqualifiedClassInstanceCreationExpressionAfter_bracopen                {
+    $$=new Node("UnqualifiedClassInstanceCreationExpression");
+    string t1=$1,t2=$3;
+    vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};
+    $$->add(v); 
+    $$->cls = $2->cls;
+    $$->type = "Class";
+    }
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
@@ -1366,7 +1500,12 @@ UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
 ;
 
 ClassOrInterfaceTypeToInstantiate:
- Identifier                                                 {string t1=$1; $$=(new Node(mymap[t1],t1)); }
+ Identifier                                                 {
+    string t1=$1; 
+    $$=(new Node(mymap[t1],t1)); 
+    $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
+
+  }
 | Identifier TypeArgumentsOrDiamond                         {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2->objects);}
 | Identifier ClassOrInterfaceType2                          {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 | Identifier ClassOrInterfaceType2 TypeArgumentsOrDiamond   {string t1=$1; $$=new Node("ClassOrInterfaceTypeToInstantiate"); $$->add(new Node(mymap[t1],t1)); $$->add($2); $$->add($3->objects);}
