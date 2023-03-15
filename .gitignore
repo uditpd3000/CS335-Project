@@ -15,4 +15,5 @@ a.out
 *.output
 *.dot
 *.ps
+*.csv
 

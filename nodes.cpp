@@ -181,9 +181,17 @@ class SymbolTable {
         }
         cout<<"\n\n---Table end---\n\n";
     }
-    
 
-
+    void print_table_CSV(){
+        std::ofstream myfile;
+        string fileName=scope+".csv";
+        myfile.open (fileName);
+        myfile<<"Token,Symbol,Type,LineNo\n";
+        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->lineNo<<"\n";}
+        for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<","<<i->lineNo<<"\n";}
+        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<","<<i->lineNo<<"\n";}
+        myfile.close();
+    }
 };
 
 class GlobalSymbolTable {
@@ -339,7 +347,7 @@ class GlobalSymbolTable {
     }
     void printAll(){
         for(int i=0;i<scope_count;i++){
-            tablemap[i]->printTable();
+            tablemap[i]->print_table_CSV();
         }
     }
 
