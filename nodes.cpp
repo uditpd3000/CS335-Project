@@ -216,7 +216,7 @@ class GlobalSymbolTable {
     // lookups
     Variable* lookup_var(string s, int pp, string scope){
 
-        SymbolTable* curr = current_symbol_table;
+        SymbolTable* curr = linkmap[scope];
 
         while(curr->parent!=NULL){
             for(int i=0; i<curr->vars.size();i++){
@@ -234,7 +234,7 @@ class GlobalSymbolTable {
 
     Method* lookup_method(string s, int pp, string scope){
 
-        SymbolTable* curr = current_symbol_table;
+        SymbolTable* curr = linkmap[scope];
 
         while(curr->parent!=NULL){
             for(int i=0; i<curr->methods.size();i++){
@@ -253,7 +253,7 @@ class GlobalSymbolTable {
 
     Class* lookup_class(string s, int pp, string scope){
 
-        SymbolTable* curr = current_symbol_table;
+        SymbolTable* curr = linkmap[scope];
 
         if(s=="String"){
             Class * Str = new Class("String",{},0);
