@@ -116,12 +116,20 @@ public class OuterClass {
   public class InnerClass {
     public void printX() {
       System.out.println("The value of x is " + x);
+
+      for(int i=0;i<10;i++){
+        a=a+b;
+      }
     }
 
   }
 
   void uff(){
-    InnerClass.printy();
+    InnerClass.printX();
     return;
+  }
+
+  public static void main(String[] args){
+    uff();
   }
 }
