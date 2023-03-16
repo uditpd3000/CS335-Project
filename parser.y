@@ -791,7 +791,7 @@ VariableDeclarator:
     $$->var = new Variable($1,$3->type,yylineno,{});
     if($3->isObj)$$->var->classs_name = $3->anyName;
     $$->dims=$3->dims;
-    // cout<<"---\n";
+    cout<<"---huu\n"<<$$->dims;
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -803,6 +803,7 @@ VariableDeclarator:
     }
     $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$2->var->dimsSize);
     $$->dims=$4->dims;
+    cout<<"hurrahii"<<$$->type<<endl;
     }
 ;
 
@@ -814,6 +815,7 @@ VariableInitializer:
     $$->cls=$1->cls; 
     $$->isObj = $1->isObj;
     $$->anyName = $1->anyName;
+    $$->dims = $1->dims;
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
@@ -965,7 +967,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno; cout<<$$->isObj<<"ISOBJ\n";}
+  AssignmentExpression {$$=$1; $$->lineno=yylineno;}
 ;
 
 AssignmentExpression: 
@@ -988,7 +990,7 @@ Assignment:
 LeftHandSide:
 FieldAccess      {$$=$1;}
 | TypeName       {$$=$1;}
-| ArrayAccess    {$$=$1;}
+| ArrayAccess    {$$=$1;cout<<"Yahi naa?";}
 ;
 
 FieldAccess:
@@ -1202,8 +1204,12 @@ ArrayAccess:
     if(v1->isArray==false){
       throwError(t1+"is not of type Array",yylineno);
     }
+    if($3->type!="int"){
+      throwError("Array index cannot be of type "+$3->type,yylineno);
+    }
     $$->var= v1;
     $$->dims=1;
+    $$->type = v1->type;
   }
 | TypeName dot Identifier box_open Expression box_close  {
     $$=new Node("ArrayAcc");
@@ -2042,9 +2048,11 @@ LocalVariableType VariableDeclaratorList {
   $$->type = $1->type;
   $$->dims = $1->dims+ $2->dims;
   cout<<"Whyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy";
+  cout<<"hurrah"<<$$->dims<<endl;
   for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
+          cout<<"---iswaleme\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->dimsSize);
@@ -2057,7 +2065,7 @@ LocalVariableType VariableDeclaratorList {
         
       }
       else{
-        cout<<"---\n";
+        
         if(i->type!=""){
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
@@ -2108,31 +2116,76 @@ LocalVariableType VariableDeclaratorList {
 ;
 
 ArrayCreationExpression: 
-newclasstype ArrayCreationExpressionAfterType  {$$= new Node("ArrayCreationExpression"); $$->add($1->objects); $$->add($2->objects); }
-| newprimtype ArrayCreationExpressionAfterType {$$= new Node("ArrayCreationExpression"); $$->add($1->objects); $$->add($2->objects); }
+newclasstype ArrayCreationExpressionAfterType  {
+  $$= new Node("ArrayCreationExpression"); 
+  $$->add($1->objects); 
+  $$->add($2->objects); 
+  $$->dims = $2->dims;
+  $$->type = $1->type;
+  }
+| newprimtype ArrayCreationExpressionAfterType {
+  $$= new Node("ArrayCreationExpression"); 
+  $$->add($1->objects); 
+  $$->add($2->objects); 
+  $$->dims = $2->dims;
+  $$->type = $1->type;
+  // cout<<"yyy"<<$$->type<<endl;
+  }
 ;
 
 ArrayCreationExpressionAfterType:
 DimExprs { $$=$1; }
-| DimExprs Dims {$$= new Node(); $$->add($1);$$->add($2);}
+| DimExprs Dims {
+    $$= new Node(); 
+    $$->add($1);
+    $$->add($2);
+    $$->dims = $1->dims+$2->var->dims;
+    }
 | Dims ArrayInitializer {$$=new Node(); $$->add($1);$$->add($2);}
 ;
 
 newprimtype:
-NEW PrimitiveType {$$=new Node(); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
+NEW PrimitiveType {
+  $$=new Node(); 
+  string t1= $1; 
+  $$->add(new Node(mymap[t1],$1));
+  $$->add($2);
+  $$->type = $2->lexeme;
+  }
 ;
 
 newclasstype:
-NEW ClassType {$$=new Node(); string t1= $1; $$->add(new Node(mymap[t1],$1));$$->add($2);}
+NEW ClassType {
+  $$=new Node(); 
+  string t1= $1; 
+  $$->add(new Node(mymap[t1],$1));
+  $$->add($2);
+  $$->type = $2->type;
+  }
 ;
 
 DimExprs:
   DimExpr {$$=$1;}
-| DimExprs DimExpr {$$=$1; $$->add($2);}
+| DimExprs DimExpr {
+    $$=$1; 
+    $$->add($2);
+    $$->dims++;
+    }
 ;
 
 DimExpr:  
-box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(new Node(mymap[t1],$1)); $$->add($2); t1=$3; $$->add(new Node(mymap[t1],$3));}
+box_open Expression box_close  {
+  string t1=$1; 
+  $$=new Node("DimExpr"); 
+  $$->add(new Node(mymap[t1],$1)); 
+  $$->add($2); 
+  t1=$3;
+  $$->add(new Node(mymap[t1],$3));
+  if($2->type!="int"){
+     throwError("Array cannot be initialized using "+$2->type+"as index",yylineno);
+  }
+  $$->dims=1;
+  }
 
 ArrayInitializer: 
   curly_open VariableInitializerList curly_close {
@@ -2168,6 +2221,7 @@ VariableInitializer {
   $$->add($1);
   // $$->variables.push_back($1->var);
   $$->type=$1->type;
+  cout<<"yyyy"<<$$->type;
   $$->dims = $1->dims;
   }
 | VariableInitializerList comma VariableInitializer {
