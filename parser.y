@@ -434,7 +434,6 @@ MethodDeclaration:
     for(auto i:_method->parameters){
       global_sym_table->insert(i);
     }
-    cout<<"wow\n";
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
@@ -626,7 +625,6 @@ FieldDeclaration:
     for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
         }
         
@@ -635,7 +633,6 @@ FieldDeclaration:
         
       }
       else{
-        cout<<"Meko daanti\n";
         if(i->type!=""){
           cout<<i->type<<endl;
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
@@ -704,6 +701,7 @@ UnannType:
     $$ = new Node("UnannType"); 
     $$->add($1); 
     $$->type = $1->type;
+    cout<<$$->type<<"me\n";
     }
 ;
 
@@ -869,6 +867,7 @@ ArrayType:
     $$->add($2->objects);   
     $$->var = $2->var;
     $$->var->type = $1->lexeme;
+    $$->type = $1->lexeme;
     }
 | ClassType Dims       {
     $$=new Node("ArrayType"); 
@@ -878,6 +877,8 @@ ArrayType:
     $$->var->isArray= true;
     $$->var->dims = $2->var->dims;
     $$->var->size = $2->var->size;  
+    $$->type = $1->type;
+    cout<<"hiii";
     }
 ;
 
@@ -1073,6 +1074,7 @@ TypeName:
     if(cls!=NULL){
       $$->cls = cls;
       $$->type = "Class";
+      cout<<"I am here\n";
       if(cls->name=="String"){
         $$->type="String";
       }
@@ -1953,7 +1955,6 @@ LocalVariableType VariableDeclaratorList {
   for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->size);
@@ -1963,7 +1964,6 @@ LocalVariableType VariableDeclaratorList {
       else{
         cout<<"---\n";
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{});
@@ -1980,7 +1980,6 @@ LocalVariableType VariableDeclaratorList {
     for(auto i:$3->variables){
       if(i->isArray){
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
@@ -1989,7 +1988,6 @@ LocalVariableType VariableDeclaratorList {
       }
       else{
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers);
