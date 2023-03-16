@@ -5,6 +5,7 @@ using namespace std;
 
 extern int yyparse();
 extern map<string, string> mymap;
+extern map<string,int> typeToSize;
 extern void insertMap(string, string );
 int yylex (void);
 int yyerror (char const *);
@@ -13,6 +14,7 @@ extern int yylineno;
 extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
+map<string,int> typeToSize;
 
 GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
 
@@ -236,7 +238,9 @@ ConstructorDeclaration:
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
     for(auto i:method->parameters){
-      global_sym_table->insert(i);
+        i->offset = global_sym_table->current_symbol_table->offset;
+        global_sym_table->insert(i);
+        global_sym_table->current_symbol_table->offset+=i->size;
     }
 
   } 
@@ -254,7 +258,9 @@ ConstructorDeclaration:
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
     for(auto i:method->parameters){
-      global_sym_table->insert(i);
+        i->offset = global_sym_table->current_symbol_table->offset;
+        global_sym_table->insert(i);
+        global_sym_table->current_symbol_table->offset+=i->size;
     }
   } 
   ConstructorDeclarationEnd {
@@ -447,7 +453,9 @@ MethodDeclaration:
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
-      global_sym_table->insert(i);
+        i->offset = global_sym_table->current_symbol_table->offset;
+        global_sym_table->insert(i);
+        global_sym_table->current_symbol_table->offset+=i->size;
     }
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
@@ -458,7 +466,9 @@ MethodDeclaration:
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
-      global_sym_table->insert(i);
+        i->offset = global_sym_table->current_symbol_table->offset;
+        global_sym_table->insert(i);
+        global_sym_table->current_symbol_table->offset+=i->size;
     }
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);global_sym_table->end_scope(); }
@@ -469,7 +479,9 @@ MethodDeclaration:
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
-      global_sym_table->insert(i);
+        i->offset = global_sym_table->current_symbol_table->offset;
+        global_sym_table->insert(i);
+        global_sym_table->current_symbol_table->offset+=i->size;
     }
   } 
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); global_sym_table->end_scope();}
@@ -597,6 +609,7 @@ FormalParameter:
   $$->add(v);
   $$->var=$3->var;
   $$->var->type=$2->type;
+  if(typeToSize.find($$->var->type)!=typeToSize.end())$$->var->size = typeToSize[$$->var->type];
   if($2->dims==0){
     $$->var->isArray=false;
   }
@@ -613,6 +626,7 @@ FormalParameter:
     $$->add(v);
     $$->var= $2->var;
     $$->var->type = $1->type;
+    if(typeToSize.find($$->var->type)!=typeToSize.end())$$->var->size = typeToSize[$$->var->type];
     if($1->dims==0 && $2->dims==0){
     $$->var->isArray=false;
     }
@@ -665,9 +679,12 @@ FieldDeclaration:
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
         }
         
-        Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->size);
+        Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->dimsSize);
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
+        
         
       }
       else{
@@ -677,7 +694,9 @@ FieldDeclaration:
         }
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers);
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
         cout<<varr->name<<"---- "<<varr->classs_name<<endl;
       }
 
@@ -757,7 +776,7 @@ VariableDeclarator:
     string t1=$1; 
     vector<Node*>v{new Node(mymap[t1],t1),$2}; 
     $$->add(v);
-    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
+    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->dimsSize);
     $$->dims = $2->dims;
   }
 | Identifier assign VariableInitializer {
@@ -782,7 +801,7 @@ VariableDeclarator:
     if($2->var->dims!=$4->dims){
       throwError("TypeError: Cannot convert "+to_string($4->dims)+" dimensional Array to "+to_string($2->var->dims)+" dimesions",yylineno );
     }
-    $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$2->var->size);
+    $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$2->var->dimsSize);
     $$->dims=$4->dims;
     }
 ;
@@ -917,7 +936,7 @@ ArrayType:
     $$->var = new Variable($1->cls->name,$1->type,yylineno,{});
     $$->var->isArray= true;
     $$->var->dims = $2->var->dims;
-    $$->var->size = $2->var->size;  
+    $$->var->dimsSize = $2->var->dimsSize;  
     $$->type = $1->type;
     $$->dims = $2->var->dims;
 
@@ -2028,9 +2047,11 @@ LocalVariableType VariableDeclaratorList {
         if(i->type!=""){
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
-        Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->size);
+        Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->dimsSize);
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
         cout<<varr->name<<"-- "<<varr->classs_name<<endl;
         
@@ -2042,7 +2063,9 @@ LocalVariableType VariableDeclaratorList {
         }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{});
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
         cout<<varr->name<<"-- "<<varr->classs_name<<endl;
       }
@@ -2060,9 +2083,11 @@ LocalVariableType VariableDeclaratorList {
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         
-        Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
+        Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->dimsSize);
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
         
       }
       else{
@@ -2072,7 +2097,9 @@ LocalVariableType VariableDeclaratorList {
 
         Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers);
         varr->classs_name=i->classs_name;
+        varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
+        global_sym_table->current_symbol_table->offset+=varr->size;
       }
 
     }
