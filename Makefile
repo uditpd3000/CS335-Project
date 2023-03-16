@@ -40,3 +40,4 @@ graph: # to show dot file
 clean : # clean up the generated files
 	@echo "cleaning up...\n"
 	@rm -f $(TARGET) $(SRCS) parser.output graph.dot
+	@rm output/*.csv

@@ -16,6 +16,7 @@ class Variable{
     int dims;
     int lineNo;
     vector<int> size;
+    string classs_name;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers){
         name = myname;
@@ -44,6 +45,7 @@ class Method{
     vector<Variable*> parameters ; 
     vector<string> modifiers;
     int lineNo;
+    bool ifConstructor = false;
 
     Method(string myname, string myret_type, vector<Variable*> myparameters, vector<string> mymodifiers, int mylineNo){
         name = myname;
@@ -76,6 +78,7 @@ class Node {
     string label; //seperator
     string lexeme; //}
     string anyName;
+    bool isObj;
 
     string type;
 
@@ -184,12 +187,12 @@ class SymbolTable {
 
     void print_table_CSV(){
         std::ofstream myfile;
-        string fileName=scope+".csv";
+        string fileName="output/"+scope+".csv";
         myfile.open (fileName);
-        myfile<<"Token,Symbol,Type,LineNo\n";
-        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->lineNo<<"\n";}
-        for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<","<<i->lineNo<<"\n";}
-        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<","<<i->lineNo<<"\n";}
+        myfile<<"Token,Symbol,Type,isArray,dims,LineNo\n";
+        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<"\n";}
+        for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<"\n";}
+        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<"\n";}
         myfile.close();
     }
 };
@@ -200,6 +203,7 @@ class GlobalSymbolTable {
     string current_scope;
     SymbolTable* current_symbol_table;
     int scope_count=0;
+    bool isForScope;
 
     map<int,SymbolTable*> tablemap; // scope-number maped
     map<string,SymbolTable*> linkmap; // scope
@@ -222,6 +226,7 @@ class GlobalSymbolTable {
             for(int i=0; i<curr->vars.size();i++){
                 if(curr->vars[i]->name==s)return curr->vars[i];
             }
+            
             curr=curr->parent;
         }
 
@@ -299,8 +304,8 @@ class GlobalSymbolTable {
 
     SymbolTable* makeTable(){
         string scopee = generate_scopename();
-
         SymbolTable *newTable = new SymbolTable(current_symbol_table, scopee, scope_count);
+        linkmap[scopee] = newTable;
         current_scope = scopee;
         current_symbol_table = newTable;
         tablemap[scope_count-1]=newTable;
@@ -322,7 +327,7 @@ class GlobalSymbolTable {
                 }
             }
         }
-        cout<<"Redeclaration of symbol : "<<symbol <<endl; 
+        throwError("Error: Redeclaration of symbol :"+symbol,yylineno);
         return false;
         
     }
@@ -334,7 +339,7 @@ class GlobalSymbolTable {
         
     }
     void insert(Method* method){
-        if(insertCheck(method->name)){
+        if(method->ifConstructor==true||insertCheck(method->name)){
            current_symbol_table->insert_method(method);
         }
     }

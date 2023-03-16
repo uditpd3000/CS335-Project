@@ -117,7 +117,7 @@ void throwError(string s, int lineno){
 %type<node> ImportDeclaration SingleTypeImportDeclaration SingleStaticImportDeclaration StaticImportOnDemandDeclaration ImportDeclarations
 %type<node> ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression 
 
-%type<sym> CommonModifier
+%type<sym> CommonModifier forr
 
 %left OR
 %left AND
@@ -186,7 +186,9 @@ ClassDeclaration:
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
-    $$->add($4->objects); }
+    $$->add($4->objects);
+    global_sym_table->end_scope();
+  }
 ;
 
 ClassDecTillTypeParameters:
@@ -230,8 +232,12 @@ ConstructorDeclaration:
     vector<string> mod;
     mod.push_back($1);
     Method* method = new Method($2->method->name,"",$2->method->parameters,mod,yylineno);
+    method->ifConstructor = true;
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
+    for(auto i:method->parameters){
+      global_sym_table->insert(i);
+    }
 
   } 
   ConstructorDeclarationEnd {
@@ -244,8 +250,12 @@ ConstructorDeclaration:
 | ConstructorDeclarator {
 
     Method* method = new Method($1->method->name,"",$1->method->parameters,{},yylineno);
+    method->ifConstructor = true;
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
+    for(auto i:method->parameters){
+      global_sym_table->insert(i);
+    }
   } 
   ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
@@ -348,7 +358,13 @@ ConstructorDeclaratorEnd:
     $$->method = $1->method;
   }
 | ReceiverParameter brac_close {$$ = new Node(); string t1=$2; vector<Node*>v{$1,new Node(mymap[t1],t1)}; $$->add(v); }
-| brac_close {$$ = new Node(); string t1=$1; vector<Node*>v{new Node(mymap[t1],t1)}; $$->add(v); }
+| brac_close {
+    $$ = new Node(); 
+    string t1=$1; 
+    vector<Node*>v{new Node(mymap[t1],t1)}; 
+    $$->add(v); 
+    $$->method = new Method("","",{},{},yylineno);
+  }
 ;
 
 StaticInitializer:
@@ -391,7 +407,7 @@ BlockStatement:
 ;
 
 LocalVariableType:
-  UnannType {$$=$1; cout<<$$->type;}
+  UnannType {$$=$1;}
 | var {
     string t1= $1; 
     $$=new Node(mymap[t1],t1); 
@@ -430,7 +446,6 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     global_sym_table->current_symbol_table->isMethod=true;
-    cout<<_method->parameters.size();
     for(auto i:_method->parameters){
       global_sym_table->insert(i);
     }
@@ -529,6 +544,7 @@ MethodDeclaratorTillRP:
     $$->add($3->objects);
     $$->method=$3->method;
     $$->type = $1->type;
+    $$->dims = $1->dims;
     }
 | MethodDeclaratorTillFP {
     $$=new Node(); 
@@ -581,6 +597,13 @@ FormalParameter:
   $$->add(v);
   $$->var=$3->var;
   $$->var->type=$2->type;
+  if($2->dims==0){
+    $$->var->isArray=false;
+  }
+  else{
+    $$->var->isArray=true;
+    $$->var->dims=$2->dims;
+  }
   $$->var->modifiers.push_back($1);
   }
 
@@ -590,19 +613,33 @@ FormalParameter:
     $$->add(v);
     $$->var= $2->var;
     $$->var->type = $1->type;
+    if($1->dims==0 && $2->dims==0){
+    $$->var->isArray=false;
+    }
+    else{
+    $$->var->isArray=true;
+    $$->var->dims=$1->dims+$2->dims;
+    }
   }
 | VariableArityParameter {$$= $1;}
 ;
 
 
 VariableDeclaratorId:
-  Identifier Dims {$$= new Node("VariableDeclaratorId"); string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2}; $$->add(v);}
+  Identifier Dims {
+    $$= new Node("VariableDeclaratorId"); 
+    string t1=$1; 
+    vector<Node*>v{(new Node(mymap[t1],t1)),$2}; 
+    $$->add(v);
+    $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,{});
+    $$->dims = $2->var->dims;
+    }
 | Identifier {
-  $$= new Node("VariableDeclaratorId"); 
-  string t1=$1; 
-  vector<Node*>v{(new Node(mymap[t1],t1))}; 
-  $$->add(v);
-  $$->var = new Variable($1,"",yylineno,{});
+    $$= new Node("VariableDeclaratorId"); 
+    string t1=$1; 
+    vector<Node*>v{(new Node(mymap[t1],t1))}; 
+    $$->add(v);
+    $$->var = new Variable($1,"",yylineno,{});
   }
 ;
 
@@ -629,6 +666,7 @@ FieldDeclaration:
         }
         
         Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->size);
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
         
       }
@@ -638,7 +676,9 @@ FieldDeclaration:
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers);
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
+        cout<<varr->name<<"---- "<<varr->classs_name<<endl;
       }
 
     }
@@ -661,7 +701,6 @@ CommonModifier {
   string t1=$1; $$ = new Node("Modifiers"); $$->add(new Node(mymap[t1],t1));
   vector<string> mod;
   mod.push_back($1);
-  // cout<<"aaa"<<$1<<endl;
   $$->var = new Variable($1,"",yylineno,mod);
   }
 | Modifiers CommonModifier {
@@ -701,7 +740,7 @@ UnannType:
     $$ = new Node("UnannType"); 
     $$->add($1); 
     $$->type = $1->type;
-    cout<<$$->type<<"me\n";
+    $$->dims = $1->dims;
     }
 ;
 
@@ -719,6 +758,7 @@ VariableDeclarator:
     vector<Node*>v{new Node(mymap[t1],t1),$2}; 
     $$->add(v);
     $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->size);
+    $$->dims = $2->dims;
   }
 | Identifier assign VariableInitializer {
   // cout<<"---\n";
@@ -730,6 +770,7 @@ VariableDeclarator:
       throwError("TypeError: Cannot convert "+to_string($3->dims)+" dimensional Array to "+$3->type+"\n",yylineno );
     }
     $$->var = new Variable($1,$3->type,yylineno,{});
+    if($3->isObj)$$->var->classs_name = $3->anyName;
     $$->dims=$3->dims;
     // cout<<"---\n";
   }
@@ -738,7 +779,6 @@ VariableDeclarator:
     string t1=$1,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
     $$->add(v);
-    cout<<"qqq\n";
     if($2->var->dims!=$4->dims){
       throwError("TypeError: Cannot convert "+to_string($4->dims)+" dimensional Array to "+to_string($2->var->dims)+" dimesions",yylineno );
     }
@@ -753,12 +793,12 @@ VariableInitializer:
     $$->var=$1->var;
     $$->method=$1->method;
     $$->cls=$1->cls; 
+    $$->isObj = $1->isObj;
+    $$->anyName = $1->anyName;
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
     $$ = $1;
-    cout<<"pppppppppp\n";
-    cout<<$$->dims<<" ==========";
     $$->dims++;
     } // 
 ; 
@@ -857,7 +897,7 @@ WildcardBounds:
 
 ReferenceType:
   ClassType {$$=$1;}
-| ArrayType {$$=$1;}
+| ArrayType {$$=$1;cout<<"Array"<<$$->dims<<"\n";}
 ;
 
 ArrayType:
@@ -868,6 +908,7 @@ ArrayType:
     $$->var = $2->var;
     $$->var->type = $1->lexeme;
     $$->type = $1->lexeme;
+    $$->dims = $2->var->dims;
     }
 | ClassType Dims       {
     $$=new Node("ArrayType"); 
@@ -878,7 +919,8 @@ ArrayType:
     $$->var->dims = $2->var->dims;
     $$->var->size = $2->var->size;  
     $$->type = $1->type;
-    cout<<"hiii";
+    $$->dims = $2->var->dims;
+
     }
 ;
 
@@ -904,12 +946,12 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno;}
+  AssignmentExpression {$$=$1; $$->lineno=yylineno; cout<<$$->isObj<<"ISOBJ\n";}
 ;
 
 AssignmentExpression: 
 Assignment                {$$=$1;  }
-| ConditionalExpression   {$$=$1; if($$->var->type!="")$$->type=$1->var->type; }
+| ConditionalExpression   {$$=$1; if($$->var!=NULL&& $$->var->type!="")$$->type=$1->var->type; }
 ;
 
 Assignment:
@@ -937,8 +979,8 @@ Primary dot Identifier              {
   vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};
   $$->add(v);
   if($1->type=="Class"){
-    $$->var=global_sym_table->lookup_var($3,1,global_sym_table->current_scope);
-    // cout<<"Duh---------------";
+    $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
+    $$->type = $$->var->type;
   }
 
   cout<<"ab naa hoga"; 
@@ -965,10 +1007,10 @@ PrimaryNoNewArray:
     while(temp->parent->scope!="Yayyy"){
       temp=temp->parent;
     }
-    // cout<<"tui";
     t1= temp->scope;
     $$->cls= global_sym_table->lookup_class(t1,0,global_sym_table->current_scope);
     $$->type="Class";
+    $$->anyName = $$->cls->name;
 
     // exit(1);
     
@@ -1074,7 +1116,6 @@ TypeName:
     if(cls!=NULL){
       $$->cls = cls;
       $$->type = "Class";
-      cout<<"I am here\n";
       if(cls->name=="String"){
         $$->type="String";
       }
@@ -1088,7 +1129,13 @@ TypeName:
     else if(var!=NULL){
       $$->var = var;
       $$->type = var->type;
-      $$->anyName=$$->var->name;
+      $$->anyName = var->classs_name;
+      $$->dims = var->dims;
+      if($$->type!="Class"){
+        
+        $$->anyName=$$->var->name;
+      }
+      
     }
     else {
       throwError("Variable "+t1 + "not declared in appropriate scope",yylineno);
@@ -1107,6 +1154,7 @@ TypeName:
     if(cls!=NULL){
       $$->cls = cls;
       $$->type = "Class";
+      $$->anyName = cls->name;
 
     }
     else if(met !=NULL){
@@ -1116,6 +1164,7 @@ TypeName:
     else if(var!=NULL){
       $$->var = var;
       $$->type = var->type;
+      $$->dims = var->dims;
     }
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
@@ -1352,7 +1401,8 @@ AdditiveExpression:
       priority["int"]=0;
       priority["char"]=0;
       priority["float"]=1;
-      priority["String"]=2;
+      priority["double"]=2;
+      priority["String"]=3;
 
       if(priority.find($1->var->type)==priority.end() || priority.find($3->var->type)==priority.end()){
         throwError("bad operand types for additive operator on line number",yylineno);
@@ -1362,7 +1412,8 @@ AdditiveExpression:
 
       if(x1==0) $$->var=new Variable("","int",yylineno,{});
       else if(x1==1) $$->var=new Variable("","float",yylineno,{});
-      else if(x1==2) $$->var=new Variable("","String",yylineno,{});
+      else if(x1==2) $$->var=new Variable("","double",yylineno,{});
+      else if(x1==3) $$->var=new Variable("","String",yylineno,{});
 
     }
     | MultiplicativeExpression                                                       {$$=$1;}
@@ -1425,8 +1476,8 @@ UnaryExpressionNotPlusMinus:
     ;
 
 PostfixExpression:
-  Primary                                   {$$=$1;  $$->var=new Variable("",$1->type,yylineno,{});}
-| TypeName                                  {$$=$1; $$->var=new Variable("",$1->type,yylineno,{});}
+  Primary                                   {$$=$1;}
+| TypeName                                  {$$=$1;}
 | PostIncrDecrExpression                    {$$=$1;}
 ;
 
@@ -1601,7 +1652,7 @@ MethodIncovationStart:
 ;
 
 ClassInstanceCreationExpression:
-  UnqualifiedClassInstanceCreationExpression                {$$=$1;}
+  UnqualifiedClassInstanceCreationExpression                {$$=$1;$$->isObj = true;}
 | TypeName dot UnqualifiedClassInstanceCreationExpression   {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 | Primary dot UnqualifiedClassInstanceCreationExpression    {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 ;
@@ -1620,6 +1671,7 @@ UnqualifiedClassInstanceCreationExpression:
     $$->add(v); 
     $$->cls = $2->cls;
     $$->type = "Class";
+    $$->anyName=$2->cls->name;
     }
 ;
 
@@ -1637,6 +1689,7 @@ ClassOrInterfaceTypeToInstantiate:
      
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     $$->type = "Class";
+    cout<<$$->cls->name<<"bana";
     
 
   }
@@ -1668,7 +1721,7 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
     vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)};
      $$->add(v);
 
-     if($3->var->type=="bool" || $3->var->type=="NULL"){
+     if($3->type=="bool" || $3->type=="NULL"){
       "invalid type to print. \n";
       exit(1);
      }
@@ -1677,7 +1730,7 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
 ;
 
 StatementWithoutTrailingSubstatement:
-{global_sym_table->makeTable();} 
+{if(global_sym_table->isForScope==false)global_sym_table->makeTable();global_sym_table->isForScope=false;} 
   Block {
     $$=$2;
     global_sym_table->end_scope();
@@ -1844,44 +1897,44 @@ BasicForStatementNoShortIf:
 BasicForStatementStart StatementNoShortIf                              {$$=new Node("BasicForStatementNoShortIf"); $$->add($1->objects); $$->add($2);}
 
 BasicForStatementStart:
-FOR brac_open semi_colon semi_colon brac_close                         {
+forr brac_open semi_colon semi_colon brac_close                         {
   $$ = new Node();
    string t1= $1,t2=$2,t3=$3, t4=$4, t5=$5; 
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), new Node(mymap[t5], $5) };
    $$->add(v);
    }
-| FOR brac_open ForInit semi_colon semi_colon brac_close               {
+| forr brac_open ForInit semi_colon semi_colon brac_close               {
   $$ = new Node();
    string t1= $1,t2=$2,t4=$4, t5=$5, t6=$6; 
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
      $$->add(v);
       } 
-| FOR brac_open semi_colon Expression semi_colon brac_close            {
+| forr brac_open semi_colon Expression semi_colon brac_close            {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t6=$6;
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
   $$->add(v); 
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"bool",$$->lineno);
   }
-| FOR brac_open semi_colon semi_colon ForUpdate brac_close             {
+| forr brac_open semi_colon semi_colon ForUpdate brac_close             {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t4=$4, t6=$6;
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6) };
    $$->add(v);
    }
-| FOR brac_open semi_colon Expression semi_colon ForUpdate brac_close  {
+| forr brac_open semi_colon Expression semi_colon ForUpdate brac_close  {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t7=$7;
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) }; 
   $$->add(v);
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"bool",$$->lineno);
   }
-| FOR brac_open ForInit semi_colon semi_colon ForUpdate brac_close     {
+| forr brac_open ForInit semi_colon semi_colon ForUpdate brac_close     {
   $$ = new Node(); 
   string t1= $1,t2=$2,t4=$4, t5=$5, t7=$7;
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) };
   $$->add(v);
   }
-| FOR brac_open ForInit semi_colon Expression semi_colon brac_close    {
+| forr brac_open ForInit semi_colon Expression semi_colon brac_close    {
   $$ = new Node();
   string t1= $1,t2=$2,t4=$4, t6=$6, t7=$7;
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6),new Node(mymap[t7], $7) };
@@ -1889,7 +1942,7 @@ FOR brac_open semi_colon semi_colon brac_close                         {
   $$->lineno=$5->lineno;
   global_sym_table->typeCheckVar($5->var,"bool",$$->lineno);
   }
-| FOR brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close {
+| forr brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close {
   $$ = new Node(); 
   string t1= $1,t2=$2,t4=$4, t6=$6, t8=$8; 
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), $7, new Node(mymap[t8], $8) };
@@ -1899,10 +1952,19 @@ FOR brac_open semi_colon semi_colon brac_close                         {
   }
 ;
 
+forr:
+FOR {
+  global_sym_table->isForScope=true;
+  global_sym_table->makeTable();
+  }
+;
+
 
 ForInit: 
 StatementExpressionList {$$=$1;}
-| LocalVariableDeclaration {$$=$1;}
+| LocalVariableDeclaration {
+  $$=$1;
+  }
 ;
 
 ForUpdate:
@@ -1915,24 +1977,30 @@ StatementExpression {$$= new Node("StatementExpressionList"); $$->add($1);}
 ;
 
 EnhancedForStatement:
-FOR brac_open LocalVariableDeclaration colon Expression brac_close Statement {
+forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   $$ = new Node("EnhancedForStatement"); 
   string t1= $1,t2=$2,t4=$4, t6=$6; 
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), $7 }; 
   $$->add(v);
   $$->lineno=$5->lineno;
-  global_sym_table->typeCheckVar($5->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($5->var,$3->type,$$->lineno);
+  if($3->variables[0]->dims!=$5->dims-1){
+    throwError("Type mismatch: Cannot iterate over "+to_string($5->dims)+" dimensional object using "+to_string($3->dims)+" dimesnional object",$5->lineno);
+  }
   }
 ;
 
 EnhancedForStatementNoShortIf:
-FOR brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf {
+forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoShortIf {
   $$ = new Node("EnhancedForStatementNoShortIf"); 
   string t1= $1,t2=$2,t4=$4, t6=$6; 
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), $7 };  
   $$->add(v);
   $$->lineno=$5->lineno;
-  global_sym_table->typeCheckVar($5->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($5->var,$3->type,$$->lineno);
+  if($3->variables[0]->dims!=$5->dims-1){
+    throwError("Type mismatch: Cannot iterate over "+to_string($5->dims)+" dimensional object using "+to_string($3->dims)+" dimesnional object",$5->lineno);
+  }
   }
 ;
 
@@ -1952,13 +2020,19 @@ LocalVariableType VariableDeclaratorList {
   $$= new Node ("LocalVariableDeclaration"); 
   $$->add($1->objects); 
   $$->add($2);
+  $$->type = $1->type;
+  $$->dims = $1->dims+ $2->dims;
+  cout<<"Whyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy";
   for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->size);
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
+        $$->variables.push_back(varr);
+        cout<<varr->name<<"-- "<<varr->classs_name<<endl;
         
       }
       else{
@@ -1967,7 +2041,10 @@ LocalVariableType VariableDeclaratorList {
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{});
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
+        $$->variables.push_back(varr);
+        cout<<varr->name<<"-- "<<varr->classs_name<<endl;
       }
 
     }
@@ -1982,7 +2059,9 @@ LocalVariableType VariableDeclaratorList {
         if(i->type!=""){
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
+        
         Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->size);
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
         
       }
@@ -1990,7 +2069,9 @@ LocalVariableType VariableDeclaratorList {
         if(i->type!=""){
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
+
         Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers);
+        varr->classs_name=i->classs_name;
         global_sym_table->insert(varr);
       }
 
@@ -2029,7 +2110,6 @@ box_open Expression box_close  {string t1=$1; $$=new Node("DimExpr"); $$->add(ne
 ArrayInitializer: 
   curly_open VariableInitializerList curly_close {
     string t1=$1; 
-    cout<<"ahhhhhhhhh\n";
     $$=new Node("ArrayInitializer"); 
     $$->add(new Node(mymap[t1],$1)); 
     $$->add($2); 
