@@ -6,10 +6,17 @@ using namespace std;
 class Instruction{
     public:
 
+        bool isLabel=false;
+        string label="";
+
+
         string result="";
 
         virtual string print(){
             return "";
+        }
+
+        virtual void setIndex(int i){
         }
 };
 
@@ -20,6 +27,7 @@ class Assignment: public Instruction{
         string op="";
 
         string print(){
+
             if(op!="") {
                 if(arg2!="") return (arg1 + " " + op + " " + arg2);
                 else return (arg1 + op);
@@ -28,17 +36,26 @@ class Assignment: public Instruction{
                 return arg1;
             }
         }
+
+        void setIndex(int i){
+        }
 };
 
 class UnconditionalJump: public Instruction{
     public:
         string arg1="goto";
+        string arg2="";
         int index;
 
         string result = "";
 
         string print(){
-            return (arg1 + " " + to_string(index));
+            if(arg2=="") return (arg1 + " " + to_string(index));
+            else return (arg1 + " " +arg2);
+        }
+
+        void setIndex(int i){
+            index=i;
         }
 
 };
@@ -48,23 +65,49 @@ class ConditionalJump: public Instruction{
         string arg1="if";
         string arg2;
         string arg3="goto";
+        string arg4="";
         int index;
 
         string result = "";
 
         string print(){
-            return (arg1 + " " + arg2 + " " + arg3 + " " +to_string(index));
+            if(arg4=="") return (arg1 + " " + arg2 + " " + arg3 + " " +to_string(index));
+            else return (arg1 + " " + arg2 + " " + arg3 + " " +arg4);
+        }
+
+        void setIndex(int i){
+            index=i;
         }
 
 };
 
-class IR{
-
-    vector<Instruction*> quadruple;
-
-    int local_reg_count=0;
-
+class Block: public Instruction{
     public:
+    string label;
+
+    vector<Instruction*> codes;
+
+    string print(){
+        string s = label + ":\n";
+        for(auto x : codes){
+            if (x->result!="") s += "\t" + x->result + " := " +  x->print() + "\n";
+            else s += x->print() + "\n";
+        }
+        return s;
+    }
+};
+
+
+
+class IR{
+    public:
+
+        vector<Instruction*> quadruple;
+        vector<Block*> blocks;
+
+        int local_reg_count=0;
+        int local_label_count=0;
+
 
         string getVar(int index){
             return quadruple[index]->result;
@@ -72,6 +115,9 @@ class IR{
 
         string getLocalVar(){
             return "t"+to_string(local_reg_count++);
+        }
+        string getLocalLabel(){
+            return "L"+to_string(local_label_count++);
         }
 
         int insert(Instruction* myInstruction){
@@ -109,6 +155,39 @@ class IR{
             return myInstruction;
         }
 
+        // block
+        string makeBlock(int start, int end){
+            Block* myInstruction = new Block();
+            myInstruction->label = getLocalLabel();
+            
+            for(int i=start;i<end;i++){
+                myInstruction->codes.push_back(quadruple[i]);
+            }
+
+            quadruple.erase(quadruple.begin()+start,quadruple.begin()+end);
+
+            blocks.push_back(myInstruction);
+
+            return myInstruction->label;
+        }
+        string makeBlock(int index){
+            Block* myInstruction = new Block();
+            myInstruction->label = getLocalLabel();
+
+            myInstruction->codes.push_back(quadruple[index]);
+
+            quadruple.erase(quadruple.begin()+index,quadruple.begin()+index+1);
+
+            blocks.push_back(myInstruction);
+
+            return myInstruction->label;
+
+        }
+
+        int insertAss(string myArg1, string myArg2, string op,string res=""){
+            return insert(create(myArg1,myArg2,op,res));
+        }
+
         // unconditional jump
         int insertJump(int myArg2){
             UnconditionalJump* myInstruction = new UnconditionalJump();
@@ -119,16 +198,54 @@ class IR{
             return quadruple.size()-1;
         }
 
-        // conditional jump
-        int insertIf(Instruction* myArg1, int myArg2){
-            ConditionalJump* myInstruction = new ConditionalJump();
+        // else statements
+        int insertElse(int index, int arg1){
+            UnconditionalJump* myInstruction = new UnconditionalJump();
+            myInstruction->arg2 = makeBlock(arg1);
 
-            myInstruction->arg2= myArg1->print();
-            myInstruction->index=myArg2;
-
-            quadruple.push_back(myInstruction);
+            Instruction*  myCondition = myInstruction;
+            quadruple.insert(quadruple.begin()+index,myCondition);
 
             return quadruple.size()-1;
+        }
+        int insertElse(int index, string arg1){
+            UnconditionalJump* myInstruction = new UnconditionalJump();
+            myInstruction->arg2 = arg1;
+
+            Instruction*  myCondition = myInstruction;
+            quadruple.insert(quadruple.begin()+index,myCondition);
+
+            return quadruple.size()-1;
+        }
+
+        // conditional jump
+        int insertIf(int index ,string arg2){
+            ConditionalJump* myInstruction = new ConditionalJump();
+
+            myInstruction->arg2= quadruple[index]->print(); // if a>b
+            myInstruction->arg4=arg2;
+
+            Instruction*  myCondition = myInstruction;
+
+            // cout << myCondition->print();
+
+            quadruple[index] = myCondition;
+
+            return index;
+        }
+        int insertIf(int index ,int arg2){
+            ConditionalJump* myInstruction = new ConditionalJump();
+
+            myInstruction->arg2= quadruple[index]->print(); // if a>b
+            myInstruction->arg4=makeBlock(arg2);
+
+            Instruction*  myCondition = myInstruction;
+
+            // cout << myCondition->print();
+
+            quadruple[index] = myCondition;
+
+            return index;
         }
 
         // while loop
@@ -147,17 +264,22 @@ class IR{
         }
 
         // for loopp
-        int insertFor(int index1, Instruction* myArg1, Instruction* myArg2){
-            int index2 = insert(myArg2);
+        // int insertFor(int index1, int myArg1, Instruction* myArg2){
+        //     int index2 = insert(myArg2);
 
-            return insertIf(myArg1,index1+1);
-        }
+        //     return insertIf(myArg1,index1+1);
+        // }
 
         void print(){
             for(int i=0;i<quadruple.size();i++){
-                cout<<i<<": ";
+                // cout<<i<<": ";
                 if(quadruple[i]->result!="") cout<<quadruple[i]->result<<" := ";
                 cout<<quadruple[i]->print();
+                cout<<endl;
+            }
+            for(int i=0;i<blocks.size();i++){
+                // cout<<i<<": ";
+                cout<<blocks[i]->print();
                 cout<<endl;
             }
         }

@@ -1,6 +1,7 @@
 %{  
 #include <bits/stdc++.h>
-#include "nodes.cpp" 
+#include "nodes.cpp"
+#include "ThreeAC.cpp" 
 #include "parser.tab.h"
 
 #include <bits/stdc++.h>
@@ -91,7 +92,7 @@ StringLiteral \"[^\n"]+\"
 ".*" {insertMap(strdup(yytext),"DotStar");yylval.sym = strdup(yytext); return DOT_STAR;}
 
 
-enum|record|switch|assert|default|package|synchronized|boolean|do|goto|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
+enum|record|switch|assert|default|package|synchronized|do|goto|case|catch|try|interface|finally|const|"_" {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return keyword;} /* keywords */
 
 class {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_just_class;}
 public|private|protected {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return class_access;}
@@ -117,7 +118,7 @@ for {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return FOR
 while {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return WHILE;}
 if {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return IF;}
 else {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return ELSE;}
-byte|short|int|long|char|float|double {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return literal_type;}
+byte|short|int|long|char|float|double|boolean {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return literal_type;}
 instanceof {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return INSTANCE_OF;}
 new {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return NEW;}
 import {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return IMPORT;}

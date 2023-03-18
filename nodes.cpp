@@ -77,6 +77,8 @@ class Node {
     string lexeme; //}
     string anyName;
 
+    vector<Node*> objects;
+
     string type;
 
     Variable* var;
@@ -85,7 +87,6 @@ class Node {
     int dims=0;
     vector<Variable*> variables;
 
-    vector<Node*> objects;
 
     Node(){
         label="";
@@ -184,7 +185,7 @@ class SymbolTable {
 
     void print_table_CSV(){
         std::ofstream myfile;
-        string fileName=scope+".csv";
+        string fileName="output/" + scope+".csv";
         myfile.open (fileName);
         myfile<<"Token,Symbol,Type,LineNo\n";
         for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->lineNo<<"\n";}
@@ -304,6 +305,7 @@ class GlobalSymbolTable {
         current_scope = scopee;
         current_symbol_table = newTable;
         tablemap[scope_count-1]=newTable;
+        linkmap[scopee] = newTable;
         return newTable;
 
     }

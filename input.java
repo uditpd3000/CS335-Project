@@ -115,21 +115,37 @@ public class OuterClass {
 
   public class InnerClass {
     public void printX() {
-      System.out.println("The value of x is " + x);
+      // System.out.println("The value of x is " + x);
 
-      for(int i=0;i<10;i++){
-        a=a+b;
+     
+      boolean c,a=true,b=false;
+      int d=5,e,f;
+
+      // a=2;
+      // b=1;
+      // c = a || b;
+      d = e;
+
+      if(a||b){
+        if(b>a) {
+          e++;
+        }
+        d++;
+        f++;
       }
+      else if (a==b) ++e;
+
+      a = 1 > 2;
     }
 
   }
 
-  void uff(){
-    InnerClass.printX();
-    return;
-  }
+  // void uff(){
+  //   InnerClass.printX();
+  //   return;
+  // }
 
-  public static void main(String[] args){
-    uff();
-  }
+  // public static void main(String[] args){
+  //   uff();
+  // }
 }
