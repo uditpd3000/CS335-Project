@@ -17,6 +17,8 @@ class Node {
     string anyName;
     bool isObj;
 
+    vector<Node*> objects;
+
     string type;
 
     Variable* var;
@@ -25,7 +27,6 @@ class Node {
     int dims=0;
     vector<Variable*> variables;
 
-    vector<Node*> objects;
 
     Node(){
         label="";

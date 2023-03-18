@@ -457,6 +457,7 @@ MethodDeclaration:
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
     }
+    cout<<"wow\n";
   }
   MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
 
@@ -676,6 +677,7 @@ FieldDeclaration:
     for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
+          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
         }
         
@@ -688,6 +690,7 @@ FieldDeclaration:
         
       }
       else{
+        cout<<"Meko daanti\n";
         if(i->type!=""){
           cout<<i->type<<endl;
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
@@ -1125,8 +1128,8 @@ literal:
     string t1=$1; 
     $$= new Node(mymap[t1],t1); 
     $$->var = new Variable($1,$1,yylineno,{},$1);
-    $$->var->type="bool";
-    $$->type="bool";
+    $$->var->type="boolean";
+    $$->type="boolean";
     }
 ;
 
@@ -1307,8 +1310,8 @@ ConditionalOrExpression:
 
       $$->lineno=yylineno;
       global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
-      global_sym_table->typeCheckVar($1->var, "bool",$$->lineno);
-      $$->var=new Variable("","bool",yylineno,{},"");
+      global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
+      $$->var=new Variable("","boolean",yylineno,{},"");
       }
 ;
 
@@ -1319,9 +1322,9 @@ ConditionalAndExpression:
         vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);
         $$->lineno=yylineno;
         global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
-        global_sym_table->typeCheckVar($1->var, "bool",$$->lineno);
+        global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
 
-        $$->var=new Variable("","bool",yylineno,{},"");
+        $$->var=new Variable("","boolean",yylineno,{},"");
         }
     ;
 
@@ -1382,11 +1385,11 @@ EqualityExpression:
           throwError("bad operands type for equality check: \""+$1->var->type+"\" and \""+$3->var->type,yylineno);
         }
         else {
-          $$->var=new Variable("","bool",yylineno,{},"");
+          $$->var=new Variable("","boolean",yylineno,{},"");
         }
       }
       else if(($1->var->type==$3->var->type) || ($1->var->type=="NULL" || $3->var->type=="NULL")){
-        $$->var=new Variable("","bool",yylineno,{},"");
+        $$->var=new Variable("","boolean",yylineno,{},"");
       }
       else {
         throwError("bad operands type for equality check: \""+$1->var->type+"\" and \""+$3->var->type,yylineno);
@@ -1401,12 +1404,12 @@ RelationalExpression:
     | RelationalExpression RELATIONAL_OP ShiftExpression                             {
       $$=new Node("ConditionalExpression");
       vector<Node*>v{$1,$2,$3};$$->add(v); 
-      $$->var=new Variable("","bool",yylineno,{},"");
+      $$->var=new Variable("","boolean",yylineno,{},"");
       }
     | RelationalExpression INSTANCE_OF ReferenceType                                 {
       string t2=$2;$$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
-      $$->var=new Variable("","bool",yylineno,{},"");
+      $$->var=new Variable("","boolean",yylineno,{},"");
       }
     // | RelationalExpression INSTANCE_OF LocalVariableDeclaration                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
     ;
@@ -1759,7 +1762,7 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
     vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)};
      $$->add(v);
 
-     if($3->type=="bool" || $3->type=="NULL"){
+     if($3->type=="boolean" || $3->type=="NULL"){
       "invalid type to print. \n";
       exit(1);
      }
@@ -1875,7 +1878,7 @@ IF brac_open Expression brac_close Statement                                  {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5 }; 
   $$->add(v);
   $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
   }   
 ;
 
@@ -1886,7 +1889,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6),$7 }; 
   $$->add(v); 
   $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
   }
 ;
 
@@ -1897,7 +1900,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5,new Node (mymap[t6],$6) } ;
   $$->add(v);
   $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
   }
 ;
 
@@ -1919,7 +1922,7 @@ WHILE curly_open Expression curly_close StatementNoShortIf             {$$ = new
     vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };
       $$->add(v);
       $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
       }
 ;
 
@@ -1958,7 +1961,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
   $$->add(v); 
   $$->lineno=$4->lineno;
-  global_sym_table->typeCheckVar($4->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
   }
 | forr brac_open semi_colon semi_colon ForUpdate brac_close             {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t4=$4, t6=$6;
@@ -1970,7 +1973,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) }; 
   $$->add(v);
   $$->lineno=$4->lineno;
-  global_sym_table->typeCheckVar($4->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
   }
 | forr brac_open ForInit semi_colon semi_colon ForUpdate brac_close     {
   $$ = new Node(); 
@@ -1984,7 +1987,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6),new Node(mymap[t7], $7) };
   $$->add(v); 
   $$->lineno=$5->lineno;
-  global_sym_table->typeCheckVar($5->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
   }
 | forr brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close {
   $$ = new Node(); 
@@ -1992,7 +1995,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6), $7, new Node(mymap[t8], $8) };
   $$->add(v);
   $$->lineno=$5->lineno;
-  global_sym_table->typeCheckVar($5->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
   }
 ;
 
@@ -2055,7 +2058,7 @@ WHILE brac_open Expression brac_close Statement {
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5};  
   $$->add(v);
   $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"bool",$$->lineno);
+  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
   }
 ;
 
@@ -2087,6 +2090,7 @@ LocalVariableType VariableDeclaratorList {
       else{
         
         if(i->type!=""){
+          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{},i->value);
@@ -2108,6 +2112,7 @@ LocalVariableType VariableDeclaratorList {
     for(auto i:$3->variables){
       if(i->isArray){
         if(i->type!=""){
+          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         
@@ -2120,6 +2125,7 @@ LocalVariableType VariableDeclaratorList {
       }
       else{
         if(i->type!=""){
+          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
 
