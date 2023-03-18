@@ -122,20 +122,17 @@ public class OuterClass {
       int d=5,e,f;
 
       // a=2;
-      // b=1;
+      // b=1;jo
       // c = a || b;
       d = e;
 
-      if(a||b){
-        if(b>a) {
-          e++;
-        }
-        d++;
+      if(a||b && c) {
+        e=1;
         f++;
       }
-      else if (a==b) ++e;
 
-      a = 1 > 2;
+      f=e;
+      d++;
     }
 
   }
