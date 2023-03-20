@@ -402,7 +402,9 @@ Block:
      string t1=$1,t2=$3;
       vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
        $$->add(v); 
+
        $$->index = (mycode->makeBlock($2->index));
+       $$->result = mycode->getVar($$->index); 
        }
 | curly_open curly_close {
   $$=new Node("Block");
@@ -1008,7 +1010,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno;}
+  AssignmentExpression {$$=$1; $$->lineno=yylineno;cout<<"maiyaha";}
 ;
 
 AssignmentExpression: 
@@ -1972,9 +1974,8 @@ IF brac_open Expression brac_close Statement                                  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
-  $$->result = mycode->getVar($$->index);
 
   }   
 ;
@@ -1988,8 +1989,9 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
-  $$->result = mycode->getVar($$->index);
 
   }
 ;
@@ -2003,9 +2005,9 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
-  $$->result = mycode->getVar($$->index);
 
   }
 ;

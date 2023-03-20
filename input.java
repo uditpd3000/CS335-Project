@@ -113,26 +113,43 @@
 public class OuterClass {
   private int x = 10;
 
+  // OuterClass(){}
+
   public class InnerClass {
     public void printX() {
       // System.out.println("The value of x is " + x);
-
+      // OuterClass xxxxxx = new OuterClass();
      
       boolean c,a=true,b=false;
-      int d=5,e,f;
+      int d=5,e,f,ff;
 
-      // a=2;
+      // a=true;
       // b=1;jo
       // c = a || b;
       d = e;
-
-      if(a||b && c) {
-        e=1;
-        f++;
+      f=e;
+      if(f==e){
+        f=e;
+        e=3;
+        if(e==3){
+          ff=2;
+          
+        }
+        else if(e+ff==4){
+            d=10;
+          }
+      }
+      if(c==false){
+        a=true;
+        a=true;
       }
 
-      f=e;
       d++;
+      // else if(a) c=false;
+      // else a=false;
+
+      // f=e;
+      // d++;
     }
 
   }
