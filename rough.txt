@@ -211,7 +211,6 @@ public class IfExample {
 
 
 L9:
-d := e
 f := e
 t0 := f == e
 if t0 goto L5
@@ -255,5 +254,5 @@ goto L8
 
 L8:
 
-t5 := d
-d := d + 1
+t5 := f
+f := f + 1

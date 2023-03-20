@@ -227,7 +227,24 @@ class IR{
             return index;
         }
 
+        int insertWhile(int startindex, int endindex, string condition, string arg2){
 
+            ConditionalJump* myInstruction = new ConditionalJump();
+
+            string next = getLocalLabel();
+
+            myInstruction->arg2= condition; // if a>b
+            myInstruction->arg4= arg2; // goto x
+
+            quadruple.insert(quadruple.begin()+endindex+1,myInstruction);
+            insertJump(next, endindex+1);
+
+            int x = makeBlock(startindex);
+
+            insertNextJump(arg2,quadruple[x]->result);
+
+            return endindex;
+        }
 
         void print(){
             for(int i=0;i<quadruple.size();i++){

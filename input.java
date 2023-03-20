@@ -124,33 +124,37 @@ public class OuterClass {
       int d=5,e,f,ff;
 
       // a=true;
-      
+
       // b=1;jo
       // c = a || b;
-      d = e;
-      f=e;
-      if(f==e){
-        f=e;
-        e=3;
-        if(e==3){
-          ff=2;
+      // d = e;
+      // f=e;
+      // if(f==e){
+      //   f=e;
+      //   e=3;
+      //   if(e==3){
+      //     ff=2;
           
-        }
-        else if(e+ff==4){
-            d=10;
-          }
-      }
-      if(c==false){
-        a=true;
-        a=true;
-      }
+      //   }
+      //   else if(e+ff==4){
+      //       d=10;
+      //     }
+      // }
+      // if(c==false){
+      //   a=true;
+      //   a=true;
+      // }
 
-      d++;
+      // d++;
       // else if(a) c=false;
       // else a=false;
 
       // f=e;
       // d++;
+
+      while(e+ff==4) e=1;
+
+      f++;
     }
 
   }
