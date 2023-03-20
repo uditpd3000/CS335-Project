@@ -84,6 +84,14 @@ class Block: public Instruction{
     }
 };
 
+class BeginEnd: public Instruction{
+    public:
+        string arg1;
+        string arg2;
+    string print(){
+        return arg1+" "+arg2;
+    }
+};
 
 
 class IR{
@@ -92,7 +100,7 @@ class IR{
         vector<Instruction*> quadruple;
         map<string,Block*> blocks;
 
-        int local_reg_count=0;
+        int local_var_count=0;
         int local_label_count=0;
 
 
@@ -101,7 +109,7 @@ class IR{
         }
 
         string getLocalVar(){
-            return "t"+to_string(local_reg_count++);
+            return "t"+to_string(local_var_count++);
         }
         string getLocalLabel(){
             return "L"+to_string(local_label_count++);
@@ -203,7 +211,7 @@ class IR{
             blocks[arg1]->codes.push_back(myJump);
         }
 
-        // conditional jump
+        // if statement
         int insertIf(int index ,string arg1,string arg2, string arg3){
 
             ConditionalJump* myInstruction = new ConditionalJump();

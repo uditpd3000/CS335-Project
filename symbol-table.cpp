@@ -13,6 +13,7 @@ class Variable{
     public:
     string name;
     string type;
+    string value;
     vector<string> modifiers;
     bool isArray;
     int dims;
@@ -22,12 +23,13 @@ class Variable{
     int size;
     int offset;
 
-    Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers){
+    Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;
         type = mytype;
         isArray = false;
         modifiers = myModifiers;
         lineNo = mylineNo;
+        value = myvalue;
         dims=0;
         if(typeToSize.find(mytype)!=typeToSize.end()){
             size = typeToSize[mytype];
@@ -36,7 +38,7 @@ class Variable{
         }
 
     }
-    Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize){
+    Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize, string myvalue){
         name = myname;
         type = mytype;
         isArray = true;
@@ -44,10 +46,18 @@ class Variable{
         dims = mydims;
         dimsSize = mysize;
         lineNo = mylineNo;
+        value = myvalue;
         if(typeToSize.find(mytype)!=typeToSize.end()){
-            cout<<myname<<"---------------------xxxxxxxxxxxxx---------------------------"<<size<<"\n";
-            size = typeToSize[mytype];
+            int size1= typeToSize[mytype];
+            if(dimsSize.size()!=0){    
+                for (int i=0;i<dimsSize.size();i++){
+                    size1*=dimsSize[dimsSize.size()-1-i];
+                }
+            }
+            size = size1;
+            
         }
+
     }
 };
 
@@ -154,7 +164,8 @@ class SymbolTable {
         string fileName="output/"+scope+".csv";
         myfile.open (fileName);
         myfile<<"Token,Symbol,Type,isArray,dims,LineNo,Size,offset\n";
-        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
+        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";
+        if(i->dimsSize.size()!=0)for(auto jj:i->dimsSize)cout<<jj<<" ";}
         for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<"\n";}
         for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<"\n";}
         myfile.close();
@@ -171,6 +182,7 @@ class GlobalSymbolTable {
 
     map<int,SymbolTable*> tablemap; // scope-number maped
     map<string,SymbolTable*> linkmap; // scope
+    map<string,int>sameTypeMap;
 
     GlobalSymbolTable(){
 
@@ -332,20 +344,24 @@ class GlobalSymbolTable {
     }
 
     bool typeCheckVar(string s1, string s2, int myLineno){
+
         Variable* v1 = lookup_var(s1,1,current_scope);
         Variable* v2 = lookup_var(s2,1,current_scope);
+        if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
             throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, Variable* v2,int myLineno){
+        if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
             throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, string myType,int myLineno){
+        if(v1->type == "int"&& myType == "long")return true;
         if(v1->type!=myType){
             throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
         }

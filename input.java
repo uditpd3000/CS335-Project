@@ -113,7 +113,9 @@
 public class OuterClass {
   private int x = 10;
 
-  // OuterClass(){}
+  OuterClass(){
+    x += 100;
+  }
 
   public class InnerClass {
     public void printX() {
@@ -156,15 +158,5 @@ public class OuterClass {
 
       f++;
     }
-
   }
-
-  // void uff(){
-  //   InnerClass.printX();
-  //   return;
-  // }
-
-  // public static void main(String[] args){
-  //   uff();
-  // }
 }
