@@ -21,6 +21,7 @@ GlobalSymbolTable* global_sym_table = new GlobalSymbolTable();
 IR* mycode =new IR();
 
 int num=0;
+int indd=0;
 
 ofstream fout;
 ofstream vout;
@@ -402,9 +403,11 @@ Block:
      string t1=$1,t2=$3;
       vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
        $$->add(v); 
+      
+       $$->index = (mycode->makeBlock($2->start));
+       $$->result = mycode->getVar($$->index);
+       $$->start = $2->start;
 
-       $$->index = (mycode->makeBlock($2->index));
-       $$->result = mycode->getVar($$->index); 
        }
 | curly_open curly_close {
   $$=new Node("Block");
@@ -420,12 +423,14 @@ BlockStatements:
     $$->add($1);
 
     $$->index = $1->index;
+    $$->start = $1->start;
     }
 | BlockStatements BlockStatement {
   $$=$1; 
   $$->add($2);
 
   $$->index = $1->index;
+  $$->start = $1->start;
   }
 ;
 
@@ -437,17 +442,20 @@ BlockStatement:
   $$->add($1);
   $$->result =$1->result;
   $$->index = $1->index;
+  $$->start = $1->start;
   }
 | LocalVariableDeclaration semi_colon {
   $$ =$1; string t1=$2;
    $$->add(new Node(mymap[t1],t1));
    $$->result =$1->result;
-  $$->index = $1->index;  
+  $$->index = $1->index; 
+  $$->start = $1->start; 
   }
 | Statement { 
   $$=new Node("BlockStatement"); 
   $$->add($1);
   $$->result =$1->result;
+  $$->start = $1->start;
   $$->index = $1->index;
   }
 ;
@@ -1010,7 +1018,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno;cout<<"maiyaha";}
+  {indd = mycode->quadruple.size(); } AssignmentExpression {$$=$2; $$->lineno=yylineno;cout<<"maiyaha"; $$->start = indd;}
 ;
 
 AssignmentExpression: 
@@ -1029,6 +1037,7 @@ Assignment:
     $$->type=$1->type;
 
     $$->index = mycode->insertAss($3->result,"",$2->lexeme,$1->result);
+    $$->start = $$->index;
     $$->result = $1->result;
     }
 ;
@@ -1354,6 +1363,7 @@ ConditionalOrExpression:
       $$->var=new Variable("","boolean",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
       }
 ;
@@ -1370,6 +1380,7 @@ ConditionalAndExpression:
         $$->var=new Variable("","boolean",yylineno,{});
 
         $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
         }
     ;
@@ -1385,6 +1396,7 @@ InclusiveOrExpression:
         $$->var=new Variable("","int",yylineno,{});
 
         $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
         }
     ;
@@ -1401,6 +1413,7 @@ ExclusiveOrExpression:
         $$->var=new Variable("","int",yylineno,{});
 
         $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
         }
     ;
@@ -1417,6 +1430,7 @@ AndExpression:
       $$->var=new Variable("","int",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
     }
     ;
@@ -1451,6 +1465,7 @@ EqualityExpression:
       }
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
       }
@@ -1465,6 +1480,7 @@ RelationalExpression:
       $$->var=new Variable("","boolean",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2->lexeme);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
       }
@@ -1474,6 +1490,7 @@ RelationalExpression:
       $$->var=new Variable("","boolean",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
       }
@@ -1490,6 +1507,7 @@ AdditiveExpression SHIFT_OP AdditiveExpression                                  
       $$->var=new Variable("","int",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
       }
 | AdditiveExpression                                                             {$$=$1;}
@@ -1521,6 +1539,7 @@ AdditiveExpression:
       else if(x1==3) $$->var=new Variable("","String",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
     }
@@ -1549,6 +1568,7 @@ MultiplicativeExpression:
       else if(x1==1) $$->var=new Variable("","float",yylineno,{});
 
       $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
       }
@@ -1564,6 +1584,7 @@ UnaryExpression:
         $$->var=new Variable("",$2->var->type,yylineno,{});
 
         $$->index = mycode->insertAss(t1+"1",$2->result,"*");
+        $$->start = $2->start;
         $$->result = mycode->getVar($$->index);
     }
     ;
@@ -1577,6 +1598,7 @@ PreIncrDecrExpression:
       $$->var=new Variable("",$2->var->type,yylineno,{});
 
       $$->index = mycode->insertAss($2->result,"1","+",$2->result);
+      $$->start = $2->start;
       $$->result = mycode->getVar($$->index);
     }
     ;
@@ -1589,6 +1611,10 @@ UnaryExpressionNotPlusMinus:
       $$=new Node("ConditionalExpression");
       vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{});
+
+      if($2->var->type=="boolean"){
+        $$->index = mycode->insertAss($2->result,$1,"");
+      }
     }
     ;
 
@@ -1605,6 +1631,7 @@ PostIncrDecrExpression:
     $$->var=new Variable("",$1->var->type,yylineno,{});
 
     $$->index = mycode->insertAss($1->result,"","");
+    $$->start = $1->start;
     mycode->insertAss($1->result,"1","+",$1->result);
     $$->result = mycode->getVar($$->index);
     }
@@ -1834,12 +1861,12 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
-| LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
-| IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
-| IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
-| WhileStatement                         {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
-| ForStatement                           {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+| LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+| IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+| IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+| WhileStatement                         {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+| ForStatement                           {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | PRINTLN brac_open Expression brac_close semi_colon {
     $$= new Node("Statement");
     string t1=$1,t2=$2,t4=$4,t5=$5; 
@@ -1862,6 +1889,7 @@ StatementWithoutTrailingSubstatement:
 
     $$->result = $2->result;
     $$->index = $2->index;
+    $$->start = $2->start;
   }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}
 | ExpressionStatement           {$$=$1;}
@@ -1950,7 +1978,10 @@ StatementExpression semi_colon                                                {
   string t2= $2; $$->add($1);
   $$->add(new Node(mymap[t2],$2)); 
 
-  $$->index=$1->index; $$->result=$1->result;}
+  $$->index=$1->index; $$->result=$1->result;
+  $$->start = $1->start;
+
+  }
 ;
 
 LabeledStatement:
@@ -1960,7 +1991,7 @@ Identifier colon Statement                                                    {
   vector<Node*> v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3};
   $$->add(v);
 
-  $$->index = mycode->makeBlock($3->index,t1);
+  $$->index = mycode->makeBlock($3->start,t1);
   $$->result = t1;
   }
 ;
@@ -1972,10 +2003,10 @@ IF brac_open Expression brac_close Statement                                  {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5 }; 
   $$->add(v);
   $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
+  $$->start = $3->start;
 
   }   
 ;
@@ -1989,9 +2020,13 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  cout<<endl<<$7->start<<endl;
+
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+
+  $$->start = $3->start;
 
   }
 ;
@@ -2005,9 +2040,11 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+
+  $$->start = $3->start;
 
   }
 ;
