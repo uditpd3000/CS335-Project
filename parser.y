@@ -1,6 +1,7 @@
 %{  
 #include <bits/stdc++.h>
 #include "nodes.cpp"
+#include "ThreeAC.cpp"
 using namespace std;
 
 extern int yyparse();
@@ -17,6 +18,7 @@ extern void close_output_file();
 map<string,int> typeToSize;
 
 GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
+IR* mycode =new IR();
 
 int num=0;
 
@@ -395,21 +397,57 @@ InstanceInitializer:
 ;
 
 Block:
-  curly_open BlockStatements curly_close {$$=new Node("Block"); string t1=$1,t2=$3; vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))}; $$->add(v);}
-| curly_open curly_close {$$=new Node("Block"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v);}
+  curly_open BlockStatements curly_close {
+    $$=new Node("Block");
+     string t1=$1,t2=$3;
+      vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
+       $$->add(v); 
+       $$->index = (mycode->makeBlock($2->index));
+       }
+| curly_open curly_close {
+  $$=new Node("Block");
+  string t1=$1,t2=$2;
+  vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
+  $$->add(v);
+  }
 ;
 
 BlockStatements:
-  BlockStatement {$$=new Node("BlockStatements"); $$->add($1); }
-| BlockStatements BlockStatement {$$=$1; $$->add($2);}
+  BlockStatement {
+    $$=new Node("BlockStatements"); 
+    $$->add($1);
+
+    $$->index = $1->index;
+    }
+| BlockStatements BlockStatement {
+  $$=$1; 
+  $$->add($2);
+
+  $$->index = $1->index;
+  }
 ;
 
 
 BlockStatement:
   // Assignment semi_colon {string t1=$2;$$=new Node("BlockStatement"); vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); }
- LocalClassOrInterfaceDeclaration {$$ = new Node("LocalClassOrInterfaceDeclaration"); $$->add($1); }
-| LocalVariableDeclaration semi_colon {$$ =$1; string t1=$2; $$->add(new Node(mymap[t1],t1));  }
-| Statement { $$=new Node("BlockStatement"); $$->add($1);}
+ LocalClassOrInterfaceDeclaration {
+  $$ = new Node("LocalClassOrInterfaceDeclaration"); 
+  $$->add($1);
+  $$->result =$1->result;
+  $$->index = $1->index;
+  }
+| LocalVariableDeclaration semi_colon {
+  $$ =$1; string t1=$2;
+   $$->add(new Node(mymap[t1],t1));
+   $$->result =$1->result;
+  $$->index = $1->index;  
+  }
+| Statement { 
+  $$=new Node("BlockStatement"); 
+  $$->add($1);
+  $$->result =$1->result;
+  $$->index = $1->index;
+  }
 ;
 
 LocalVariableType:
@@ -992,13 +1030,17 @@ Assignment:
     }
     $$->type=$1->type;
     $$->var = $3->var;
+
+    $$->index = mycode->insertAss($3->result,"",$2->lexeme,$1->result);
+    $$->result = $1->result;
     }
 ;
 
+/* fixme */
 LeftHandSide:
 FieldAccess      {$$=$1;}
 | TypeName       {$$=$1;}
-| ArrayAccess    {$$=$1;cout<<"Yahi naa?";}
+| ArrayAccess    {$$=$1;}
 ;
 
 FieldAccess:
@@ -1169,6 +1211,8 @@ TypeName:
     else {
       throwError("Variable "+t1 + "not declared in appropriate scope",yylineno);
     }
+
+    $$->result = $1;
     
     // exit(1);
     }
@@ -1198,6 +1242,8 @@ TypeName:
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
     }
+
+    $$->result = $1->result;
     
   }
 ;
@@ -1312,6 +1358,8 @@ ConditionalOrExpression:
       global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
       global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
       $$->var=new Variable("","boolean",yylineno,{},"");
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
       }
 ;
 
@@ -1325,6 +1373,8 @@ ConditionalAndExpression:
         global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
 
         $$->var=new Variable("","boolean",yylineno,{},"");
+        $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->result = mycode->getVar($$->index);
         }
     ;
 
@@ -1337,6 +1387,9 @@ InclusiveOrExpression:
         global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
         global_sym_table->typeCheckVar($1->var, "int",$$->lineno);
         $$->var=new Variable("","int",yylineno,{},"");
+
+        $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->result = mycode->getVar($$->index);
         }
     ;
 
@@ -1350,6 +1403,9 @@ ExclusiveOrExpression:
         global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
         global_sym_table->typeCheckVar($1->var, "int",$$->lineno);
         $$->var=new Variable("","int",yylineno,{},"");
+
+        $$->index = mycode->insertAss($1->result,$3->result,$2);
+        $$->result = mycode->getVar($$->index);
         }
     ;
 
@@ -1363,7 +1419,10 @@ AndExpression:
         global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
       global_sym_table->typeCheckVar($1->var, "int",$$->lineno);
       $$->var=new Variable("","int",yylineno,{},"");
-        }
+      
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
+    }
     ;
 
 EqualityExpression:
@@ -1395,6 +1454,9 @@ EqualityExpression:
         throwError("bad operands type for equality check: \""+$1->var->type+"\" and \""+$3->var->type,yylineno);
       }
 
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
+
       }
     ;
 
@@ -1405,11 +1467,19 @@ RelationalExpression:
       $$=new Node("ConditionalExpression");
       vector<Node*>v{$1,$2,$3};$$->add(v); 
       $$->var=new Variable("","boolean",yylineno,{},"");
+
+      $$->index = mycode->insertAss($1->result,$3->result,$2->lexeme);
+      $$->result = mycode->getVar($$->index);
+
       }
     | RelationalExpression INSTANCE_OF ReferenceType                                 {
       string t2=$2;$$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
       $$->var=new Variable("","boolean",yylineno,{},"");
+
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
+
       }
     // | RelationalExpression INSTANCE_OF LocalVariableDeclaration                                {string t2=$2;$$=new Node("ConditionalExpression");vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v);}
     ;
@@ -1422,6 +1492,9 @@ AdditiveExpression SHIFT_OP AdditiveExpression                                  
       global_sym_table->typeCheckVar($1->var, $3->var,$$->lineno);
       global_sym_table->typeCheckVar($1->var, "int",$$->lineno);
       $$->var=new Variable("","int",yylineno,{},"");
+
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
       }
 | AdditiveExpression                                                             {$$=$1;}
 ;
@@ -1451,6 +1524,9 @@ AdditiveExpression:
       else if(x1==2) $$->var=new Variable("","double",yylineno,{},"");
       else if(x1==3) $$->var=new Variable("","String",yylineno,{},"");
 
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
+
     }
     | MultiplicativeExpression                                                       {$$=$1;}
     ;
@@ -1476,6 +1552,9 @@ MultiplicativeExpression:
       if(x1==0) $$->var=new Variable("","int",yylineno,{},"");
       else if(x1==1) $$->var=new Variable("","float",yylineno,{},"");
 
+      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->result = mycode->getVar($$->index);
+
       }
     | UnaryExpression                                                                {$$=$1;}
     ;
@@ -1487,7 +1566,10 @@ UnaryExpression:
         string t1=$1;$$=new Node("ConditionalExpression");
         vector<Node*>v{new Node(mymap[t1],$1),$2}; $$->add(v); 
         $$->var=new Variable("",$2->var->type,yylineno,{},"");
-        }
+
+        $$->index = mycode->insertAss(t1+"1",$2->result,"*");
+        $$->result = mycode->getVar($$->index);
+    }
     ;
 
 PreIncrDecrExpression:
@@ -1497,7 +1579,10 @@ PreIncrDecrExpression:
       vector<Node*>v{new Node(mymap[t1],$1),$2};
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
-      }
+
+      $$->index = mycode->insertAss($2->result,"1","+",$2->result);
+      $$->result = mycode->getVar($$->index);
+    }
     ;
 
 UnaryExpressionNotPlusMinus:
@@ -1520,9 +1605,12 @@ PostfixExpression:
 PostIncrDecrExpression:
   PostfixExpression INCR_DECR               {
     $$=new Node("PostIncrDecExp");
-    string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};
-    $$->add(v); 
     $$->var=new Variable("",$1->var->type,yylineno,{},"");
+    string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); 
+
+    $$->index = mycode->insertAss($1->result,"","");
+    mycode->insertAss($1->result,"1","+",$1->result);
+    $$->result = mycode->getVar($$->index);
     }
 ;
 
@@ -1532,7 +1620,7 @@ RELATIONAL_OP1                   {string t1=$1;$$=(new Node(mymap[t1],t1));}
 | less_than                      {string t1=$1;$$=(new Node(mymap[t1],t1));}
 ;
 
-
+/* fixme */
 CastExpression:
   brac_open literal_type brac_close UnaryExpression                               {
     $$=new Node("CastExp");
@@ -1750,12 +1838,12 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);}
-| LabeledStatement                       {$$= new Node("Statement");$$->add($1);}
-| IfThenStatement                        {$$= new Node("Statement");$$->add($1);}
-| IfThenElseStatement                    {$$= new Node("Statement");$$->add($1);}
-| WhileStatement                         {$$= new Node("Statement");$$->add($1);}
-| ForStatement                           {$$= new Node("Statement");$$->add($1);}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+| LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+| IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+| IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+| WhileStatement                         {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
+| ForStatement                           {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index;}
 | PRINTLN brac_open Expression brac_close semi_colon {
     $$= new Node("Statement");
     string t1=$1,t2=$2,t4=$4,t5=$5; 
@@ -1775,6 +1863,9 @@ StatementWithoutTrailingSubstatement:
   Block {
     $$=$2;
     global_sym_table->end_scope();
+
+    $$->result = $2->result;
+    $$->index = $2->index;
   }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}
 | ExpressionStatement           {$$=$1;}
@@ -1864,11 +1955,24 @@ Assignment                       {$$=$1;}
 ;
 
 ExpressionStatement:
-StatementExpression semi_colon                                                {$$ = new Node("ExpressionStatement"); string t2= $2; $$->add($1);$$->add(new Node(mymap[t2],$2));}
+StatementExpression semi_colon                                                {
+  $$ = new Node("ExpressionStatement"); 
+  string t2= $2; $$->add($1);
+  $$->add(new Node(mymap[t2],$2)); 
+
+  $$->index=$1->index; $$->result=$1->result;}
 ;
 
 LabeledStatement:
-Identifier colon Statement                                                    {$$= new Node("LabeledStatement"); string t1=$1, t2=$2; vector<Node*> v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3};$$->add(v);}
+Identifier colon Statement                                                    {
+  $$= new Node("LabeledStatement"); 
+  string t1=$1, t2=$2; 
+  vector<Node*> v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3};
+  $$->add(v);
+
+  $$->index = mycode->makeBlock($3->index,t1);
+  $$->result = t1;
+  }
 ;
 
 IfThenStatement:
@@ -1879,6 +1983,11 @@ IF brac_open Expression brac_close Statement                                  {
   $$->add(v);
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+  $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
+  $$->result = mycode->getVar($$->index);
+
   }   
 ;
 
@@ -1890,6 +1999,10 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->add(v); 
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+  $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+  $$->result = mycode->getVar($$->index);
+
   }
 ;
 
@@ -1901,6 +2014,11 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->add(v);
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+  $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+  $$->result = mycode->getVar($$->index);
+
   }
 ;
 
@@ -1917,7 +2035,7 @@ Identifier colon StatementNoShortIf                                    {$$= new 
 ;
 
 WhileStatementNoShortIf:
-WHILE curly_open Expression curly_close StatementNoShortIf             {$$ = new Node();
+WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new Node();
   string t1= $1,t2=$2, t4=$4;
     vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };
       $$->add(v);
@@ -2325,6 +2443,8 @@ int main(int argc, char *argv[])
 
     /* printf("%d %d %d %d\n",titles,paras,words,sentences)); */
     /* fout<<titles<<" "<<paras<<" "<<words<<" "<<sentences<<endl; */
+
+    mycode->print();
 
     return 0;
 }
