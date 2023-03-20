@@ -409,7 +409,7 @@ StaticInitializer:
     $$ =new Node("StaticInitializer");
     vector<Node*>v{new Node("Keyword",t1),$3};
     $$->add(v); 
-    global_sym_table->end_scope();
+    if(global_sym_table->isForScope==false)global_sym_table->end_scope();
     }
 ;
 
@@ -2182,8 +2182,8 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
 ;
 
 ForStatement:
-BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1);global_sym_table->end_scope(); }
-| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);global_sym_table->end_scope();}
+BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1); }
+| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);}
 ;
 
 ForStatementNoShortIf:
