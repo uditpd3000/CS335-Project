@@ -169,6 +169,11 @@ ClassDeclaration:
     global_sym_table->insert(classs);
     global_sym_table->makeTable($3);
     global_sym_table->current_symbol_table->isClass=true;
+
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="";
+    myIns->arg2 = $3;
+    mycode->insert(myIns);
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -184,6 +189,10 @@ ClassDeclaration:
     Class* classs =  new Class($2,mod,yylineno);
     global_sym_table->insert(classs);
     global_sym_table->makeTable($2);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="";
+    myIns->arg2 = $2;
+    mycode->insert(myIns);
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -239,6 +248,10 @@ ConstructorDeclaration:
     method->ifConstructor = true;
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tBeginConstr";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns);
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
@@ -252,6 +265,10 @@ ConstructorDeclaration:
     vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope(); 
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tEndConstr";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns);
   }
 | ConstructorDeclarator {
 
@@ -259,6 +276,10 @@ ConstructorDeclaration:
     method->ifConstructor = true;
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tBeginConstr";
+    myIns->arg2 = $1->method->name;
+    mycode->insert(myIns);
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
@@ -270,6 +291,10 @@ ConstructorDeclaration:
     vector<Node*>v{$1}; $$->add(v); 
     $$->add($3->objects);
     global_sym_table->end_scope(); 
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tEndConstr";
+    myIns->arg2 = $1->method->name;
+    mycode->insert(myIns);
   }
 ;
 
@@ -489,6 +514,10 @@ MethodDeclaration:
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1=" BeginFunc";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
@@ -497,12 +526,26 @@ MethodDeclaration:
     }
     cout<<"wow\n";
   }
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2->objects); $$->add($4->objects); global_sym_table->end_scope(); }
+  MethodDeclarationEnd {
+    $$=new Node("MethodDeclaration"); 
+    $$->add($1->objects); 
+    $$->add($2->objects); 
+    $$->add($4->objects); 
+    global_sym_table->end_scope();
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tEndFunc";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns); 
+    }
 
 | Modifiers MethodHeader {
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tBeginFunc";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
@@ -510,12 +553,25 @@ MethodDeclaration:
         global_sym_table->current_symbol_table->offset+=i->size;
     }
   }
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1->objects); $$->add($2); $$->add($4->objects);global_sym_table->end_scope(); }
+  MethodDeclarationEnd {
+    $$=new Node("MethodDeclaration"); 
+    $$->add($1->objects); 
+    $$->add($2);
+     $$->add($4->objects);
+     global_sym_table->end_scope();
+     BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tEndFunc";
+    myIns->arg2 = $2->method->name;
+    mycode->insert(myIns);  }
 
 | MethodHeader{
     Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="\tBeginFunc";
+    myIns->arg2 = $1->method->name;
+    mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
@@ -523,7 +579,15 @@ MethodDeclaration:
         global_sym_table->current_symbol_table->offset+=i->size;
     }
   } 
-  MethodDeclarationEnd {$$=new Node("MethodDeclaration"); $$->add($1); $$->add($3->objects); global_sym_table->end_scope();}
+  MethodDeclarationEnd {
+    $$=new Node("MethodDeclaration"); 
+    $$->add($1); 
+    $$->add($3->objects); 
+    global_sym_table->end_scope();
+    BeginEnd* myIns = new BeginEnd();
+    myIns->arg1="EndFunc";
+    myIns->arg2 = $1->method->name;
+    mycode->insert(myIns); }
 ;
 
 MethodDeclarationEnd:
@@ -637,6 +701,7 @@ FormalParameterList:
     $$->add(new Node(mymap[t1],t1)); 
     $$->add($3);
     $$->method=$1->method;
+    $3->var->name = "_"+$3->var->name;
     $$->method->parameters.push_back($3->var);
     }
 ;
@@ -833,6 +898,9 @@ VariableDeclarator:
     if($3->isObj)$$->var->classs_name = $3->anyName;
     $$->dims=$3->dims;
     cout<<"---huu\n"<<$$->dims;
+    cout<<$3->result<<endl;
+    $$->index = mycode->insertAss($3->result,"","",$1);
+    // $$->result = $3->result;
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -845,6 +913,8 @@ VariableDeclarator:
     $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$4->var->dimsSize,$4->var->value);
     $$->dims=$4->dims;
     cout<<"hurrahii"<<$$->type<<endl;
+    $$->index = mycode->insertAss($4->result,"","",$1);
+    // $$->result = $4->result;
     }
 ;
 
@@ -857,6 +927,9 @@ VariableInitializer:
     $$->isObj = $1->isObj;
     $$->anyName = $1->anyName;
     $$->dims = $1->dims;
+    $$->result = $1->result;
+    cout<<"$$\n";
+    cout<<"$"<<$1->var->name<<"\n";
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
@@ -1008,7 +1081,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno;}
+  AssignmentExpression {$$=$1; $$->lineno=yylineno;cout<<"pukaratujhe\n";}
 ;
 
 AssignmentExpression: 
@@ -1068,7 +1141,7 @@ PrimaryNoNewArray                   {$$=$1;}
 
 /* fixmme */
 PrimaryNoNewArray:
-  literal                           {$$=$1;}
+  literal                           {$$=$1;$$->result = $1->var->value;}
 | ClassLiteral                      {$$=$1;}
 | THIS                              {
     string t1=$1; 
@@ -1100,7 +1173,7 @@ PrimaryNoNewArray:
 | FieldAccess                       {$$=$1;} 
 | ArrayAccess                       {$$=$1;} 
 | MethodInvocation                  {$$=$1;} 
-| ClassInstanceCreationExpression   {$$=$1;} 
+| ClassInstanceCreationExpression   {$$=$1;cout<<"tukaha\n";$$->var=new Variable("","",yylineno,{},"");} 
 ;
 
 literal:
@@ -1605,8 +1678,8 @@ PostfixExpression:
 PostIncrDecrExpression:
   PostfixExpression INCR_DECR               {
     $$=new Node("PostIncrDecExp");
-    $$->var=new Variable("",$1->var->type,yylineno,{},"");
     string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); 
+    $$->var=new Variable("",$1->var->type,yylineno,{},"");
 
     $$->index = mycode->insertAss($1->result,"","");
     mycode->insertAss($1->result,"1","+",$1->result);
@@ -1636,6 +1709,7 @@ CastExpression:
   string t1=$1,t2=$3;
   vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};
   $$->add(v);
+  $$->var=new Variable("",t2,yylineno,{},$6->var->value);
   }
 | brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus  {
   $$=new Node("CastExp");
@@ -1781,7 +1855,7 @@ MethodIncovationStart:
 ;
 
 ClassInstanceCreationExpression:
-  UnqualifiedClassInstanceCreationExpression                {$$=$1;$$->isObj = true;}
+  UnqualifiedClassInstanceCreationExpression                {$$=$1;$$->isObj = true;cout<<"maiyaha\n";}
 | TypeName dot UnqualifiedClassInstanceCreationExpression   {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 | Primary dot UnqualifiedClassInstanceCreationExpression    {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 ;
@@ -2045,8 +2119,8 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
 ;
 
 ForStatement:
-BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1); }
-| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);}
+BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1);global_sym_table->end_scope(); }
+| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);global_sym_table->end_scope();}
 ;
 
 ForStatementNoShortIf:
@@ -2317,7 +2391,6 @@ DimExprs:
     $$=$1; 
     $$->add($2);
     $$->dims++;
-    $$->var->dimsSize.push_back($2->var->dimsSize[0]);
     }
 ;
 

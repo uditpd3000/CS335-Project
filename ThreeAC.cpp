@@ -83,6 +83,14 @@ class Block: public Instruction{
     }
 };
 
+class BeginEnd: public Instruction{
+    public:
+        string arg1;
+        string arg2;
+    string print(){
+        return arg1+" "+arg2;
+    }
+};
 
 
 class IR{
@@ -91,7 +99,7 @@ class IR{
         vector<Instruction*> quadruple;
         map<string,Block*> blocks;
 
-        int local_reg_count=0;
+        int local_var_count=0;
         int local_label_count=0;
 
 
@@ -100,7 +108,7 @@ class IR{
         }
 
         string getLocalVar(){
-            return "t"+to_string(local_reg_count++);
+            return "t"+to_string(local_var_count++);
         }
         string getLocalLabel(){
             return "L"+to_string(local_label_count++);
@@ -194,14 +202,18 @@ class IR{
 
         }
 
-        // conditional jump
+        // if statement
         int insertIf(int index ,string arg1,string arg2, string arg3){
             // indexx in vector- arg2
 
             ConditionalJump* myInstruction = new ConditionalJump();
 
             myInstruction->arg2= arg1; // if a>b
-            myInstruction->arg4= nextLabel(); // goto x
+
+            string next = nextLabel();
+            // myInstruction->arg4= nextLabel(); // goto x
+            if(arg3!="")myInstruction->arg4=arg3;
+            else myInstruction->arg4= next;
 
             // next instructions inside - "goto x"
             insertNextJump(arg2,myInstruction->arg4); // after working with if-statement jump
