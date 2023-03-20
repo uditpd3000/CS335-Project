@@ -208,3 +208,52 @@ public class IfExample {
 29,     endScope, None, _Main
 30,     ret
 31,     endScope, _Main, _Program
+
+
+L9:
+d := e
+f := e
+t0 := f == e
+if t0 goto L5
+goto L6
+L5:
+f := e
+e := 
+t1 := e==
+if t1 goto L0
+goto L3
+L0:
+ff := 
+goto L4
+
+L3:
+t2 := e + ff
+t3 := t2==
+if t3 goto L1
+goto L2
+L1:
+d := 
+goto L2
+
+L2:
+
+
+goto L4
+L4:
+
+goto L6
+
+L6:
+
+t4 := c==
+if t4 goto L7
+goto L8
+L7:
+a := 
+a := 
+goto L8
+
+L8:
+
+t5 := d
+d := d + 1

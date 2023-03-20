@@ -27,6 +27,7 @@ class Node {
     int dims=0;
     vector<Variable*> variables;
 
+    int start;
     int index; // global IR vector
     string result=""; // result eg t1 = t2+t3
 

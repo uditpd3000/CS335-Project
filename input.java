@@ -126,6 +126,7 @@ public class OuterClass {
       int d=5,e,f,ff;
 
       // a=true;
+      
       // b=1;jo
       // c = a || b;
       d = e;
