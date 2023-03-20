@@ -128,7 +128,7 @@ public class OuterClass {
       // a=true;
       
       // b=1;jo
-      // c = a || b;
+      c = a || b;
       d = e;
       f=e;
       if(f==e){
@@ -142,12 +142,20 @@ public class OuterClass {
             d=10;
           }
       }
-      if(c==false){
-        a=true;
-        a=true;
+      if(c==true){
+        // d*=3;
+        // --d;
+        d++;
+        d*=2;
+        
       }
+      else if(d==2) {
+        d=3;
+        
+      }
+      e--;
 
-      d++;
+      // d++;
     }
   }
 }

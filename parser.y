@@ -427,7 +427,7 @@ Block:
      string t1=$1,t2=$3;
       vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
        $$->add(v); 
-      
+       cout<<$2->start<<"starttt"<<endl;
        $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($$->index);
        $$->start = $2->start;
@@ -438,6 +438,10 @@ Block:
   string t1=$1,t2=$2;
   vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
   $$->add(v);
+
+  $$->index = mycode->makeBlock(mycode->quadruple.size());
+  $$->result = mycode->getVar($$->index);
+  $$->start = $$->index;
   }
 ;
 
@@ -453,7 +457,7 @@ BlockStatements:
   $$=$1; 
   $$->add($2);
 
-  $$->index = $1->index;
+  $$->index = $2->index;
   $$->start = $1->start;
   }
 ;
@@ -1306,6 +1310,7 @@ TypeName:
     }
 
     $$->result = $1;
+    $$->index = mycode->quadruple.size();
     
     // exit(1);
     }
@@ -1337,6 +1342,7 @@ TypeName:
     }
 
     $$->result = $1->result;
+    $$->index = mycode->quadruple.size();
     
   }
 ;
@@ -1680,12 +1686,14 @@ UnaryExpression:
 PreIncrDecrExpression:
     INCR_DECR UnaryExpression                                                        {
       string t1=$1;
+      string zz = "";
+      zz += t1[0];
       $$=new Node("ConditionalExpression");
       vector<Node*>v{new Node(mymap[t1],$1),$2};
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
-
-      $$->index = mycode->insertAss($2->result,"1","+",$2->result);
+      
+      $$->index = mycode->insertAss($2->result,"1",zz,$2->result);
       $$->start = $2->start;
       $$->result = mycode->getVar($$->index);
     }
@@ -1708,8 +1716,8 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
   Primary                                   {$$=$1;}
-| TypeName                                  {$$=$1;}
-| PostIncrDecrExpression                    {$$=$1;}
+| TypeName                                  {$$=$1;cout<<mycode->quadruple.size()<<"---";cout<<$$->index<<"qqq";$$->start--;}
+| PostIncrDecrExpression                    {$$=$1;$$->start--;}
 ;
 
 PostIncrDecrExpression:
@@ -1718,10 +1726,13 @@ PostIncrDecrExpression:
     string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); 
     $$->var=new Variable("",$1->var->type,yylineno,{},"");
 
-    $$->index = mycode->insertAss($1->result,"","");
-    $$->start = $1->start;
-    mycode->insertAss($1->result,"1","+",$1->result);
-    $$->result = mycode->getVar($$->index);
+    int z = mycode->insertAss($1->result,"","");
+    string zz = "";
+    zz+=$2[0];
+    $$->start = $1->index;
+    mycode->insertAss($1->result,"1",zz,$1->result);
+    $$->result = mycode->getVar(z);
+    $$->index=$1->index;
     }
 ;
 
@@ -1979,6 +1990,7 @@ StatementWithoutTrailingSubstatement:
     $$->result = $2->result;
     $$->index = $2->index;
     $$->start = $2->start;
+      cout<<"Blockkkk\n";
   }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}
 | ExpressionStatement           {$$=$1;}
@@ -2098,10 +2110,13 @@ IF brac_open Expression brac_close Statement                                  {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5 }; 
   $$->add(v);
   $$->lineno=$3->lineno;
-
+  cout<<"{}"<<$5->result<<endl;
   if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
+  cout<<"Blockkkk\n";
   $$->start = $3->start;
+   
 
   }   
 ;
