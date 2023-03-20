@@ -126,7 +126,7 @@ public class OuterClass {
       int d=5,e,f,ff;
 
       // a=true;
-
+      
       // b=1;jo
       // c = a || b;
       // d = e;
@@ -142,21 +142,13 @@ public class OuterClass {
       //       d=10;
       //     }
       // }
-      // if(c==false){
-      //   a=true;
-      //   a=true;
-      // }
-
-      // d++;
-      // else if(a) c=false;
-      // else a=false;
-
-      // f=e;
+      f=2;
+      for(;;){
+        f=10;
+        ff=10;
+      }
       // d++;
 
-      while(e+ff==4) e=1;
-
-      f++;
     }
   }
 }
