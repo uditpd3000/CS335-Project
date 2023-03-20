@@ -170,10 +170,7 @@ ClassDeclaration:
     global_sym_table->makeTable($3);
     global_sym_table->current_symbol_table->isClass=true;
 
-    BeginEnd* myIns = new BeginEnd();
-    myIns->arg1="";
-    myIns->arg2 = $3;
-    mycode->insert(myIns);
+   
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -183,16 +180,14 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($5->objects); 
     global_sym_table->end_scope();
+     mycode->makeBlock(0,$3);
   }
 | class_just_class Identifier {
     vector<string> mod;
     Class* classs =  new Class($2,mod,yylineno);
     global_sym_table->insert(classs);
     global_sym_table->makeTable($2);
-    BeginEnd* myIns = new BeginEnd();
-    myIns->arg1="";
-    myIns->arg2 = $2;
-    mycode->insert(myIns);
+    
   } 
   ClassDecTillTypeParameters {
     $$= new Node("ClassDeclaration"); 
@@ -201,6 +196,7 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope();
+    mycode->makeBlock(0,$2);
   }
 ;
 
@@ -269,6 +265,7 @@ ConstructorDeclaration:
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
+    mycode->makeBlock(0,$2->method->name+".Constr");
   }
 | ConstructorDeclarator {
 
@@ -295,6 +292,7 @@ ConstructorDeclaration:
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
+    mycode->makeBlock(0,$1->method->name+".Constr");
   }
 ;
 
@@ -427,7 +425,9 @@ Block:
      string t1=$1,t2=$3;
       vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
        $$->add(v); 
+
        $$->index = (mycode->makeBlock($2->index));
+       $$->result = mycode->getVar($$->index); 
        }
 | curly_open curly_close {
   $$=new Node("Block");
@@ -515,8 +515,8 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     BeginEnd* myIns = new BeginEnd();
-    myIns->arg1=" BeginFunc";
-    myIns->arg2 = $2->method->name;
+    myIns->arg1="\tBeginFunc";
+    myIns->arg2 = "";
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
@@ -536,6 +536,7 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    mycode->makeBlock(0,$2->method->name);
     }
 
 | Modifiers MethodHeader {
@@ -562,7 +563,9 @@ MethodDeclaration:
      BeginEnd* myIns = new BeginEnd();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
-    mycode->insert(myIns);  }
+    mycode->insert(myIns); 
+    mycode->makeBlock(0,$2->method->name);
+     }
 
 | MethodHeader{
     Method* _method = new Method($1->method->name,$1->method->ret_type,$1->method->parameters,{},yylineno);
@@ -587,7 +590,9 @@ MethodDeclaration:
     BeginEnd* myIns = new BeginEnd();
     myIns->arg1="EndFunc";
     myIns->arg2 = $1->method->name;
-    mycode->insert(myIns); }
+    mycode->insert(myIns); 
+    mycode->makeBlock(0,$1->method->name);
+    }
 ;
 
 MethodDeclarationEnd:
@@ -1081,7 +1086,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  AssignmentExpression {$$=$1; $$->lineno=yylineno;cout<<"pukaratujhe\n";}
+  AssignmentExpression {$$=$1; $$->lineno=yylineno;}
 ;
 
 AssignmentExpression: 
@@ -2058,9 +2063,8 @@ IF brac_open Expression brac_close Statement                                  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  $5->result = mycode->getVar(mycode->makeBlock($5->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
-  $$->result = mycode->getVar($$->index);
 
   }   
 ;
@@ -2074,8 +2078,9 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
-  $$->result = mycode->getVar($$->index);
 
   }
 ;
@@ -2089,9 +2094,9 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->index));
+  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->index));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
-  $$->result = mycode->getVar($$->index);
 
   }
 ;

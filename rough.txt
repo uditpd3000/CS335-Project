@@ -174,3 +174,37 @@ public class IfExample {
                     System.out.println("a: " );
                 }
             }
+
+
+
+1, label, _check1
+2, label, _Program
+3, label, _Main
+4, beginScope, _Program, _Main
+5, readParam, _args
+6, beginScope, _Main, None
+7, =, _i, 9
+8, <=, _tVar_0, _i, 9 // t0= i<=9
+9, ifgoto, _tVar_0, label_3 // if to goto L3
+10, goto, label_4 // goto L4
+11, label, label_3 // L3:
+12,     %, _tVar_1, _i, 2
+13,     ==, _tVar_2, _tVar_1, 0
+14,     ifgoto, _tVar_2, label_0
+15,     goto, label_1
+16, label, label_0 // L0:
+17,     =, _res, 0
+18,     goto, label_2
+19, label, label_1 // L1:
+20,      =, _res, 1
+21,label, label_2 // L2:
+22, label, label_4 // L4:
+23,     =, _res, 2024
+24,     printstr, "Parity of "
+25,     printint, _i
+26,     printstr, " is : "
+27,     printint, _res
+28,     printstr, "\n"
+29,     endScope, None, _Main
+30,     ret
+31,     endScope, _Main, _Program

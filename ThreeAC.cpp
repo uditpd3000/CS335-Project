@@ -7,6 +7,7 @@ class Instruction{
     public:
 
         string result="";
+        bool isBlock=false;
 
         virtual string print(){
             return "";
@@ -75,9 +76,9 @@ class Block: public Instruction{
     vector<Instruction*> codes;
 
     string print(){
-        string s = result + ":\n";
+        string s =result + ":\n";
         for(auto x : codes){
-            s += "\t" + x->print() + "\n";
+            s += x->print() + "\n";
         }
         return s;
     }
@@ -114,7 +115,7 @@ class IR{
             return "L"+to_string(local_label_count++);
         }
         string nextLabel(){
-            return "L"+to_string(local_label_count+2);
+            return "L"+to_string(local_label_count+1);
         }
 
         int insert(Instruction* myInstruction){
@@ -167,9 +168,8 @@ class IR{
 
             blocks.insert({myInstruction->result,myInstruction});
 
-            UnconditionalJump* myInstruction2 = new UnconditionalJump();
-            myInstruction2->arg2=myInstruction->result;
-            myInstruction2->result=myInstruction->result;
+            Instruction* myInstruction2 = myInstruction;
+            myInstruction2->isBlock=true;
             quadruple.push_back(myInstruction2);
 
             return quadruple.size()-1;
@@ -180,53 +180,59 @@ class IR{
         }
 
         // unconditional jump
-        int insertJump(string myArg2){
+        int insertJump(string myArg2, int index=-1){
             UnconditionalJump* myInstruction = new UnconditionalJump();
 
             myInstruction->arg2=myArg2;
 
-            quadruple.push_back(myInstruction);
+            if(index==-1) quadruple.push_back(myInstruction);
+            else{
+                quadruple.insert(quadruple.begin()+index+1,myInstruction);
+            }
+
+            if(blocks.find(myArg2)==blocks.end()){
+                Block* myBlock = new Block();
+                myBlock->result = myArg2;
+                myBlock->isBlock=true;
+                blocks.insert({myArg2,myBlock});
+
+                Instruction* justLabel = myBlock;
+                quadruple.push_back(justLabel);
+            }
+
             return quadruple.size()-1;
         }
+        void insertNextJump(string arg1, string jumphere){
+            UnconditionalJump* myInstruction = new UnconditionalJump();
+            myInstruction->arg2=jumphere;
 
-        // after if label
-        void insertNextJump(string arg, string jumphere){
+            Instruction* myJump= myInstruction;
 
-            Block*  myCondition = blocks[arg];
-
-            UnconditionalJump* myInstruction2 = new UnconditionalJump();
-            myInstruction2->arg2=jumphere;
-
-            Instruction* myCondition2 = myInstruction2;
-            myCondition->codes.push_back(myCondition2);
-
+            blocks[arg1]->codes.push_back(myJump);
         }
 
         // if statement
         int insertIf(int index ,string arg1,string arg2, string arg3){
-            // indexx in vector- arg2
 
             ConditionalJump* myInstruction = new ConditionalJump();
 
+            string next = getLocalLabel();
+
             myInstruction->arg2= arg1; // if a>b
+            myInstruction->arg4= arg2; // goto x
 
-            string next = nextLabel();
-            // myInstruction->arg4= nextLabel(); // goto x
-            if(arg3!="")myInstruction->arg4=arg3;
-            else myInstruction->arg4= next;
-
-            // next instructions inside - "goto x"
-            insertNextJump(arg2,myInstruction->arg4); // after working with if-statement jump
-            if(arg3!="") insertNextJump(arg3,myInstruction->arg4); // after working with else-statement jump
 
             quadruple.insert(quadruple.begin()+index+1,myInstruction);
 
-            arg3 = makeBlock(index+1);
+            insertNextJump(arg2, next);
 
-            makeBlock(0);
-            quadruple.pop_back();
+            if(arg3!=""){
+                insertJump(arg3, index+1);
+                insertJump(next,quadruple.size()-1);
+            }
+            else insertJump(next, index+1);
 
-            return 0;
+            return index;
         }
 
 
@@ -235,10 +241,6 @@ class IR{
             for(int i=0;i<quadruple.size();i++){
                 // cout<<i<<": ";
                 cout<<quadruple[i]->print();
-                cout<<endl;
-            }
-            for(auto x : blocks){
-                cout<<x.second->print();
                 cout<<endl;
             }
         }
