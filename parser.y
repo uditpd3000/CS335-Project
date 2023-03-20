@@ -1108,8 +1108,11 @@ Assignment:
     }
     $$->type=$1->type;
     $$->var = $3->var;
-
-    $$->index = mycode->insertAss($3->result,"",$2->lexeme,$1->result);
+    cout<<"$@@@"<<$2->lexeme;
+    string x = "";
+    x+=($2->lexeme)[0];
+    if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
+    else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->result = $1->result;
     }
 ;
@@ -1726,8 +1729,8 @@ CastExpression:
 ;
 
 AssignmentOperator:
-assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
-| AssignmentOperator1 {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);}
+assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);$$->lexeme = "=";}
+| AssignmentOperator1 {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);$$->lexeme = $1;}
 ;
 
 // InstanceofExpression:

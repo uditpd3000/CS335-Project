@@ -113,7 +113,9 @@
 public class OuterClass {
   private int x = 10;
 
-  // OuterClass(){}
+  OuterClass(){
+    x += 100;
+  }
 
   public class InnerClass {
     public void printX() {
