@@ -1,45 +1,28 @@
-public class OuterClass {
-  private int x = 10;
+// import java.util.Scanner; // import statement
 
-  OuterClass(){
-    x += 100;
+public class MyProgram1 {
+  //field declarations
+  String x = "Charlie";
+  public void greetme(){
+      System.out.println("Hello"+x+"dear");
   }
+}
 
-  public class InnerClass {
-    public void printX() {
-      // System.out.println("The value of x is " + x);
-      // OuterClass xxxxxx = new OuterClass();
-     
-      boolean c,a=true,b=false;
-      int d=5,e,f,ff;
-
-      // a=true;
-      
-      // b=1;jo
-      // c = a || b;
-      // d = e;
-      // f=e;
-      // if(f==e){
-      //   f=e;
-      //   e=3;
-      //   if(e==3){
-      //     ff=2;
-          
-      //   }
-      //   else if(e+ff==4){
-      //       d=10;
-      //     }
-      // }
-      f=2;
-      for(d=5;d<10;d++,e=1){
-        f=10;
-        ff=10;
-        while(ff<=8){
-          ff=9/f;
-
-        }
+public class MyProgram2 {
+  public static int greetOther(String[] args) {
+      //using imported library
+      // Scanner scanner = new Scanner(System.in);
+      int z = 0;
+      boolean c;
+      // x = scanner.nextLine();
+      System.out.println("Hello"+"dear");
+      if(c==true||c==false){
+        if(c)z++;
       }
-      
-    }
+      for(c=true;c==true;c=true){
+        --z;
+      }
+      return 1;
+
   }
 }

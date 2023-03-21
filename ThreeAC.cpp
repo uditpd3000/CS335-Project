@@ -84,7 +84,7 @@ class Block: public Instruction{
     }
 };
 
-class BeginEnd: public Instruction{
+class TwoWordInstr: public Instruction{
     public:
         string arg1;
         string arg2;
@@ -243,9 +243,10 @@ class IR{
 
             myInstruction->arg2= condition; // if a>b
             myInstruction->arg4= arg2; // goto x
-
+            
             quadruple.insert(quadruple.begin()+endindex+1,myInstruction);
             insertJump(next, endindex+1);
+           
 
             int x = makeBlock(startindex);
 
@@ -291,6 +292,16 @@ class IR{
             }
     
             return quadruple.size()-1;
+        }
+
+        int InsertTwoWordInstr(string instr, string arg2){
+
+            TwoWordInstr* print = new TwoWordInstr();
+            print->arg1 = instr;
+            print->arg2 = arg2;
+            return insert(print);
+
+
         }
 
         void print(){

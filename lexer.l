@@ -51,7 +51,7 @@ CharacterLiteral ['][^'][']
 BooleanLiteral true|false
 NullLiteral null
 TextBlock ["]["]["](([^"]*)|(["][^"]*["][^"]+)|([\n]))*["]["]["]
-StringLiteral \"[^\n"]+\" 
+StringLiteral \"[^\n"]*\" 
 %%
 
 "//"(.*[ \t]*.*)*[\n] /* for single line comments */

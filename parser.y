@@ -250,7 +250,7 @@ ConstructorDeclaration:
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name+".Constr");
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
@@ -267,7 +267,7 @@ ConstructorDeclaration:
     vector<Node*>v{new Node(mymap[t],t),$2}; $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope(); 
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
@@ -279,7 +279,7 @@ ConstructorDeclaration:
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$1->method->name+".Constr");
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
@@ -294,7 +294,7 @@ ConstructorDeclaration:
     vector<Node*>v{$1}; $$->add(v); 
     $$->add($3->objects);
     global_sym_table->end_scope(); 
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
@@ -532,7 +532,7 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     mycode->insert(myIns);
@@ -550,7 +550,7 @@ MethodDeclaration:
     $$->add($2->objects); 
     $$->add($4->objects); 
     global_sym_table->end_scope();
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
@@ -562,7 +562,7 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
@@ -579,7 +579,7 @@ MethodDeclaration:
     $$->add($2);
      $$->add($4->objects);
      global_sym_table->end_scope();
-     BeginEnd* myIns = new BeginEnd();
+     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
@@ -590,7 +590,7 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$1->method->name);
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
@@ -607,7 +607,7 @@ MethodDeclaration:
     $$->add($3->objects); 
     global_sym_table->end_scope();
 
-    BeginEnd* myIns = new BeginEnd();
+    TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="EndFunc";
     myIns->arg2 = $1->method->name;
 
@@ -1107,7 +1107,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  {indd = mycode->quadruple.size(); } AssignmentExpression {$$=$2; $$->lineno=yylineno;cout<<"maiyaha"; $$->start = indd;}
+  {indd = mycode->quadruple.size();cout<<"me gadbad karega\n"; } AssignmentExpression {$$=$2; $$->lineno=yylineno;cout<<"maiyaha"; $$->start = indd;}
 ;
 
 AssignmentExpression: 
@@ -1171,7 +1171,7 @@ PrimaryNoNewArray                   {$$=$1;}
 
 /* fixmme */
 PrimaryNoNewArray:
-  literal                           {$$=$1;$$->result = $1->var->value;}
+  literal                           {$$=$1;$$->result = $1->var->value;$$->index = -1;}
 | ClassLiteral                      {$$=$1;}
 | THIS                              {
     string t1=$1; 
@@ -1699,8 +1699,9 @@ PreIncrDecrExpression:
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
       
-      $$->index = mycode->insertAss($2->result,"1",zz,$2->result);
-      $$->start = $2->start;
+      mycode->insertAss($2->result,"1",zz,$2->result);
+      $$->start = $2->index;
+      $$->index = $2->index;
       $$->result = mycode->getVar($$->index);
     }
     ;
@@ -1722,8 +1723,8 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
   Primary                                   {$$=$1;}
-| TypeName                                  {$$=$1;cout<<mycode->quadruple.size()<<"---";cout<<$$->index<<"qqq";$$->start--;}
-| PostIncrDecrExpression                    {$$=$1;$$->start--;}
+| TypeName                                  {$$=$1;cout<<mycode->quadruple.size()<<"---";cout<<$$->index<<"qqq";}
+| PostIncrDecrExpression                    {$$=$1;}
 ;
 
 PostIncrDecrExpression:
@@ -1979,11 +1980,10 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
     vector<Node*>v {new Node(mymap[t1],$1),new Node(mymap[t2],$2), $3, new Node(mymap[t4],$4),new Node(mymap[t5],$5)};
      $$->add(v);
 
-     if($3->type=="boolean" || $3->type=="NULL"){
-      "invalid type to print. \n";
-      exit(1);
+     if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
+      throwError("Invalid type to print",yylineno);
      }
-
+     mycode->InsertTwoWordInstr("print",$3->result);
      }
 ;
 
@@ -2039,6 +2039,9 @@ RETURN  semi_colon                         {
       }
     }
   }
+  mycode->InsertTwoWordInstr("return","");
+
+
 
   }
 | RETURN Expression semi_colon           {
@@ -2069,6 +2072,7 @@ RETURN  semi_colon                         {
       }
     }
   }
+  mycode->InsertTwoWordInstr("return",$2->result);
 
   }
 ;
@@ -2118,7 +2122,7 @@ IF brac_open Expression brac_close Statement                                  {
   $$->lineno=$3->lineno;
 
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-  $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
+  $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
   cout<<"Blockkkk\n";
   $$->start = $3->start;
    
@@ -2139,7 +2143,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-  $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+  $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
 
@@ -2157,7 +2161,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-  $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
+  $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
 
@@ -2186,7 +2190,7 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
 
       $$->start = $3->start;
       if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-      $$->index = mycode->insertWhile($3->start,$3->index,$3->result,$5->result);
+      $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
 }
 ;
 
@@ -2215,6 +2219,7 @@ BasicForStatementStart Statement                                       {
 
   if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
   $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
+  cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
 
   }
@@ -2227,6 +2232,7 @@ BasicForStatementStart StatementNoShortIf                              {
 
   if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
   $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
+  cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
   }
 
@@ -2261,7 +2267,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
 
   $$->start =$4->start;
-  $$->index = $4->index;
+  $$->index = mycode->quadruple.size()-1;
   $$->result="";
 
   }
@@ -2284,7 +2290,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
 
   $$->start =$4->start;
-  $$->index = $4->index;
+  $$->index = mycode->quadruple.size()-1;
   if(!mycode->quadruple[$6->start]->isBlock) $6->result = mycode->getVar(mycode->makeBlock($6->start));
   $$->result=$6->result;
 
@@ -2403,7 +2409,9 @@ WHILE brac_open Expression brac_close Statement {
   $$->start = $3->start;
   cout<<$3->index<<"---"<<$5->index<<endl;;
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-  $$->index = mycode->insertWhile($3->start,$3->index,$3->result,$5->result);
+  $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
+  $$->result = mycode->getVar($3->start);
+  cout<<$$->result<<"RESSSSs\n";
   
   }
 ;
