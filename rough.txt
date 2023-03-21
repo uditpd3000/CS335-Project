@@ -254,5 +254,78 @@ goto L8
 
 L8:
 
-t5 := f
-f := f + 1
+t5 := d
+d := d + 1
+
+
+InnerClass:
+
+printX:
+
+        BeginFunc printX
+a := true
+b := false
+d := 5
+t0 := a || b
+c := t0
+d := e
+f := e
+t1 := f == e
+if t1 goto L5
+goto L6
+L5:
+f := e
+e := 3
+t2 := e == 3
+if t2 goto L0
+goto L3
+L0:
+ff := 2
+goto L4
+
+L3:
+t3 := e + ff
+t4 := t3 == 4
+if t4 goto L1
+goto L2
+L1:
+d := 10
+goto L2
+
+L2:
+
+
+goto L4
+L4:
+
+goto L6
+
+L6:
+
+t5 := c == true
+if t5 goto L7
+goto L10
+L7:
+t6 := d
+d := d + 1
+d := 2 * d
+goto L11
+
+L10:
+t7 := d == 2
+if t7 goto L8
+goto L9
+L8:
+d := 3
+goto L9
+
+L9:
+
+
+goto L11
+L11:
+
+t8 := e
+e := e - 1
+
+        EndFunc printX
