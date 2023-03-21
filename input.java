@@ -31,12 +31,13 @@ public class OuterClass {
       //     }
       // }
       f=2;
-      for(;;){
+      for(;f<10;){
         f=10;
         ff=10;
+      //   while(ff<=8){
+      //     ff=9/f;
+      //  }
       }
-      // d++;
-
     }
   }
 }

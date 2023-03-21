@@ -12,9 +12,6 @@ class Instruction{
         virtual string print(){
             return "";
         }
-
-        virtual void setIndex(int i){
-        }
 };
 
 class Assignment: public Instruction{
@@ -25,9 +22,9 @@ class Assignment: public Instruction{
 
         string print(){
 
-            string s="";
+            string s="\t";
 
-            if(result!="") s = result + " := ";
+            if(result!="") s += result + " := ";
 
             if(op!="") {
                 if(arg2!="") return ( s + arg1 + " " + op + " " + arg2);
@@ -36,9 +33,6 @@ class Assignment: public Instruction{
             else{
                 return s + arg1;
             }
-        }
-
-        void setIndex(int i){
         }
 };
 
@@ -49,8 +43,8 @@ class UnconditionalJump: public Instruction{
         int index;
 
         string print(){
-            if(arg2=="") return (arg1 + " " + to_string(index));
-            else return (arg1 + " " +arg2);
+            if(arg2=="") return ("\t"+ arg1 + " " + to_string(index));
+            else return ("\t"+ arg1 + " " +arg2);
         }
 
 };
@@ -64,8 +58,8 @@ class ConditionalJump: public Instruction{
         int index;
 
         string print(){
-            if(arg4=="") return (arg1 + " " + arg2 + " " + arg3 + " " +to_string(index));
-            else return (arg1 + " " + arg2 + " " + arg3 + " " +arg4);
+            if(arg4=="") return ("\t"+ arg1 + " " + arg2 + " " + arg3 + " " +to_string(index));
+            else return ("\t"+ arg1 + " " + arg2 + " " + arg3 + " " +arg4);
         }
 
 };
@@ -76,9 +70,9 @@ class Block: public Instruction{
     vector<Instruction*> codes;
 
     string print(){
-        string s =result + ":\n";
+        string s =result + ":";
         for(auto x : codes){
-            s += x->print() + "\n";
+            s +="\n"+ x->print();
         }
         return s;
     }

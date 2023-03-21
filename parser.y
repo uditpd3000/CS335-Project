@@ -1134,7 +1134,7 @@ Assignment:
     x+=($2->lexeme)[0];
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
-    $$->start = $$->index;
+    $$->start = min($$->index,$3->start);
     $$->result = $1->result;
     }
 ;
@@ -2193,12 +2193,12 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
 ForStatement:
 BasicForStatement                                                      {
   $$=new Node("ForStatement"); 
-  $$->add($1);global_sym_table->end_scope(); 
+  $$->add($1);
   $$->start=$1->start; $$->index=$1->index;
   }
 | EnhancedForStatement                                                 {
   $$=new Node("ForStatement"); 
-  $$->add($1);global_sym_table->end_scope();
+  $$->add($1);
   $$->start=$1->start; $$->index=$1->index;
   }
 ;
