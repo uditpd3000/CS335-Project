@@ -235,7 +235,63 @@ class IR{
             return index;
         }
 
+        int insertWhile(int startindex, int endindex, string condition, string arg2){
 
+            ConditionalJump* myInstruction = new ConditionalJump();
+
+            string next = getLocalLabel();
+
+            myInstruction->arg2= condition; // if a>b
+            myInstruction->arg4= arg2; // goto x
+
+            quadruple.insert(quadruple.begin()+endindex+1,myInstruction);
+            insertJump(next, endindex+1);
+
+            int x = makeBlock(startindex);
+
+            insertNextJump(arg2,quadruple[x]->result);
+
+            return endindex;
+        }
+
+        int insertFor(int startindex, int endindex, string changeExp, string arg2 ){
+            //  for (i=0;i<10;i++)
+            // i=0;
+            // L1:
+            // if i<10 goto arg2
+            // goto next
+            // arg2: 
+            // goto chageexp
+            // changeexp:
+            // goto L1
+
+
+            ConditionalJump* myInstruction = new ConditionalJump();
+
+            string next = getLocalLabel();
+
+            if(startindex>=0) myInstruction->arg2= quadruple[endindex]->result; // if a>b
+            else myInstruction->arg2 = "true";
+
+            myInstruction->arg4= arg2; // goto x
+
+            quadruple.insert(quadruple.begin()+endindex+1,myInstruction); // if-inserted
+            insertJump(next, endindex+1); // goto next
+
+            int x;
+            if(startindex>=0) x = makeBlock(startindex); // l1:
+            else x = makeBlock(endindex+1);
+
+            if(changeExp!=""){
+                insertNextJump(arg2,changeExp); // in arg2: goto changeexp
+                insertNextJump(changeExp,quadruple[x]->result); // in changeexp: goto L1
+            }
+            else {
+                insertNextJump(arg2,quadruple[x]->result);
+            }
+    
+            return quadruple.size()-1;
+        }
 
         void print(){
             for(int i=0;i<quadruple.size();i++){

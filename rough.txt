@@ -211,7 +211,6 @@ public class IfExample {
 
 
 L9:
-d := e
 f := e
 t0 := f == e
 if t0 goto L5
@@ -255,6 +254,7 @@ goto L8
 
 L8:
 
+<<<<<<< HEAD
 t5 := d
 d := d + 1
 
@@ -330,3 +330,7 @@ t8 := e
 e := e - 1
 
         EndFunc printX
+=======
+t5 := f
+f := f + 1
+>>>>>>> aarchie

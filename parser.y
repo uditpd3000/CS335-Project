@@ -222,7 +222,11 @@ ClassDecTillPermits:
 ;
 
 ClassBody:
-  curly_open ClassBodyDeclaration curly_close {string t1=$1,t2=$3; $$ =new Node("ClassBody"); vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; $$->add(v);}
+  curly_open ClassBodyDeclaration curly_close {
+    string t1=$1,t2=$3; $$ =new Node("ClassBody"); 
+    vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; 
+    $$->add(v);
+    }
 | curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
 ;
 
@@ -430,7 +434,7 @@ Block:
        cout<<$2->start<<"starttt"<<endl;
        $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($$->index);
-       $$->start = $2->start;
+       $$->start = $$->index;
 
        }
 | curly_open curly_close {
@@ -602,9 +606,11 @@ MethodDeclaration:
     $$->add($1); 
     $$->add($3->objects); 
     global_sym_table->end_scope();
+
     BeginEnd* myIns = new BeginEnd();
     myIns->arg1="EndFunc";
     myIns->arg2 = $1->method->name;
+
     mycode->insert(myIns); 
     
     }
@@ -1128,7 +1134,7 @@ Assignment:
     x+=($2->lexeme)[0];
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
-    $$->start = $$->index;
+    $$->start = min($$->index,$3->start);
     $$->result = $1->result;
     }
 ;
@@ -2110,9 +2116,8 @@ IF brac_open Expression brac_close Statement                                  {
   vector<Node*>v{new Node (mymap[t1],$1),new Node (mymap[t2],$2),$3,new Node (mymap[t4],$4),$5 }; 
   $$->add(v);
   $$->lineno=$3->lineno;
-  cout<<"{}"<<$5->result<<endl;
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-  
+
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,"");
   cout<<"Blockkkk\n";
   $$->start = $3->start;
@@ -2132,8 +2137,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
 
   cout<<endl<<$7->start<<endl;
 
-  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2150,8 +2155,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if(!mycode->quadruple[$7->index]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->index]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($3->index,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2177,13 +2182,25 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
     vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), $5 };
       $$->add(v);
       $$->lineno=$3->lineno;
-  global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
-      }
+      global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+      $$->start = $3->start;
+      if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+      $$->index = mycode->insertWhile($3->start,$3->index,$3->result,$5->result);
+}
 ;
 
 ForStatement:
-BasicForStatement                                                      {$$=new Node("ForStatement"); $$->add($1); }
-| EnhancedForStatement                                                 {$$=new Node("ForStatement"); $$->add($1);}
+BasicForStatement                                                      {
+  $$=new Node("ForStatement"); 
+  $$->add($1);
+  $$->start=$1->start; $$->index=$1->index;
+  }
+| EnhancedForStatement                                                 {
+  $$=new Node("ForStatement"); 
+  $$->add($1);
+  $$->start=$1->start; $$->index=$1->index;
+  }
 ;
 
 ForStatementNoShortIf:
@@ -2192,11 +2209,26 @@ BasicForStatementNoShortIf {$$=$1;}
 ;
 
 BasicForStatement:
-BasicForStatementStart Statement                                       {$$=new Node("BasicForStatement"); $$->add($1->objects); $$->add($2);}
+BasicForStatementStart Statement                                       {
+  $$=new Node("BasicForStatement"); 
+  $$->add($1->objects); $$->add($2);
+
+  if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
+  $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
+  $$->start = $$->index;
+
+  }
 ;
 
 BasicForStatementNoShortIf:
-BasicForStatementStart StatementNoShortIf                              {$$=new Node("BasicForStatementNoShortIf"); $$->add($1->objects); $$->add($2);}
+BasicForStatementStart StatementNoShortIf                              {
+  $$=new Node("BasicForStatementNoShortIf"); 
+  $$->add($1->objects); $$->add($2);
+
+  if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
+  $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
+  $$->start = $$->index;
+  }
 
 BasicForStatementStart:
 forr brac_open semi_colon semi_colon brac_close                         {
@@ -2204,24 +2236,45 @@ forr brac_open semi_colon semi_colon brac_close                         {
    string t1= $1,t2=$2,t3=$3, t4=$4, t5=$5; 
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), new Node(mymap[t5], $5) };
    $$->add(v);
+  
+  $$->start =-1;
+  $$->index = mycode->quadruple.size();
+  $$->result="";
+
    }
 | forr brac_open ForInit semi_colon semi_colon brac_close               {
   $$ = new Node();
    string t1= $1,t2=$2,t4=$4, t5=$5, t6=$6; 
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
      $$->add(v);
-      } 
+
+    $$->start =-1;
+    $$->index = $3->index;
+    $$->result="";
+
+  } 
 | forr brac_open semi_colon Expression semi_colon brac_close            {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t6=$6;
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), $4, new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
   $$->add(v); 
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
+
+  $$->start =$4->start;
+  $$->index = $4->index;
+  $$->result="";
+
   }
 | forr brac_open semi_colon semi_colon ForUpdate brac_close             {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t4=$4, t6=$6;
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6) };
    $$->add(v);
+
+    $$->start =-1;
+    $$->index = $5->start - 1;
+    if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+    $$->result=$5->result;
+
    }
 | forr brac_open semi_colon Expression semi_colon ForUpdate brac_close  {
   $$ = new Node(); string t1= $1,t2=$2,t3=$3, t5=$5, t7=$7;
@@ -2229,12 +2282,24 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->add(v);
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
+
+  $$->start =$4->start;
+  $$->index = $4->index;
+  if(!mycode->quadruple[$6->start]->isBlock) $6->result = mycode->getVar(mycode->makeBlock($6->start));
+  $$->result=$6->result;
+
   }
 | forr brac_open ForInit semi_colon semi_colon ForUpdate brac_close     {
   $$ = new Node(); 
   string t1= $1,t2=$2,t4=$4, t5=$5, t7=$7;
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) };
   $$->add(v);
+
+  $$->start =-1;
+  $$->index = $3->index;
+  if(!mycode->quadruple[$6->start]->isBlock) $6->result = mycode->getVar(mycode->makeBlock($6->start));
+  $$->result=$6->result;
+
   }
 | forr brac_open ForInit semi_colon Expression semi_colon brac_close    {
   $$ = new Node();
@@ -2243,6 +2308,11 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->add(v); 
   $$->lineno=$5->lineno;
   global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
+
+  $$->start =$5->start;
+  $$->index = $5->index;
+  $$->result="";
+
   }
 | forr brac_open ForInit semi_colon Expression semi_colon ForUpdate brac_close {
   $$ = new Node(); 
@@ -2251,6 +2321,11 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->add(v);
   $$->lineno=$5->lineno;
   global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
+
+  $$->start =$5->start;
+  $$->index = $5->index;
+  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  $$->result=$7->result;
   }
 ;
 
@@ -2274,8 +2349,17 @@ StatementExpressionList {$$=$1;}
 ;
 
 StatementExpressionList:
-StatementExpression {$$= new Node("StatementExpressionList"); $$->add($1);}
-| StatementExpressionList comma StatementExpression  {$$ = $1; string t1 = $2; $$->add(new Node(mymap[t1],$2));$$->add($3);}
+StatementExpression {
+  $$= new Node("StatementExpressionList"); $$->add($1);
+  $$->start=$1->start; $$->index = $1->index;
+  }
+| StatementExpressionList comma StatementExpression  {
+  $$ = $1; string t1 = $2; 
+  $$->add(new Node(mymap[t1],$2));
+  $$->add($3);
+
+  $$->start=$1->start; $$->index = $3->index;
+  }
 ;
 
 EnhancedForStatement:
@@ -2314,6 +2398,13 @@ WHILE brac_open Expression brac_close Statement {
   $$->add(v);
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+
+  $$->start = $3->start;
+  cout<<$3->index<<"---"<<$5->index<<endl;;
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  $$->index = mycode->insertWhile($3->start,$3->index,$3->result,$5->result);
+  
   }
 ;
 

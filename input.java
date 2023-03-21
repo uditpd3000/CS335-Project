@@ -31,10 +31,15 @@ public class OuterClass {
       //     }
       // }
       f=2;
-      for(d=5;d<10;d=5,e=1){
+      for(d=5;d<10;d++,e=1){
         f=10;
         ff=10;
+        while(ff<=8){
+          ff=9/f;
+
+        }
       }
+      
     }
   }
 }
