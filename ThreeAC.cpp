@@ -87,6 +87,25 @@ class BeginEnd: public Instruction{
     }
 };
 
+class FunctnCall: public Instruction{
+    public:
+        string name;
+        vector<string> params;
+        bool isCall=false;
+
+        string print(){
+
+            string s="";
+            for(auto x:params){
+                if(isCall) s+= "\tparam "+x + "\n";
+                else s+= "\tpopparam\n";
+            }
+            s=s.substr(0,s.length()-1);
+
+            return s;
+        }
+};
+
 
 class IR{
     public:
@@ -284,6 +303,24 @@ class IR{
                 insertNextJump(arg2,quadruple[x]->result);
             }
     
+            return quadruple.size()-1;
+        }
+
+        int insertFunctnCall(string funcName, vector<string> argList, int isdec=0){
+            FunctnCall* myCall = new FunctnCall();
+            myCall->name = funcName;
+            for(auto x: argList){
+                myCall->params.push_back(x);
+            }
+            if(!isdec) myCall->isCall=true;
+
+            Instruction* myInstruction = myCall;
+
+            quadruple.push_back(myInstruction);
+
+            if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
+            else insertAss("call "+funcName,"","");
+
             return quadruple.size()-1;
         }
 

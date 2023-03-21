@@ -1,43 +1,35 @@
-public class OuterClass {
-  private int x = 10;
-
-  OuterClass(){
-    x += 100;
-  }
-
-  public class InnerClass {
-    public void printX() {
-      // System.out.println("The value of x is " + x);
-      // OuterClass xxxxxx = new OuterClass();
-     
-      boolean c,a=true,b=false;
-      int d=5,e,f,ff;
-
-      // a=true;
-      
-      // b=1;jo
-      // c = a || b;
-      // d = e;
-      // f=e;
-      // if(f==e){
-      //   f=e;
-      //   e=3;
-      //   if(e==3){
-      //     ff=2;
-          
-      //   }
-      //   else if(e+ff==4){
-      //       d=10;
-      //     }
-      // }
-      f=2;
-      for(;f<10;){
-        f=10;
-        ff=10;
-      //   while(ff<=8){
-      //     ff=9/f;
-      //  }
+class first
+  {
+      public int Count(int a, int b, int c)
+      {
+          int i = a, cnt = 0;
+          while(i < b){
+              i = i + 1;
+              cnt = cnt + 1;
+          }
+          return cnt*c;
       }
-    }
+
+      public void sum(){
+        int i=0;
+        for(;i<10;){
+          i++;
+          
+        }
+
+        return ;
+      }
+
+      public void Main()
+      {
+          int i = 9,j=10,k=11;
+          // int sid[] = {4, 7, 8, 10};
+          // int xxx = 2+3;
+          int res = Count( i, j,k);
+          first.sum();
+          // int res = Count(i, j, k);
+
+          // print(res);
+          // print("\n");
+      }
   }
-}
