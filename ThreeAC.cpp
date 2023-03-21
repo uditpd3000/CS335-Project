@@ -200,6 +200,7 @@ class IR{
 
             if(index==-1) quadruple.push_back(myInstruction);
             else{
+                cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``"<<index<<endl;
                 quadruple.insert(quadruple.begin()+index+1,myInstruction);
             }
 

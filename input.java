@@ -1,5 +1,6 @@
 class first
   {
+    public int tui;
       public int Count(int a, int b, int c)
       {
           int i = a, cnt = 0;
@@ -9,14 +10,16 @@ class first
           }
           return cnt*c;
       }
+      first(int zz){
+        this.tui = zz;
+      }
 
       public void sum(){
         int i=0;
-        for(;i<10;){
-          i++;
-          
+        while(i<10){
+          continue;
+          i=1;
         }
-
         return ;
       }
 

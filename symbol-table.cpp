@@ -129,6 +129,10 @@ class SymbolTable {
     void insert_class(Class* classs){
         classes.push_back(classs);
     }
+    int get_offset(Variable* var){
+        
+    }
+
     void printTable(){
         cout<<"Scope: "<<scope<<endl;
         cout<<"Variables coming\n\n";

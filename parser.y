@@ -442,6 +442,8 @@ Block:
       //  $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($2->index);
        $$->start = $2->start;
+       $$->isContinue = $2->isContinue;
+       $$->continueIndex = $2->continueIndex;
 
        }
 | curly_open curly_close {
@@ -463,6 +465,8 @@ BlockStatements:
 
     $$->index = $1->index;
     $$->start = $1->start;
+    $$->isContinue= $1->isContinue;
+    $$->continueIndex = $1->continueIndex;
     }
 | BlockStatements BlockStatement {
   $$=$1; 
@@ -496,6 +500,9 @@ BlockStatement:
   $$->result =$1->result;
   $$->start = $1->start;
   $$->index = $1->index;
+  $$->isContinue= $1->isContinue;
+  $$->continueIndex = $1->continueIndex;
+  cout<<$1->continueIndex<<"++++++++"<<endl;
   }
 ;
 
@@ -2020,7 +2027,7 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start; $$->isContinue = $1->isContinue;$$->continueIndex = $1->continueIndex;cout<<"??"<<$$->isContinue<<" \n";}
 | LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
@@ -2064,8 +2071,24 @@ BREAK  semi_colon                        {$$= new Node("BreakStatement");string 
 ;
 
 ContinueStatement:
-CONTINUE semi_colon                     {$$= new Node("ContinueStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
-| CONTINUE Identifier semi_colon           {$$= new Node("ContinueStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
+CONTINUE semi_colon                     {
+  $$= new Node("ContinueStatement");
+  string t1= $1,t2=$2; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2));
+  $$->isContinue = true;
+  $$->continueIndex = mycode->quadruple.size()-1;
+  $$->start = mycode->quadruple.size();
+  $$->index = mycode->quadruple.size();
+  }
+| CONTINUE Identifier semi_colon           {
+  $$= new Node("ContinueStatement"); 
+  string t1= $1, t2=$2,t3=$3; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2)); 
+  $$->add(new Node(mymap[t3],t3));
+  $$->start = mycode->quadruple.size();
+  $$->index = mycode->quadruple.size();}
 ;
 
 ReturnStatement:
@@ -2091,8 +2114,9 @@ RETURN  semi_colon                         {
       }
     }
   }
+  $$->start = mycode->quadruple.size();
+  $$->index = mycode->quadruple.size();
   mycode->InsertTwoWordInstr("return","");
-
 
 
   }
@@ -2124,6 +2148,8 @@ RETURN  semi_colon                         {
       }
     }
   }
+  $$->start = mycode->quadruple.size();
+  $$->index = mycode->quadruple.size();
   mycode->InsertTwoWordInstr("return",$2->result);
 
   }
@@ -2243,6 +2269,9 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
       $$->start = $3->start;
       if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
       $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
+
+      $$->result=mycode->getVar($$->start);
+      // if($$->isContinue) mycode->insertJump($$->result,$$->continueIndex);
 }
 ;
 
@@ -2465,6 +2494,7 @@ WHILE brac_open Expression brac_close Statement {
   $$->result = mycode->getVar($3->start);
   cout<<$$->result<<"RESSSSs\n";
   
+  // if($5->isContinue) mycode->insertJump($$->result,$5->continueIndex);
   }
 ;
 
