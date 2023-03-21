@@ -313,6 +313,7 @@ class IR{
             print->arg1 = instr;
             print->arg2 = arg2;
             return insert(print);
+        }
 
 
         int insertFunctnCall(string funcName, vector<string> argList, int isdec=0){
