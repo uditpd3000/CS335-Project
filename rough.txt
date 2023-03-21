@@ -255,6 +255,9 @@ goto L8
 L8:
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> udit
 t5 := d
 d := d + 1
 
@@ -330,7 +333,10 @@ t8 := e
 e := e - 1
 
         EndFunc printX
+<<<<<<< HEAD
+=======
 =======
 t5 := f
 f := f + 1
 >>>>>>> aarchie
+>>>>>>> udit

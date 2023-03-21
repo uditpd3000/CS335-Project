@@ -1,28 +1,35 @@
-// import java.util.Scanner; // import statement
-
-public class MyProgram1 {
-  //field declarations
-  String x = "Charlie";
-  public void greetme(){
-      System.out.println("Hello"+x+"dear");
-  }
-}
-
-public class MyProgram2 {
-  public static int greetOther(String[] args) {
-      //using imported library
-      // Scanner scanner = new Scanner(System.in);
-      int z = 0;
-      boolean c;
-      // x = scanner.nextLine();
-      System.out.println("Hello"+"dear");
-      if(c==true||c==false){
-        if(c)z++;
+class first
+  {
+      public int Count(int a, int b, int c)
+      {
+          int i = a, cnt = 0;
+          while(i < b){
+              i = i + 1;
+              cnt = cnt + 1;
+          }
+          return cnt*c;
       }
-      for(c=true;c==true;c=true){
-        --z;
-      }
-      return 1;
 
+      public void sum(){
+        int i=0;
+        for(;i<10;){
+          i++;
+          
+        }
+
+        return ;
+      }
+
+      public void Main()
+      {
+          int i = 9,j=10,k=11;
+          // int sid[] = {4, 7, 8, 10};
+          // int xxx = 2+3;
+          int res = Count( i, j,k);
+          first.sum();
+          // int res = Count(i, j, k);
+
+          // print(res);
+          // print("\n");
+      }
   }
-}

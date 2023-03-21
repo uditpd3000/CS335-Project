@@ -342,6 +342,9 @@ ArgumentList:
     vector<Node*>v{$1};
     $$->add(v);
     $$->variables.push_back($1->var);
+
+    $$->index = $1->index; $$->start = $1->start;
+    $$->resList.push_back($1->result);
     }
 | ArgumentList comma Expression   {
     $$=new Node("Arglist");
@@ -349,6 +352,10 @@ ArgumentList:
     $$->add(v);
     $$->variables=$1->variables;
     $$->variables.push_back($3->var);
+
+    $$->index = $3->index; $$->start = $1->start;
+    $1->resList.push_back($3->result);
+    $$->resList = $1->resList;
     }
 ;
 
@@ -432,9 +439,9 @@ Block:
       vector<Node*>v{(new Node(mymap[t1],t1)),$2,(new Node(mymap[t2],t2))};
        $$->add(v); 
        cout<<$2->start<<"starttt"<<endl;
-       $$->index = (mycode->makeBlock($2->start));
-       $$->result = mycode->getVar($$->index);
-       $$->start = $$->index;
+      //  $$->index = (mycode->makeBlock($2->start));
+       $$->result = mycode->getVar($2->index);
+       $$->start = $2->start;
 
        }
 | curly_open curly_close {
@@ -727,7 +734,6 @@ FormalParameterList:
     $$->add(new Node(mymap[t1],t1)); 
     $$->add($3);
     $$->method=$1->method;
-    $3->var->name = "_"+$3->var->name;
     $$->method->parameters.push_back($3->var);
     }
 ;
@@ -920,13 +926,14 @@ VariableDeclarator:
     if($3->dims!=0){
       throwError("TypeError: Cannot convert "+to_string($3->dims)+" dimensional Array to "+$3->type+"\n",yylineno );
     }
+
     $$->var = new Variable($1,$3->type,yylineno,{},$3->var->value);
     if($3->isObj)$$->var->classs_name = $3->anyName;
     $$->dims=$3->dims;
-    cout<<"---huu\n"<<$$->dims;
+
     cout<<$3->result<<endl;
     $$->index = mycode->insertAss($3->result,"","",$1);
-    // $$->result = $3->result;
+    $$->result = $3->result;
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -938,9 +945,9 @@ VariableDeclarator:
     }
     $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$4->var->dimsSize,$4->var->value);
     $$->dims=$4->dims;
-    cout<<"hurrahii"<<$$->type<<endl;
+    // cout<<"hurrahii"<<$$->type<<endl;
     $$->index = mycode->insertAss($4->result,"","",$1);
-    // $$->result = $4->result;
+    $$->result = $4->result;
     }
 ;
 
@@ -955,7 +962,8 @@ VariableInitializer:
     $$->dims = $1->dims;
     $$->result = $1->result;
     cout<<"$$\n";
-    cout<<"$"<<$1->var->name<<"\n";
+    // mycode->print();
+    // cout<<"$"<<$1->result<<"\n";
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
@@ -1202,7 +1210,7 @@ PrimaryNoNewArray:
     }
 | FieldAccess                       {$$=$1;} 
 | ArrayAccess                       {$$=$1;} 
-| MethodInvocation                  {$$=$1;} 
+| MethodInvocation                  {$$=$1;$$->var=new Variable("","",yylineno,{},"");} 
 | ClassInstanceCreationExpression   {$$=$1;cout<<"tukaha\n";$$->var=new Variable("","",yylineno,{},"");} 
 ;
 
@@ -1347,7 +1355,7 @@ TypeName:
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
     }
 
-    $$->result = $1->result;
+    $$->result = $3;
     $$->index = mycode->quadruple.size();
     
   }
@@ -1812,6 +1820,10 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
+    $$->index = mycode->insertFunctnCall($1->result,$3->resList);
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
+
     }
 | TypeName brac_open brac_close                                                      {
     $$=new Node("MethodInvocation");
@@ -1830,9 +1842,32 @@ MethodInvocation:
     }
     $$->type= method->ret_type;
     $$->method=method;
+
+    $$->index = mycode->insertFunctnCall($1->result,vector<string>{});
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
+
     }
-| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$6;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};$$->add(v);}
-| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {$$=new Node("MethodInvocation");string t1=$3,t2=$4,t3=$5;$$->add($1->objects); vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+| MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {
+  $$=new Node("MethodInvocation");
+  string t1=$3,t2=$4,t3=$6;$$->add($1->objects); 
+  vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};
+  $$->add(v);
+
+    $$->index = mycode->insertFunctnCall($3,$5->resList);
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
+  }
+| MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {
+  $$=new Node("MethodInvocation");
+  string t1=$3,t2=$4,t3=$5;$$->add($1->objects); 
+  vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
+  $$->add(v);
+
+    $$->index = mycode->insertFunctnCall($3,vector<string>{});
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
+  }
 | MethodIncovationStart Identifier  brac_open brac_close                               {
     $$=new Node("MethodInvocation");
     string t1=$2,t2=$3,t3=$4;
@@ -1846,6 +1881,10 @@ MethodInvocation:
       }
     $$->type= method->ret_type;
     $$->method=method;
+
+    $$->index = mycode->insertFunctnCall($2,vector<string>{});
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
     
   }
 | MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {
@@ -1867,6 +1906,11 @@ MethodInvocation:
     }
     $$->type= method->ret_type;
     $$->method=method;
+
+    $$->index = mycode->insertFunctnCall($2,$4->resList);
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
+
     }
   | Primary dot Identifier brac_open ArgumentList brac_close {
     $$=new Node("MethodInvocation");
@@ -1887,6 +1931,10 @@ MethodInvocation:
     }
     $$->type= method->ret_type;
     $$->method=method;
+
+    $$->index = mycode->insertFunctnCall($3,$5->resList);
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
   }
   | Primary dot Identifier brac_open brac_close {
     $$=new Node("MethodInvocation");
@@ -1901,13 +1949,17 @@ MethodInvocation:
       }
     $$->type= method->ret_type;
     $$->method=method;
+
+    $$->index = mycode->insertFunctnCall($3,vector<string>{});
+    $$->start = $1->start;
+    $$->result = mycode->getVar($$->index);
   }
 ; 
 
 MethodIncovationStart:
-  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
-| super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); }
-| TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
+  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start;}
+| super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); $$->start = mycode->quadruple.size(); }
+| TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); $$->start = $1->start;}
 ;
 
 ClassInstanceCreationExpression:
