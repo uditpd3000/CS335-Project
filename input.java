@@ -77,10 +77,10 @@ class second {
     // c=e;
     // c=f;
 
-    // d=a;
-    // d=b;
-    // d=c;
-    // d=e;
+    d=a;
+    d=b;
+    d=c;
+    d=e;
     // d=f;
 
     // e=a;

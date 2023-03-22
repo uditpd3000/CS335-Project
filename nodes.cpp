@@ -19,6 +19,7 @@ class Node {
     bool isContinue;
     int continueIndex;
     string which_scope;
+    int arrSize = 0;
 
     vector<Node*> objects;
 
