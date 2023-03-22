@@ -378,9 +378,9 @@ class GlobalSymbolTable {
             }
         }
         if(flag==1){
-            cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
+            // cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
             if(lookup_var(symbol,0,current_scope)->value!=""){
-                cout<<"    harshitxyz    ";
+                // cout<<"    harshitxyz    ";
                 throwError("Error: cannot change value of final type :"+symbol,yylineno);
                 return false;
             }

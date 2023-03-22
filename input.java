@@ -77,10 +77,10 @@ class second {
     // c=e;
     // c=f;
 
-    d=a;
-    d=b;
-    d=c;
-    d=e;
+    // d=a;
+    // d=b;
+    // d=c;
+    // d=e;
     // d=f;
 
     // e=a;
@@ -89,16 +89,18 @@ class second {
     // e=d;
     // e=f;
 
+    // a=1+1.1;
+
     f=a;
     f=b;
     f=c;
     f=d;
     f=e;
 
-    e=6;
-    if(1){
-      e++;
-    }
+    // e=6;
+    // if(1){
+    //   e++;
+    // }
 
     // if(1==1.0);
     // int z,y;

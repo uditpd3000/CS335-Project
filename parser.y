@@ -47,7 +47,6 @@ void generatetree(Node* n){
         fout<<"[label=\"";
         n->print();
         fout<<"\"];"<<endl;
-        // cout<<"ye1\n";
         
     }
     else{
@@ -70,7 +69,6 @@ void generate_graph(Node *n){
 
   fout<<"digraph G {\n";
   generatetree(n);
-  cout<<"yqq\n";
   fout <<"\n}";
 
   vout<<"\n Generation of the graph.dot file completed."<<endl;
@@ -156,15 +154,11 @@ void throwError(string s, int lineno){
 %%
 
 input: 
-CompilationUnit {
-  cout<<"ye9\n";
-generate_graph($$);cout<<"ye7\n";
-global_sym_table->printAll();
-}
+CompilationUnit {generate_graph($$);global_sym_table->printAll();}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
-| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);cout<<"ye1\n";}
+| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);}
 | CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
 ;
 
@@ -204,7 +198,6 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope();
-    cout<<"ye3\n";
   }
 ;
 
@@ -233,7 +226,6 @@ ClassBody:
     string t1=$1,t2=$3; $$ =new Node("ClassBody"); 
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; 
     $$->add(v);
-    cout<<"ye2\n";
     }
 | curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
 ;
@@ -262,18 +254,11 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
-
-    vector<string>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
-
-        params.push_back(i->name);
     }
-
-    reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($2->method->name,params,1);
 
   } 
   ConstructorDeclarationEnd {
@@ -298,18 +283,11 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
-
-    vector<string>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
-
-        params.push_back(i->name);
     }
-
-    reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($1->method->name,params,1);
   } 
   ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
@@ -464,8 +442,6 @@ Block:
       //  $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($2->index);
        $$->start = $2->start;
-       $$->isContinue = $2->isContinue;
-       $$->continueIndex = $2->continueIndex;
 
        }
 | curly_open curly_close {
@@ -487,8 +463,6 @@ BlockStatements:
 
     $$->index = $1->index;
     $$->start = $1->start;
-    $$->isContinue= $1->isContinue;
-    $$->continueIndex = $1->continueIndex;
     }
 | BlockStatements BlockStatement {
   $$=$1; 
@@ -515,7 +489,6 @@ BlockStatement:
    $$->result =$1->result;
   $$->index = $1->index; 
   $$->start = $1->start; 
-   
   }
 | Statement { 
   $$=new Node("BlockStatement"); 
@@ -523,9 +496,6 @@ BlockStatement:
   $$->result =$1->result;
   $$->start = $1->start;
   $$->index = $1->index;
-  $$->isContinue= $1->isContinue;
-  $$->continueIndex = $1->continueIndex;
-  cout<<$1->continueIndex<<"++++++++"<<endl;
   }
 ;
 
@@ -568,25 +538,18 @@ MethodDeclaration:
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
-
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     mycode->insert(myIns);
-    vector<string>params;
-
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
-
-        params.push_back(i->name);
     }
-
-    reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($2->method->name,params,1);
+    cout<<"wow\n";
   }
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -598,7 +561,6 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
-    cout<<"ye1\n";
     
     }
 
@@ -612,18 +574,11 @@ MethodDeclaration:
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
-
-    vector<string>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
-
-        params.push_back(i->name);
     }
-
-    reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($2->method->name,params,1);
   }
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -635,7 +590,6 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
-    cout<<"ye1\n";
      }
 
 | MethodHeader{
@@ -648,18 +602,11 @@ MethodDeclaration:
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
-
-     vector<string>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
-
-        params.push_back(i->name);
     }
-
-    reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($1->method->name,params,1);
   } 
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -672,13 +619,12 @@ MethodDeclaration:
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
-    cout<<"ye1\n";
     
     }
 ;
 
 MethodDeclarationEnd:
-  Block {$$=$1;cout<<"yee\n";}
+  Block {$$=$1;}
 | semi_colon {string t1=$1; $$=new Node(mymap[t1],t1); }
 ;
 
@@ -837,7 +783,6 @@ VariableDeclaratorId:
     $$->add(v);
     $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,{},"");
     $$->dims = $2->var->dims;
-
     }
 | Identifier {
     $$= new Node("VariableDeclaratorId"); 
@@ -849,11 +794,7 @@ VariableDeclaratorId:
 ;
 
 VariableArityParameter:
- dots Identifier {
-  $$= new Node("VariableArityParameter"); 
-  string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
-  $$->add(v);
-  }
+ dots Identifier {$$= new Node("VariableArityParameter"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v);}
 ;
 
 ReceiverParameter:
@@ -977,7 +918,7 @@ VariableDeclarator:
     $$->dims = $2->dims;
   }
 | Identifier assign VariableInitializer {
-  cout<<"---\n";
+  // cout<<"---\n";
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
@@ -1004,8 +945,6 @@ VariableDeclarator:
     }
     $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$4->var->dimsSize,$4->var->value);
     $$->dims=$4->dims;
-    for(auto ll:$4->var->dimsSize)cout<<"aaaooo"<<ll;
-    cout<<"zise"<<$4->var->dimsSize.size()<<endl;
     // cout<<"hurrahii"<<$$->type<<endl;
     $$->index = mycode->insertAss($4->result,"","",$1);
     $$->result = $4->result;
@@ -1029,7 +968,6 @@ VariableInitializer:
 | ArrayInitializer {
     // $$ = new Node();
     $$ = $1;
-    reverse($$->var->dimsSize.begin(),$$->var->dimsSize.end());
     $$->dims++;
     } // 
 ; 
@@ -1039,28 +977,7 @@ TypeParameters:
 ;
 
 ClassExtends:
-  extends ClassType {
-    $$ = new Node(); 
-    string t1=$1; 
-    $$->add(new Node(mymap[t1],t1)); 
-    $$->add($2);
-    Class* cls = $2->cls;
-    cout<<cls->name<<"Inheritence\n";
-    SymbolTable* base = global_sym_table->linkmap[cls->name];
-    for(auto var: base->vars){
-      var->inherited = true;
-      global_sym_table->insert(var);
-    }
-    for(auto met: base->methods){
-      met->inherited = true;
-      global_sym_table->insert(met);
-    }
-    for(auto clss: base->classes){
-      clss->inherited = true;
-      global_sym_table->insert(clss);
-    }
-
-    }
+  extends ClassType {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);}
 ;
 
 ClassImplements:
@@ -1211,11 +1128,9 @@ Assignment:
     $$=new Node("Assignment");
     vector<Node*>v{$1,$2,$3};
     $$->add(v);
+
     if($1->type!=$3->type){
-      if(global_sym_table->typeCheckHelperLiteral($3->type,$1->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if(($1->type=="byte" || $1->type=="short") && $3->type=="int") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if($1->type=="float" && $3->type=="double") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else cout<<"      hello d    "<<endl;
+      if(global_sym_table->typeCheckHelper($3->type,$1->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
     }
     if($1->dims!=$3->dims){
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
@@ -1223,17 +1138,15 @@ Assignment:
     }
     $$->type=$1->type;
     $$->var = $3->var;
+    $$->var->value = $3->result;
     cout<<"$@@@"<<$2->lexeme;
     string x = "";
     x+=($2->lexeme)[0];
-    // cout<<$1->result<<"gayab??"
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
     $$->result = $1->result;
 
-    // cout<<"dukh\n"; mycode->print(); exit(1);
-    // global_sym_table->finalCheck($1)
     }
 ;
 
@@ -1241,7 +1154,7 @@ Assignment:
 LeftHandSide:
 FieldAccess      {$$=$1;}
 | TypeName       {$$=$1;}
-| ArrayAccess    { $$=$1;}
+| ArrayAccess    {$$=$1;}
 ;
 
 FieldAccess:
@@ -1255,16 +1168,9 @@ Primary dot Identifier              {
     $$->type = $$->var->type;
   }
 
-
-
-  // else if($1->type!="Method"){
-  //   $$->value=$1->value;
-  // }
-
-
-
-
   cout<<"ab naa hoga"; 
+
+
   }
 | super dot Identifier              {$$=new Node("FieldAccess");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | TypeName dot super dot Identifier {$$=new Node("FieldAccess");string t1=$2,t2=$3,t3=$4,t4=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
@@ -1272,7 +1178,7 @@ Primary dot Identifier              {
 
 /* fixmme */
 Primary:
-PrimaryNoNewArray                   {$$=$1;}
+PrimaryNoNewArray                   {$$=$1;$$->var->value=$1->result;}
 | ArrayCreationExpression           {$$=$1;}
 ;
 
@@ -1395,13 +1301,6 @@ TypeName:
     Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
-      if(cls->inherited==true){
-        for(auto mod: cls->modifiers){
-          if(mod=="private"){
-            throwError("Class "+ t1 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->cls = cls;
       $$->type = "Class";
       if(cls->name=="String"){
@@ -1410,25 +1309,11 @@ TypeName:
       $$->anyName = $$->cls->name;
     }
     else if(met !=NULL){
-      if(met->inherited==true){
-        for(auto mod: met->modifiers){
-          if(mod=="private"){
-            throwError("Method "+ t1 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->method = met;
       $$->type = met->ret_type;
       $$->anyName=$$->method->name;
     }
     else if(var!=NULL){
-      if(var->inherited==true){
-        for(auto mod: var->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t1 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->var = var;
       $$->type = var->type;
       $$->anyName = var->classs_name;
@@ -1437,6 +1322,8 @@ TypeName:
         
         $$->anyName=$$->var->name;
       }
+      global_sym_table->finalCheck($1);
+      
       
     }
     else {
@@ -1457,37 +1344,16 @@ TypeName:
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
     Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
     if(cls!=NULL){
-      if(cls->inherited==true){
-        for(auto mod: cls->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t2 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->cls = cls;
       $$->type = "Class";
       $$->anyName = cls->name;
 
     }
     else if(met !=NULL){
-      if(met->inherited==true){
-        for(auto mod: met->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t2 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->method = met;
       $$->type = met->ret_type;
     }
     else if(var!=NULL){
-      if(var->inherited==true){
-        for(auto mod: var->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t2 +" is of private access",yylineno);
-          }
-        }
-      }
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
@@ -1509,95 +1375,27 @@ ArrayAccess:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
-    if(v1->inherited==true){
-        for(auto mod: v1->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t1 +" is of private access",yylineno);
-          }
-        }
-      }
-    $$->which_scope = global_sym_table->lookup_var_get_scope($1,1,global_sym_table->current_scope);
     if(v1->isArray==false){
       throwError(t1+"is not of type Array",yylineno);
     }
-    if($3->type!="int"){
+    if($3->type!="int" && $3->type!="long"){
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
     $$->var= v1;
-    int ss = $$->var->dimsSize.size();
-    // cout<<ss<<"ghghgh"<<endl;
-    if(ss){
-      int ll=1;
-      int zz = v1->dims-1; 
-      // cout<<zz<<"hghgh"<<endl;
-      if(zz<0){
-      throwError("Dimension mismatch for "+t1,yylineno);
-    }
-      while(zz>0){ll*=$$->var->dimsSize[zz];zz--;cout<<$$->var->dimsSize[zz]<<"udit\n";}
-      $$->index = mycode->insertAss($3->result,to_string(ll),"*","");
-      if(v1->dims==1){
-        string t1 = mycode->getVar($$->index);
-        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
-      }
-      
-    }
-    else {
-      throwError("Array "+t1+" may not be initialised",yylineno);
-    }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
-
   }
 | TypeName dot Identifier box_open Expression box_close  {
     $$=new Node("ArrayAcc");
     string t2=$2,t3=$3,t4=$4,t6=$6;
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4),$5,new Node(mymap[t6],t6)};
     $$->add(v);
-    // exit(1);
-
-    Variable* v1 = global_sym_table->lookup_var($3,1,$1->anyName);
-    if(v1->inherited==true){
-        for(auto mod: v1->modifiers){
-          if(mod=="private"){
-            throwError("Variable "+ t3 +" is of private access",yylineno);
-          }
-        }
-      }
+    Variable* v1 = global_sym_table->lookup_var($3,1,$1->cls->name);
     if(v1->isArray==false){
       throwError(t3+" is not of type Array",yylineno);
     }
-    if($5->type!="int"){
-      throwError("Array index cannot be of type "+$5->type,yylineno);
-    }
     $$->var= v1;
-    int ss = $$->var->dimsSize.size();
-    // cout<<ss<<"ghghgh"<<endl;
-    if(ss){
-      int ll=1;
-      int zz = v1->dims-1; 
-      // cout<<zz<<"hghgh"<<endl;
-      if(zz<0){
-      throwError("Dimension mismatch for "+$$->var->name,yylineno);
-    }
-      while(zz>0){ll*=$$->var->dimsSize[zz];zz--;cout<<$$->var->dimsSize[zz]<<"udit\n";}
-      $$->index = mycode->insertAss($5->result,to_string(ll),"*","");
-      if(v1->dims==1){
-        string t1 = mycode->getVar($$->index);
-        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
-      }
-      
-    }
-    else {
-      throwError("Array "+$$->var->name+" may not be initialised",yylineno);
-    }
     $$->dims=v1->dims-1;
-    $$->type = v1->type;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -1608,37 +1406,10 @@ ArrayAccess:
     $$->cls = $1->cls;
     $$->method = $1->method;
     $$->type= $1->type;
-    $$->which_scope=$1->which_scope;
     cout<<"kkk";
-    int ss = $$->var->dimsSize.size();
-    cout<<ss<<"hghghgh"<<endl;
-    if(ss){
-      int ll=1;
-      int zz = ss-1; 
-      int loo = $1->dims-1;
-      for(auto i:$$->var->dimsSize)cout<<i<<"ul";
-      if(loo<0){
-      throwError("Dimension mismatch for "+$$->var->name,yylineno);
-    }
-      while(loo--){ll*=$$->var->dimsSize[zz];zz--;cout<<"uditt\n";}
-      int temp = mycode->insertAss($3->result,to_string(ll),"*","");
-      string t1 = mycode->getVar(temp);
-      string t2 = mycode->getVar($1->index);
-      cout<<t2<<"||"<<endl;
-      $$->index = mycode->insertAss(t1,t2,"+","");
-      if($1->dims==1){
-        string t1 = mycode->getVar($$->index);
-        int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string($1->var->offset),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
-      }
-
-    }
     if($$->var->isArray==true){
       // cout<<"llllllllllllllllllllllll";
       $$->dims=$1->dims-1;
-      
       // cout<<$$->dims<<"----------";
       if($$->dims>$$->var->dims){
         throwError("Expected dimension of "+$$->var->name +" is "+(to_string)($$->var->dims)+" but provided more",yylineno);
@@ -1647,7 +1418,7 @@ ArrayAccess:
     else{
       throwError($1->var->name+" is not of type Array",yylineno);
     }
-    if($3->type!="int"){
+    if($3->type!="int" && $3->type!="long"){
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
 
@@ -1693,37 +1464,14 @@ ClassLiteral:
 
 
 ConditionalExpression:
-    ConditionalOrExpression                                               {
-          $$=$1;
-      }
-    | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
-      // $$ = new Node("ConditionalExpression");
-      string t1=$2,t2=$4;
-      vector<Node*>v{new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
-      $$->add(v);
-
-      cout<<$3->type<<"--dukh--"<<$5->var->type;
-      if($3->type!=$5->var->type) throwError("type mismatch",yylineno);
-      if($1->type!="boolean") throwError("type mismatch for conditional",yylineno);
-      $$->var->type = $3->type;
-      $$->type = $3->type;
-
-      cout<<endl<<$3->start<<"pppp"<<$5->start<<endl;
-
-      if(!mycode->quadruple[mycode->quadruple.size()-1]->isBlock) $5->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-1));
-      if(!mycode->quadruple[mycode->quadruple.size()-2]->isBlock) $3->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-2,"",mycode->quadruple.size()-1));
-
-      $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
-      $$->index = mycode->quadruple.size()-1;
-      
-      }
+    ConditionalOrExpression                                                          {$$=$1;}
+    | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
     ;
 
 ConditionalOrExpression:
     ConditionalAndExpression                                                         {$$=$1;}
   | ConditionalOrExpression OR ConditionalAndExpression                            {
-      string t2=$2;
-      $$=new Node("ConditionalExpression");
+      string t2=$2;$$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
 
       $$->lineno=yylineno;
@@ -2222,15 +1970,7 @@ MethodIncovationStart:
 ;
 
 ClassInstanceCreationExpression:
-  UnqualifiedClassInstanceCreationExpression                {$$=$1;
-    $$->isObj = true;
-    int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
-    string z = mycode->getVar(ind);
-    // cout<<"paaaaaaaaaaaaa\n";
-    mycode->InsertTwoWordInstr("\tparam",z);
-    mycode->InsertTwoWordInstr("\tallocmem","1");
-    // cout<<global_sym_table->linkmap[$$->cls->name]->offset<<"yahinaa\n";
-    }
+  UnqualifiedClassInstanceCreationExpression                {$$=$1;$$->isObj = true;cout<<"maiyaha\n";}
 | TypeName dot UnqualifiedClassInstanceCreationExpression   {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 | Primary dot UnqualifiedClassInstanceCreationExpression    {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 ;
@@ -2287,7 +2027,7 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start; $$->isContinue = $1->isContinue;$$->continueIndex = $1->continueIndex;cout<<"??"<<$$->isContinue<<" \n";}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
@@ -2326,45 +2066,13 @@ StatementWithoutTrailingSubstatement:
 ;
 
 BreakStatement:
-BREAK  semi_colon                        {
-  $$= new Node("BreakStatement");
-  string t1= $1,t2=$2; 
-  $$->add(new Node(mymap[t1],t1));
-  $$->add(new Node(mymap[t2],t2));
-
-  $$->index = mycode->insertIncompleteJump("break");
-  }
-| BREAK Identifier semi_colon             {
-  $$= new Node("BreakStatement"); 
-  string t1= $1, t2=$2,t3=$3; 
-  $$->add(new Node(mymap[t1],t1));
-  $$->add(new Node(mymap[t2],t2)); 
-  $$->add(new Node(mymap[t3],t3));
-
-  $$->index = mycode->insertIncompleteJump("break");
-  }
+BREAK  semi_colon                        {$$= new Node("BreakStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
+| BREAK Identifier semi_colon             {$$= new Node("BreakStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
 ;
 
 ContinueStatement:
-CONTINUE semi_colon                     {
-  $$= new Node("ContinueStatement");
-  string t1= $1,t2=$2; 
-  $$->add(new Node(mymap[t1],t1));
-  $$->add(new Node(mymap[t2],t2));
-  $$->isContinue = true;
-  $$->continueIndex = mycode->quadruple.size()-1;
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->insertIncompleteJump("continue");
-  }
-| CONTINUE Identifier semi_colon           {
-  $$= new Node("ContinueStatement"); 
-  string t1= $1, t2=$2,t3=$3; 
-  $$->add(new Node(mymap[t1],t1));
-  $$->add(new Node(mymap[t2],t2)); 
-  $$->add(new Node(mymap[t3],t3));
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->insertIncompleteJump("continue");
-  }
+CONTINUE semi_colon                     {$$= new Node("ContinueStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
+| CONTINUE Identifier semi_colon           {$$= new Node("ContinueStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
 ;
 
 ReturnStatement:
@@ -2390,9 +2098,8 @@ RETURN  semi_colon                         {
       }
     }
   }
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
-  mycode->InsertTwoWordInstr("\treturn","");
+  mycode->InsertTwoWordInstr("return","");
+
 
 
   }
@@ -2424,9 +2131,7 @@ RETURN  semi_colon                         {
       }
     }
   }
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
-  mycode->InsertTwoWordInstr("\treturn",$2->result);
+  mycode->InsertTwoWordInstr("return",$2->result);
 
   }
 ;
@@ -2475,11 +2180,9 @@ IF brac_open Expression brac_close Statement                                  {
   $$->add(v);
   $$->lineno=$3->lineno;
 
-  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
-
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
-  // cout<<"Blockkkk\n";
+  cout<<"Blockkkk\n";
   $$->start = $3->start;
    
 
@@ -2495,10 +2198,10 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
+  cout<<endl<<$7->start<<endl;
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2515,10 +2218,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
-
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2549,8 +2250,6 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
       $$->start = $3->start;
       if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
       $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
-
-      $$->result=mycode->getVar($$->start);
 }
 ;
 
@@ -2772,6 +2471,7 @@ WHILE brac_open Expression brac_close Statement {
   $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
   $$->result = mycode->getVar($3->start);
   cout<<$$->result<<"RESSSSs\n";
+  
   }
 ;
 
@@ -2883,18 +2583,7 @@ DimExprs { $$=$1; }
     $$->dims = $1->dims+$2->var->dims;
     $$->var = $1->var;
     }
-| Dims ArrayInitializer {
-    $$=new Node(); 
-    $$->add($1);
-    $$->add($2);
-    if($1->var->dims!=$2->var->dimsSize.size()){
-      cout<<$1->var->dims<<" "<<$2->var->dimsSize.size();
-      throwError("Dimensions unmatched",yylineno);
-    }
-    $$->dims = $1->var->dims;
-    $$->var = $2->var;
-
-    }
+| Dims ArrayInitializer {$$=new Node(); $$->add($1);$$->add($2);}
 ;
 
 newprimtype:
@@ -2923,8 +2612,6 @@ DimExprs:
     $$=$1; 
     $$->add($2);
     $$->dims++;
-    $$->var->dimsSize.push_back($2->var->dimsSize[0]);
-    cout<<$$->var->dimsSize.size()<<"LKJKLJKL";
     }
 ;
 
@@ -2936,7 +2623,7 @@ box_open Expression box_close  {
   $$->add($2); 
   t1=$3;
   $$->add(new Node(mymap[t1],$3));
-  if($2->type!="int"){
+  if($2->type!="int" && $2->type!="long"){
      throwError("Array cannot be initialized using "+$2->type+"as index",yylineno);
   }
   vector<int> ss;
@@ -2957,9 +2644,7 @@ ArrayInitializer:
     // $$->variables=$2->variables;
     $$->type = $2->type;
     $$->dims=$2->dims;
-    $$->var= $2->var;
-    cout<<"arrsize:"<<$2->arrSize<<endl;
-    // $$->var->dimsSize.push_back($2->arrSize);
+    $$->var= new Variable("","",yylineno,{},"");
     // $$->var->isArray=true;
     }
   | curly_open VariableInitializerList comma curly_close {
@@ -2974,8 +2659,7 @@ ArrayInitializer:
       // $$->variables=$2->variables;
       $$->type = $2->type;
       $$->dims=$2->dims;
-      // $$->var= new Variable("","",yylineno,{},"");
-      $$->var= $2->var;
+      $$->var= new Variable("","",yylineno,{},"");
       }
 ;
 
@@ -2987,9 +2671,6 @@ VariableInitializer {
   $$->type=$1->type;
   cout<<"yyyy"<<$$->type;
   $$->dims = $1->dims;
-  $$->arrSize = 1;
-  $$->var = $1->var;
-  $$->var->dimsSize.push_back(1);
   }
 | VariableInitializerList comma VariableInitializer {
   $$= $1; 
@@ -3001,10 +2682,6 @@ VariableInitializer {
     if(global_sym_table->typeCheckHelper($1->type,$3->type)) throwError("kuch  bhi ",yylineno);
   }
   cout<<"::mo2\n";
-  $$->var = $1->var;
-  $$->var->dimsSize[$$->var->dimsSize.size()-1]++;
-  cout<<$$->var->dimsSize[$$->var->dimsSize.size()-1]<<"2903";
-  // $$->arrSize = $1->arrSize+1;
   // $$->variables.push_back($3->var);
   
   }
@@ -3062,7 +2739,7 @@ int main(int argc, char *argv[])
 
     /* printf("%d %d %d %d\n",titles,paras,words,sentences)); */
     /* fout<<titles<<" "<<paras<<" "<<words<<" "<<sentences<<endl; */
-    cout<<"qq\n";
+
     mycode->print();
 
     return 0;
