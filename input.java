@@ -28,26 +28,26 @@ class first
       //   return ;
       // }
 
-      // public void Main()
-      // {
-      //     int i = 9,j=10,k=11;
-      //     // int sid[] = {4, 7, 8, 10};
-      //     // int xxx = 2+3;
-      //     int res = Count( i, j,k);
-      //     
-      //     first.sum();
-      //     boolean z;
+      public void Main()
+      {
+          int i = 9,j=10,k=11;
+          // int sid[] = {4, 7, 8, 10};
+          // int xxx = 2+3;
+          int res = Count( i, j,k);
+          
+          // first.sum();
+          boolean z;
 
-      //     // int zz = z?i:j;
-      //     // int res = Count(i, j, k);
+          // int zz = z?i:j;
+          // int res = Count(i, j, k);
 
-      //     // print(res);
-      //     // print("\n");
+          // print(res);
+          // print("\n");
 
-      //     for(int jjj=0;jjj<10;jjj++){
-      //         jjj=10;
-      //     }
-      // }
+          for(int jjj=0;jjj<10;jjj++){
+              jjj=10;
+          }
+      }
   }
 class second extends first{
   public int tuii(){
