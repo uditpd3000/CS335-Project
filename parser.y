@@ -2247,7 +2247,7 @@ UnqualifiedClassInstanceCreationExpression:
     string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
     mycode->InsertTwoWordInstr("\tparam",zz);
     cout<<"INSERTING"<<$4->resList.size();
-    $$->index = mycode->insertFunctnCall($2->result,$4->resList,0,true);
+    $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true);
     $$->result = mycode->getVar($$->index);
 
 

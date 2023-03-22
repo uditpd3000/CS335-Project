@@ -51,7 +51,7 @@ class first
   }
 class second extends first{
   public int tuii(){
-    final double tt;
+    final double tt = 0.1;
     // zzzzzzzzzzz = tt;
     // int rrr = Count(0, 0, 0);
     first ruru = new first(1);
