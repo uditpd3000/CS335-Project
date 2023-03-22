@@ -273,7 +273,9 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($2->method->name,params,1);
+    mycode->insertAss("popparam","","","");
+    //  mycode -> getVar($$->index);
+    mycode->insertFunctnCall($2->method->name,params,1,true);
 
   } 
   ConstructorDeclarationEnd {
@@ -309,7 +311,9 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertFunctnCall($1->method->name,params,1);
+    mycode->insertAss("popparam","","","");
+    //  mycode -> getVar($$->index);
+    mycode->insertFunctnCall($1->method->name,params,1,true);
   } 
   ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
@@ -1443,6 +1447,8 @@ TypeName:
     Class* cls = global_sym_table->lookup_class($3,0,$1->anyName);
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
     Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
+    $$->result = $3;
+    $$->index = mycode->quadruple.size();
     if(cls!=NULL){
       if(cls->inherited==true){
         for(auto mod: cls->modifiers){
@@ -1478,13 +1484,15 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
+      int t3 = mycode->insertGetFromSymTable($1->anyName,to_string(var->offset),"");
+      $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),to_string(0),"");
+      $$->result = mycode->getVar($$->index);
     }
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
     }
 
-    $$->result = $3;
-    $$->index = mycode->quadruple.size();
+  
     
   }
 ;
@@ -1574,7 +1582,8 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
+        cout<<"$1->anyname"<<$1->anyName<<endl;
+        int t3 = mycode->insertGetFromSymTable($1->anyName,to_string(v1->offset),"");
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
@@ -1585,6 +1594,7 @@ ArrayAccess:
     }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
+    $$->which_scope=$1->anyName;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -2209,12 +2219,6 @@ MethodIncovationStart:
 ClassInstanceCreationExpression:
   UnqualifiedClassInstanceCreationExpression                {$$=$1;
     $$->isObj = true;
-    int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
-    string z = mycode->getVar(ind);
-    // cout<<"paaaaaaaaaaaaa\n";
-    mycode->InsertTwoWordInstr("\tparam",z);
-    mycode->InsertTwoWordInstr("\tallocmem","1");
-    // cout<<global_sym_table->linkmap[$$->cls->name]->offset<<"yahinaa\n";
     }
 | TypeName dot UnqualifiedClassInstanceCreationExpression   {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 | Primary dot UnqualifiedClassInstanceCreationExpression    {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
@@ -2235,14 +2239,26 @@ UnqualifiedClassInstanceCreationExpression:
     $$->cls = $2->cls;
     $$->type = "Class";
     $$->anyName=$2->cls->name;
+
+    int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
+    string z = mycode->getVar(ind);
+    mycode->InsertTwoWordInstr("\tparam",z);
+    mycode->InsertTwoWordInstr("\tallocmem","1");
+    string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+    mycode->InsertTwoWordInstr("\tparam",zz);
+    cout<<"INSERTING"<<$4->resList.size();
+    $$->index = mycode->insertFunctnCall($2->result,$4->resList,0,true);
+    $$->result = mycode->getVar($$->index);
+
+
     }
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
-  ArgumentList brac_close ClassBody      {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
+  ArgumentList brac_close ClassBody      {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);$$->resList= $1->resList;}
 | brac_close ClassBody                   {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
 | brac_close                             {string t1=$1; $$=new Node(mymap[t1],t1);}
-| ArgumentList brac_close                {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);}
+| ArgumentList brac_close                {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);$$->resList= $1->resList;}
 ;
 
 ClassOrInterfaceTypeToInstantiate:
@@ -2252,6 +2268,7 @@ ClassOrInterfaceTypeToInstantiate:
      
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     $$->type = "Class";
+    $$->result = $1;
     cout<<$$->cls->name<<"bana";
     
 
