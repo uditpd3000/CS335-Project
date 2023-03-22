@@ -22,6 +22,7 @@ class Variable{
     string classs_name;
     int size;
     int offset;
+    bool inherited;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;
@@ -50,6 +51,7 @@ class Variable{
         if(typeToSize.find(mytype)!=typeToSize.end()){
             int size1= typeToSize[mytype];
             if(dimsSize.size()!=0){    
+                cout<<dimsSize.size()<<"sizeeeeeeeeeeeeeeeeeeeeeee\n";
                 for (int i=0;i<dimsSize.size();i++){
                     size1*=dimsSize[dimsSize.size()-1-i];
                 }
@@ -69,6 +71,7 @@ class Method{
     vector<string> modifiers;
     int lineNo;
     bool ifConstructor = false;
+    bool inherited;
 
     Method(string myname, string myret_type, vector<Variable*> myparameters, vector<string> mymodifiers, int mylineNo){
         name = myname;
@@ -87,6 +90,7 @@ class Class{
     vector<string> modifiers;
     int lineNo;
     int scope_count;
+    bool inherited;
     Class(string myname, vector<string> mymodifiers, int mylineNo){
         name = myname;
         modifiers = mymodifiers;
@@ -129,6 +133,10 @@ class SymbolTable {
     void insert_class(Class* classs){
         classes.push_back(classs);
     }
+    int get_offset(Variable* var){
+        return var->offset;
+    }
+
     void printTable(){
         cout<<"Scope: "<<scope<<endl;
         cout<<"Variables coming\n\n";
@@ -212,6 +220,25 @@ class GlobalSymbolTable {
         while(curr->parent!=NULL){
             for(int i=0; i<curr->vars.size();i++){
                 if(curr->vars[i]->name==s)return curr->vars[i];
+            }
+            
+            curr=curr->parent;
+        }
+
+        if(pp){
+            cout<<"Error: Variable " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
+        return NULL;
+    }
+
+    string lookup_var_get_scope(string s, int pp, string scope){
+
+        SymbolTable* curr = linkmap[scope];
+
+        while(curr->parent!=NULL){
+            for(int i=0; i<curr->vars.size();i++){
+                if(curr->vars[i]->name==s)return curr->scope;
             }
             
             curr=curr->parent;
@@ -360,18 +387,39 @@ class GlobalSymbolTable {
         }
         return true;
     }
+    bool typeCheckHelperLiteral(string s1,string s2){
+        map<string,vector<string>> check_map;
+        vector<string> byte_conversion{"short","int","long","float","double"};
+        vector<string>short_conversion{"int","long","float","double"};
+        vector<string>int_conversion{"long","float","double","short","byte"};
+        vector<string>long_conversion{"float","double"};
+        vector<string>float_conversion{"double"};
+        vector<string>double_conversion{"float"};
+        check_map["byte"]=byte_conversion;
+        check_map["short"]=short_conversion;
+        check_map["int"]=int_conversion;
+        check_map["long"]=long_conversion;
+        check_map["float"]=float_conversion;
+        check_map["double"]=double_conversion;
+        int flag=0;
+        for(auto x:check_map[s1]){
+            if(x==s2) flag++;
+        }
+        if(flag==0) return true;
+        else return false;
+    }
 
     bool typeCheckHelper(string s1,string s2){
         map<string,vector<string>> check_map;
         vector<string> byte_conversion{"short","int","long","float","double"};
-        vector<string>short_conversion{"int","long long","float","double"};
-        vector<string>int_conversion{"long long","float","double"};
+        vector<string>short_conversion{"int","long","float","double"};
+        vector<string>int_conversion{"long","float","double"};
         vector<string>long_conversion{"float","double"};
         vector<string>float_conversion{"double"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
-        check_map["long long"]=long_conversion;
+        check_map["long"]=long_conversion;
         check_map["float"]=float_conversion;
         int flag=0;
         for(auto x:check_map[s1]){
@@ -384,23 +432,26 @@ class GlobalSymbolTable {
 
         Variable* v1 = lookup_var(s1,1,current_scope);
         Variable* v2 = lookup_var(s2,1,current_scope);
-        if(v1->type == "int"&& v2->type == "long")return true;
+        // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            if(typeCheckHelper(v1->type,v2->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            else cout<<"     hello a     "<<endl;
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, Variable* v2,int myLineno){
-        if(v1->type == "int"&& v2->type == "long")return true;
+        // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            if(typeCheckHelper(v1->type,v2->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            else cout<<"     hello b     "<<endl;
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, string myType,int myLineno){
-        if(v1->type == "int"&& myType == "long")return true;
+        // if(v1->type == "int"&& myType == "long")return true;
         if(v1->type!=myType){
-            if(typeCheckHelper(v1->type,myType)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            if(typeCheckHelperLiteral(v1->type,myType)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            else cout<<"     hello c     "<<endl;
         }
         return true;   
     }

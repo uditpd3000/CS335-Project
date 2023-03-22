@@ -8,6 +8,7 @@ class Instruction{
 
         string result="";
         bool isBlock=false;
+        bool incomplete = false;
 
         virtual string print(){
             return "";
@@ -96,9 +97,11 @@ class FunctnCall: public Instruction{
         string print(){
 
             string s="";
+
+            if(!isCall) return s;
+
             for(auto x:params){
-                if(isCall) s+= "\tparam "+x + "\n";
-                else s+= "\tpopparam\n";
+                s+= "\tparam "+x + "\n";
             }
             s=s.substr(0,s.length()-1);
 
@@ -106,10 +109,31 @@ class FunctnCall: public Instruction{
         }
 };
 
+class SymbolTableOffset: public Instruction{
+    public:
+        string classname;
+        string offset;
+
+        string print(){
+            string s="\t"+result+" := SymTable( "+classname+" , "+offset+")";
+            return s;
+        }
+};
+
+class PointerAssignment: public Instruction{
+    public:
+        string start;
+        string offset;
+
+        string print(){
+            string s="\t"+result+" :=  *("+start+" + "+offset+")";
+            return s;
+        }
+};
+
 
 class IR{
     public:
-
         vector<Instruction*> quadruple;
         map<string,Block*> blocks;
 
@@ -167,17 +191,19 @@ class IR{
         }
 
         // block
-        int makeBlock(int index, string name=""){
+        int makeBlock(int index, string name="", int endindex=-1){
+            if(endindex==-1)endindex=quadruple.size();
+
             Block* myInstruction = new Block();
 
             if(name=="") myInstruction->result = getLocalLabel();
             else myInstruction->result=name;
 
-            for(int i=index;i<quadruple.size();i++){
+            for(int i=index;i<endindex;i++){
                 myInstruction->codes.push_back(quadruple[i]);
             }
 
-            quadruple.erase(quadruple.begin()+index,quadruple.begin()+quadruple.size());
+            quadruple.erase(quadruple.begin()+index,quadruple.begin()+endindex);
 
             blocks.insert({myInstruction->result,myInstruction});
 
@@ -221,7 +247,19 @@ class IR{
 
             Instruction* myJump= myInstruction;
 
+            // cout<<arg1<<"uuuuuuuuuuuuu"<<blocks[arg1]->codes.size()<<endl;
             blocks[arg1]->codes.push_back(myJump);
+            // cout<<arg1<<"uuuuuuuuuuuuu"<<blocks[arg1]->codes.size()<<endl;
+
+            if(blocks.find(jumphere)==blocks.end()){
+                Block* myBlock = new Block();
+                myBlock->result = jumphere;
+                myBlock->isBlock=true;
+                blocks.insert({jumphere,myBlock});
+
+                Instruction* justLabel = myBlock;
+                quadruple.push_back(justLabel);
+            }
         }
 
         // if statement
@@ -240,8 +278,8 @@ class IR{
             insertNextJump(arg2, next);
 
             if(arg3!=""){
-                insertJump(arg3, index+1);
-                insertJump(next,quadruple.size()-1);
+                insertJump(arg3,index+1);
+                insertNextJump(arg3, next);
             }
             else insertJump(next, index+1);
 
@@ -264,6 +302,8 @@ class IR{
             int x = makeBlock(startindex);
 
             insertNextJump(arg2,quadruple[x]->result);
+
+            updateIncompleteJump(quadruple[x]->result,quadruple[x]->result,next);
 
             return endindex;
         }
@@ -303,6 +343,8 @@ class IR{
             else {
                 insertNextJump(arg2,quadruple[x]->result);
             }
+
+            // updateIncompleteJump(quadruple[x]->result,quadruple[x]->result,next);
     
             return quadruple.size()-1;
         }
@@ -312,6 +354,7 @@ class IR{
             TwoWordInstr* print = new TwoWordInstr();
             print->arg1 = instr;
             print->arg2 = arg2;
+            cout<<instr<<";;;\n";
             return insert(print);
         }
 
@@ -328,10 +371,66 @@ class IR{
 
             quadruple.push_back(myInstruction);
 
-            if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
-            else insertAss("call "+funcName,"","");
+            if(!isdec){
+                if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
+                else insertAss("call "+funcName,"","");
+            }
+            else {
+                for(auto x : argList){
+                    insertAss("popparam","","",x);
+                }
+            }
 
             return quadruple.size()-1;
+        }
+
+        int insertGetFromSymTable(string classs, string offset, string res){
+            SymbolTableOffset* instr = new SymbolTableOffset();
+            if(res=="")instr->result=getLocalVar();
+            else instr->result = res;
+            instr->classname = classs;
+            instr->offset = offset;
+            
+            return insert(instr);
+        }
+
+        int insertPointerAssignment(string start, string offset, string res){
+            PointerAssignment* instr = new PointerAssignment();
+            if(res=="")instr->result=getLocalVar();
+            else instr->result = res;
+            instr->start = start;
+            instr->offset = offset;
+            return insert(instr);
+        }
+
+        int insertIncompleteJump(string arg1){
+            UnconditionalJump* myJump = new UnconditionalJump();
+            myJump->result=arg1;
+            myJump->incomplete=true;
+
+            quadruple.push_back(myJump);
+            return quadruple.size()-1;
+        }
+        void updateIncompleteJump(string currBlock,string beforeBlock,string afterBlock){
+            int i=0;
+            for(auto x : blocks[currBlock]->codes){
+                if(x->isBlock){
+                    updateIncompleteJump(x->result,beforeBlock,afterBlock);
+                }
+                else if(x->incomplete){
+                    UnconditionalJump* myJump = new UnconditionalJump();
+                    string arg2;
+
+                    if(x->result=="continue") arg2=beforeBlock;
+                    else arg2=afterBlock;
+
+                    myJump->arg2=arg2;
+
+                    blocks[currBlock]->codes[i]=myJump;
+                    // cout<<x->print()<<"\nmyjump\n"<<myJump->print();
+                }
+                i++;
+            }
         }
 
         void print(){
