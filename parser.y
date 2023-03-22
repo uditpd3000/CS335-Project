@@ -2251,8 +2251,23 @@ StatementWithoutTrailingSubstatement:
 ;
 
 BreakStatement:
-BREAK  semi_colon                        {$$= new Node("BreakStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
-| BREAK Identifier semi_colon             {$$= new Node("BreakStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
+BREAK  semi_colon                        {
+  $$= new Node("BreakStatement");
+  string t1= $1,t2=$2; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2));
+
+  $$->index = mycode->insertIncompleteJump("break");
+  }
+| BREAK Identifier semi_colon             {
+  $$= new Node("BreakStatement"); 
+  string t1= $1, t2=$2,t3=$3; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2)); 
+  $$->add(new Node(mymap[t3],t3));
+
+  $$->index = mycode->insertIncompleteJump("break");
+  }
 ;
 
 ContinueStatement:
@@ -2264,7 +2279,7 @@ CONTINUE semi_colon                     {
   $$->isContinue = true;
   $$->continueIndex = mycode->quadruple.size()-1;
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
+  $$->index = mycode->insertIncompleteJump("continue");
   }
 | CONTINUE Identifier semi_colon           {
   $$= new Node("ContinueStatement"); 
@@ -2273,7 +2288,8 @@ CONTINUE semi_colon                     {
   $$->add(new Node(mymap[t2],t2)); 
   $$->add(new Node(mymap[t3],t3));
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();}
+  $$->index = mycode->insertIncompleteJump("continue");
+  }
 ;
 
 ReturnStatement:
@@ -2386,7 +2402,7 @@ IF brac_open Expression brac_close Statement                                  {
 
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
-  cout<<"Blockkkk\n";
+  // cout<<"Blockkkk\n";
   $$->start = $3->start;
    
 
@@ -2405,7 +2421,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   cout<<endl<<$7->start<<endl;
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2423,7 +2439,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2456,7 +2472,6 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
       $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
 
       $$->result=mycode->getVar($$->start);
-      // if($$->isContinue) mycode->insertJump($$->result,$$->continueIndex);
 }
 ;
 
@@ -2678,8 +2693,6 @@ WHILE brac_open Expression brac_close Statement {
   $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
   $$->result = mycode->getVar($3->start);
   cout<<$$->result<<"RESSSSs\n";
-  
-  // if($5->isContinue) mycode->insertJump($$->result,$5->continueIndex);
   }
 ;
 
