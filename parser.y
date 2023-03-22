@@ -1128,8 +1128,9 @@ Assignment:
     $$=new Node("Assignment");
     vector<Node*>v{$1,$2,$3};
     $$->add(v);
+
     if($1->type!=$3->type){
-      throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
+      if(global_sym_table->typeCheckHelper($1->type,$3->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
     }
     if($1->dims!=$3->dims){
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
@@ -1137,6 +1138,7 @@ Assignment:
     }
     $$->type=$1->type;
     $$->var = $3->var;
+    $$->var->value = $3->result;
     cout<<"$@@@"<<$2->lexeme;
     string x = "";
     x+=($2->lexeme)[0];
@@ -1144,6 +1146,7 @@ Assignment:
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
     $$->result = $1->result;
+
     }
 ;
 
@@ -1166,6 +1169,8 @@ Primary dot Identifier              {
   }
 
   cout<<"ab naa hoga"; 
+
+
   }
 | super dot Identifier              {$$=new Node("FieldAccess");string t1=$1,t2=$2,t3=$3;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v);}
 | TypeName dot super dot Identifier {$$=new Node("FieldAccess");string t1=$2,t2=$3,t3=$4,t4=$5;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4)};$$->add(v);}
@@ -1173,7 +1178,7 @@ Primary dot Identifier              {
 
 /* fixmme */
 Primary:
-PrimaryNoNewArray                   {$$=$1;}
+PrimaryNoNewArray                   {$$=$1;$$->var->value=$1->result;}
 | ArrayCreationExpression           {$$=$1;}
 ;
 
@@ -1317,6 +1322,8 @@ TypeName:
         
         $$->anyName=$$->var->name;
       }
+      global_sym_table->finalCheck($1);
+      
       
     }
     else {
@@ -1371,7 +1378,7 @@ ArrayAccess:
     if(v1->isArray==false){
       throwError(t1+"is not of type Array",yylineno);
     }
-    if($3->type!="int"){
+    if($3->type!="int" && $3->type!="long"){
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
     $$->var= v1;
@@ -1411,7 +1418,7 @@ ArrayAccess:
     else{
       throwError($1->var->name+" is not of type Array",yylineno);
     }
-    if($3->type!="int"){
+    if($3->type!="int" && $3->type!="long"){
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
 
@@ -2616,7 +2623,7 @@ box_open Expression box_close  {
   $$->add($2); 
   t1=$3;
   $$->add(new Node(mymap[t1],$3));
-  if($2->type!="int"){
+  if($2->type!="int" && $2->type!="long"){
      throwError("Array cannot be initialized using "+$2->type+"as index",yylineno);
   }
   vector<int> ss;
@@ -2671,7 +2678,9 @@ VariableInitializer {
   $$->add(new Node(mymap[t1],$2)); 
   $$->add($3);
   cout<<"hi\n" ;
-  if($1->type!=$3->type) throwError("kuch  bhi ",yylineno);
+  if($1->type!=$3->type){
+    if(global_sym_table->typeCheckHelper($1->type,$3->type)) throwError("kuch  bhi ",yylineno);
+  }
   cout<<"::mo2\n";
   // $$->variables.push_back($3->var);
   
