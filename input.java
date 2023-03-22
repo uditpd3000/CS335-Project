@@ -1,117 +1,54 @@
-// 
+public class Prime {
 
-// class first
-  // {
-  //   private int tui;
-  //   double x=0.2;
-  //   double zzzzzzzzzzz;
-  //     private int Count(int a, int b, int c)
-  //     {
-  //         int i = a, cnt = 0;
-  //         int aa[] = new int [4];
-  //         int lol = 1;
-  //         aa[1]=1;
-  //         while(i < b){
-  //             i = i + 1;
-  //             cnt = cnt + 1;
-  //         }
-  //         return cnt*c;
-  //     }
-  //     first(int zz){
-  //       this.tui = zz;
-  //     }
+    public static void main(String[] args) {
 
-  //     public void sum(){
-  //       int i=0;
-  //       while(i<10){
-  //         continue;
-  //         i=1;
-  //       }
-  //       return ;
-  //     }
+        int low = 20, high = 50;
 
-  //     public void Main()
-  //     {
-  //         int i = 9,j=10,k=11;
-  //         // int sid[] = {4, 7, 8, 10};
-  //         // int xxx = 2+3;
-  //         int res = Count( i, j,k);
-  //         first fff = new first(0);
-  //         first.sum();
-  //         // int res = Count(i, j, k);
+        // final int x;
+        // x=0;
 
-  //         // print(res);
-  //         // print("\n");
-  //     }
-  // }
-class second {
-  public int tuii(){
-    // double tt;
-    // zzzzzzzzzzz = tt;
-    // int rrr = Count(0, 0, 0);
-    // first ruru = new first(1);
-    // ruru.tui= 1;
+        // while (low < high) {
+            // boolean flag = false;
 
-    byte a=1;
-    short b=2;
-    int c=3;
-    long d=4;
-    float e=5;
-    double f=6;
+            // for(int i = 2; i <= low/2; ++i) {
+            //     // condition for nonprime number
+            //     if(low % i == 0) {
+            //         // flag = true;
+            //         break;
+            //     }
+            // }
+            // if (!flag && low != 0 && low != 1)
+            //     System.out.println(low);
+            // ++low;
+        // }
 
-    // a=b;
-    // a=c;
-    // a=d;
-    // a=e;
-    // a=f;
+        // while(low<high){
+        //   int a=1;
+        //   low++;
+        // }
 
-    // b=a;
-    // b=c;
-    // b=d;
-    // b=e;
-    // b=f;
+        // for(int i=0;i<low;i++){
+        //   i++;
+        //   int a=0;
+        // }
 
-    // c=a;
-    // c=b;
-    // c=d;
-    // c=e;
-    // c=f;
+        // for(int i = 2; i <= low/2; ++i) {
+        //     // condition for nonprime number
+        //     // if(low % i == 0) {
+        //     //     // flag = true;
+        //     //     break;
+        //     // }
+        //     // int a=5;
 
-    // d=a;
-    // d=b;
-    // d=c;
-    // d=e;
-    // d=f;
-
-    // e=a;
-    // e=b;
-    // e=c;
-    // e=d;
-    // e=f;
-
-    // a=1+1.1;
-
-    f=a;
-    f=b;
-    f=c;
-    f=d;
-    f=e;
-
-    // e=6;
-    // if(1){
-    //   e++;
-    // }
-
-    // if(1==1.0);
-    // int z,y;
-    // boolean b;
-    // float a =0.01;
-    // double dd =4;
-    // dd = 0.2;
-    // long uuu= 1;
-    // long u1= z;
-    // z = uuu;
+        //     if(high==0) low++;
 
 
-  }
+
+        //     // for(int j=0;j<high;j++){
+        //     //   int b=0;
+        //     // }
+        // }
+
+        static 
+    }
 }

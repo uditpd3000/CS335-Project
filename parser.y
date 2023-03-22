@@ -1130,7 +1130,7 @@ Assignment:
     $$->add(v);
 
     if($1->type!=$3->type){
-      if(global_sym_table->typeCheckHelper($3->type,$1->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
+      if(global_sym_table->typeCheckHelper($3->type,$1->type)) throwError("d  cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
     }
     if($1->dims!=$3->dims){
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
@@ -1146,6 +1146,8 @@ Assignment:
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
     $$->result = $1->result;
+
+    global_sym_table->finalCheck($$->result);
 
     }
 ;
