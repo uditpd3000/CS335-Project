@@ -1147,6 +1147,7 @@ Assignment:
     cout<<"$@@@"<<$2->lexeme;
     string x = "";
     x+=($2->lexeme)[0];
+    // cout<<$1->result<<"gayab??"
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
@@ -1158,7 +1159,7 @@ Assignment:
 LeftHandSide:
 FieldAccess      {$$=$1;}
 | TypeName       {$$=$1;}
-| ArrayAccess    {$$=$1;}
+| ArrayAccess    { $$=$1;}
 ;
 
 FieldAccess:
@@ -1375,6 +1376,7 @@ ArrayAccess:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
+    $$->which_scope = global_sym_table->lookup_var_get_scope($1,1,global_sym_table->current_scope);
     if(v1->isArray==false){
       throwError(t1+"is not of type Array",yylineno);
     }
@@ -1382,8 +1384,26 @@ ArrayAccess:
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
     $$->var= v1;
+    int ss = $$->var->dimsSize.size();
+    cout<<ss<<"ghghgh"<<endl;
+    if(ss){
+      int ll=1;
+      int zz = v1->dims-1; 
+      cout<<zz<<"hghgh"<<endl;
+      while(zz>0){ll*=$$->var->dimsSize[zz];zz--;cout<<$$->var->dimsSize[zz]<<"udit\n";}
+      $$->index = mycode->insertAss($3->result,to_string(ll),"*","");
+      if(v1->dims==1){
+        string t1 = mycode->getVar($$->index);
+        int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*",t1);
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        $$->result = mycode->getVar($$->index);
+      }
+      
+    }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
+
   }
 | TypeName dot Identifier box_open Expression box_close  {
     $$=new Node("ArrayAcc");
@@ -1406,7 +1426,30 @@ ArrayAccess:
     $$->cls = $1->cls;
     $$->method = $1->method;
     $$->type= $1->type;
+    $$->which_scope=$1->which_scope;
     cout<<"kkk";
+    int ss = $$->var->dimsSize.size();
+    cout<<ss<<"hghghgh"<<endl;
+    if(ss){
+      int ll=1;
+      int zz = ss-1; 
+      int loo = $1->dims-1;
+      for(auto i:$$->var->dimsSize)cout<<i<<"ul";
+      while(loo--){ll*=$$->var->dimsSize[zz];zz--;cout<<"uditt\n";}
+      int temp = mycode->insertAss($3->result,to_string(ll),"*","");
+      string t1 = mycode->getVar(temp);
+      string t2 = mycode->getVar($1->index);
+      cout<<t2<<"||"<<endl;
+      $$->index = mycode->insertAss(t1,t2,"+","");
+      if($1->dims==1){
+        string t1 = mycode->getVar($$->index);
+        int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*",t1);
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string($1->var->offset),"");
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        $$->result = mycode->getVar($$->index);
+      }
+
+    }
     if($$->var->isArray==true){
       // cout<<"llllllllllllllllllllllll";
       $$->dims=$1->dims-1;
@@ -1970,7 +2013,15 @@ MethodIncovationStart:
 ;
 
 ClassInstanceCreationExpression:
-  UnqualifiedClassInstanceCreationExpression                {$$=$1;$$->isObj = true;cout<<"maiyaha\n";}
+  UnqualifiedClassInstanceCreationExpression                {$$=$1;
+    $$->isObj = true;
+    int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
+    string z = mycode->getVar(ind);
+    // cout<<"paaaaaaaaaaaaa\n";
+    mycode->InsertTwoWordInstr("param",z);
+    mycode->InsertTwoWordInstr("allocmem","1");
+    // cout<<global_sym_table->linkmap[$$->cls->name]->offset<<"yahinaa\n";
+    }
 | TypeName dot UnqualifiedClassInstanceCreationExpression   {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 | Primary dot UnqualifiedClassInstanceCreationExpression    {$$=new Node("ClassInstCreatExp");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);}
 ;
@@ -2635,6 +2686,8 @@ DimExprs:
     $$=$1; 
     $$->add($2);
     $$->dims++;
+    $$->var->dimsSize.push_back($2->var->dimsSize[0]);
+    cout<<$$->var->dimsSize.size()<<"LKJKLJKL";
     }
 ;
 

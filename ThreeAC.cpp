@@ -106,6 +106,30 @@ class FunctnCall: public Instruction{
         }
 };
 
+class SymbolTableOffset: public Instruction{
+    public:
+        string classname;
+        string offset;
+        string res;
+
+        string print(){
+            string s=res+" := SymTable( "+classname+" , "+offset+")";
+            return s;
+        }
+};
+
+class PointerAssignment: public Instruction{
+    public:
+        string start;
+        string offset;
+        string res;
+
+        string print(){
+            string s=res+" :=  *("+start+" + "+offset+")";
+            return s;
+        }
+};
+
 
 class IR{
     public:
@@ -313,6 +337,7 @@ class IR{
             TwoWordInstr* print = new TwoWordInstr();
             print->arg1 = instr;
             print->arg2 = arg2;
+            cout<<instr<<";;;\n";
             return insert(print);
         }
 
@@ -333,6 +358,25 @@ class IR{
             else insertAss("call "+funcName,"","");
 
             return quadruple.size()-1;
+        }
+
+        int insertGetFromSymTable(string classs, string offset, string res){
+            SymbolTableOffset* instr = new SymbolTableOffset();
+            if(res=="")instr->res=getLocalVar();
+            else instr->res = res;
+            instr->classname = classs;
+            instr->offset = offset;
+            
+            return insert(instr);
+        }
+
+        int insertPointerAssignment(string start, string offset, string res){
+            PointerAssignment* instr = new PointerAssignment();
+            if(res=="")instr->res=getLocalVar();
+            else instr->res = res;
+            instr->start = start;
+            instr->offset = offset;
+            return insert(instr);
         }
 
         void print(){
