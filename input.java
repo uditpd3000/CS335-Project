@@ -16,7 +16,7 @@ class first
           return cnt*c;
       }
       first(int zz){
-        this.tui = zz;
+        tui = zz;
       }
 
       // public void sum(){

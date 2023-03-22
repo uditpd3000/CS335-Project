@@ -114,6 +114,7 @@ throws {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return 
 throw {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return THROW;}
 return {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return RETURN;}
 continue {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return CONTINUE;}
+break {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return BREAK;}
 for {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return FOR;}
 while {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return WHILE;}
 if {insertMap(strdup(yytext),"Keyword");yylval.sym = strdup(yytext); return IF;}

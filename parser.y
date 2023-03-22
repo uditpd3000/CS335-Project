@@ -156,7 +156,11 @@ void throwError(string s, int lineno){
 %%
 
 input: 
-CompilationUnit {cout<<"ye9\n";generate_graph($$);cout<<"ye7\n";global_sym_table->printAll();}
+CompilationUnit {
+  cout<<"ye9\n";
+generate_graph($$);cout<<"ye7\n";
+global_sym_table->printAll();
+}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
@@ -1224,6 +1228,8 @@ Assignment:
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
     $$->result = $1->result;
+
+    // cout<<"dukh\n"; mycode->print(); exit(1);
     }
 ;
 
@@ -1676,21 +1682,33 @@ ClassLiteral:
 ConditionalExpression:
     ConditionalOrExpression                                                          {$$=$1;}
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
-      string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
+      // $$ = new Node("ConditionalExpression");
+      string t1=$2,t2=$4;
+      vector<Node*>v{new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
       $$->add(v);
 
-      // global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
+      cout<<$3->type<<"--dukh--"<<$5->var->type;
+      if($3->type!=$5->var->type) throwError("type mismatch",yylineno);
+      if($1->type!="boolean") throwError("type mismatch for conditional",yylineno);
+      $$->var->type = $3->type;
+      $$->type = $3->type;
 
-      // if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-      // if(!mycode->quadruple[$3->start]->isBlock) $3->result = mycode->getVar(mycode->makeBlock($3->start));
-      // $$->index= mycode->insertIf($1->index,$1->result,$3->result,$5->result);
+      cout<<endl<<$3->start<<"pppp"<<$5->start<<endl;
+
+      if(!mycode->quadruple[mycode->quadruple.size()-1]->isBlock) $5->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-1));
+      if(!mycode->quadruple[mycode->quadruple.size()-2]->isBlock) $3->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-2,"",mycode->quadruple.size()-1));
+
+      $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
+      $$->index = mycode->quadruple.size()-1;
+      
       }
     ;
 
 ConditionalOrExpression:
     ConditionalAndExpression                                                         {$$=$1;}
   | ConditionalOrExpression OR ConditionalAndExpression                            {
-      string t2=$2;$$=new Node("ConditionalExpression");
+      string t2=$2;
+      $$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
 
       $$->lineno=yylineno;
@@ -2293,8 +2311,23 @@ StatementWithoutTrailingSubstatement:
 ;
 
 BreakStatement:
-BREAK  semi_colon                        {$$= new Node("BreakStatement");string t1= $1,t2=$2; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2));}
-| BREAK Identifier semi_colon             {$$= new Node("BreakStatement"); string t1= $1, t2=$2,t3=$3; $$->add(new Node(mymap[t1],t1));$$->add(new Node(mymap[t2],t2)); $$->add(new Node(mymap[t3],t3));}
+BREAK  semi_colon                        {
+  $$= new Node("BreakStatement");
+  string t1= $1,t2=$2; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2));
+
+  $$->index = mycode->insertIncompleteJump("break");
+  }
+| BREAK Identifier semi_colon             {
+  $$= new Node("BreakStatement"); 
+  string t1= $1, t2=$2,t3=$3; 
+  $$->add(new Node(mymap[t1],t1));
+  $$->add(new Node(mymap[t2],t2)); 
+  $$->add(new Node(mymap[t3],t3));
+
+  $$->index = mycode->insertIncompleteJump("break");
+  }
 ;
 
 ContinueStatement:
@@ -2306,7 +2339,7 @@ CONTINUE semi_colon                     {
   $$->isContinue = true;
   $$->continueIndex = mycode->quadruple.size()-1;
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
+  $$->index = mycode->insertIncompleteJump("continue");
   }
 | CONTINUE Identifier semi_colon           {
   $$= new Node("ContinueStatement"); 
@@ -2315,7 +2348,8 @@ CONTINUE semi_colon                     {
   $$->add(new Node(mymap[t2],t2)); 
   $$->add(new Node(mymap[t3],t3));
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();}
+  $$->index = mycode->insertIncompleteJump("continue");
+  }
 ;
 
 ReturnStatement:
@@ -2428,7 +2462,7 @@ IF brac_open Expression brac_close Statement                                  {
 
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
-  cout<<"Blockkkk\n";
+  // cout<<"Blockkkk\n";
   $$->start = $3->start;
    
 
@@ -2447,7 +2481,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   cout<<endl<<$7->start<<endl;
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2465,7 +2499,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2498,7 +2532,6 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
       $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
 
       $$->result=mycode->getVar($$->start);
-      // if($$->isContinue) mycode->insertJump($$->result,$$->continueIndex);
 }
 ;
 
@@ -2720,8 +2753,6 @@ WHILE brac_open Expression brac_close Statement {
   $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
   $$->result = mycode->getVar($3->start);
   cout<<$$->result<<"RESSSSs\n";
-  
-  // if($5->isContinue) mycode->insertJump($$->result,$5->continueIndex);
   }
 ;
 
