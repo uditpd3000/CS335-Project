@@ -433,6 +433,19 @@ class IR{
             }
         }
 
+        string insertTernary(int index, string cond,string first, string sec){
+            string res1,res2,res=getLocalVar();
+            res1=blocks[first]->codes[blocks[first]->codes.size()-1]->result;
+            res2=blocks[sec]->codes[blocks[sec]->codes.size()-1]->result;
+
+            blocks[first]->codes.push_back(create(res1,"","",res));
+            blocks[sec]->codes.push_back(create(res2,"","",res));
+
+            insertIf(index,cond,first,sec);
+
+            return res;
+        }
+
         void print(){
             for(int i=0;i<quadruple.size();i++){
                 // cout<<i<<": ";

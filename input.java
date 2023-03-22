@@ -96,7 +96,9 @@ class second {
     f=e;
 
     e=6;
-
+    if(1){
+      e++;
+    }
 
     // if(1==1.0);
     // int z,y;
