@@ -16,6 +16,9 @@ class Node {
     string lexeme; //}
     string anyName;
     bool isObj;
+    bool isContinue;
+    int continueIndex;
+    string which_scope;
 
     vector<Node*> objects;
 

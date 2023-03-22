@@ -22,6 +22,7 @@ class Variable{
     string classs_name;
     int size;
     int offset;
+    bool inherited;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;
@@ -50,6 +51,7 @@ class Variable{
         if(typeToSize.find(mytype)!=typeToSize.end()){
             int size1= typeToSize[mytype];
             if(dimsSize.size()!=0){    
+                cout<<dimsSize.size()<<"sizeeeeeeeeeeeeeeeeeeeeeee\n";
                 for (int i=0;i<dimsSize.size();i++){
                     size1*=dimsSize[dimsSize.size()-1-i];
                 }
@@ -69,6 +71,7 @@ class Method{
     vector<string> modifiers;
     int lineNo;
     bool ifConstructor = false;
+    bool inherited;
 
     Method(string myname, string myret_type, vector<Variable*> myparameters, vector<string> mymodifiers, int mylineNo){
         name = myname;
@@ -87,6 +90,7 @@ class Class{
     vector<string> modifiers;
     int lineNo;
     int scope_count;
+    bool inherited;
     Class(string myname, vector<string> mymodifiers, int mylineNo){
         name = myname;
         modifiers = mymodifiers;
@@ -129,6 +133,10 @@ class SymbolTable {
     void insert_class(Class* classs){
         classes.push_back(classs);
     }
+    int get_offset(Variable* var){
+        return var->offset;
+    }
+
     void printTable(){
         cout<<"Scope: "<<scope<<endl;
         cout<<"Variables coming\n\n";
@@ -212,6 +220,25 @@ class GlobalSymbolTable {
         while(curr->parent!=NULL){
             for(int i=0; i<curr->vars.size();i++){
                 if(curr->vars[i]->name==s)return curr->vars[i];
+            }
+            
+            curr=curr->parent;
+        }
+
+        if(pp){
+            cout<<"Error: Variable " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
+        return NULL;
+    }
+
+    string lookup_var_get_scope(string s, int pp, string scope){
+
+        SymbolTable* curr = linkmap[scope];
+
+        while(curr->parent!=NULL){
+            for(int i=0; i<curr->vars.size();i++){
+                if(curr->vars[i]->name==s)return curr->scope;
             }
             
             curr=curr->parent;

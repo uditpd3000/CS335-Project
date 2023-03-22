@@ -108,10 +108,31 @@ class FunctnCall: public Instruction{
         }
 };
 
+class SymbolTableOffset: public Instruction{
+    public:
+        string classname;
+        string offset;
+
+        string print(){
+            string s="\t"+result+" := SymTable( "+classname+" , "+offset+")";
+            return s;
+        }
+};
+
+class PointerAssignment: public Instruction{
+    public:
+        string start;
+        string offset;
+
+        string print(){
+            string s="\t"+result+" :=  *("+start+" + "+offset+")";
+            return s;
+        }
+};
+
 
 class IR{
     public:
-
         vector<Instruction*> quadruple;
         map<string,Block*> blocks;
 
@@ -202,6 +223,7 @@ class IR{
 
             if(index==-1) quadruple.push_back(myInstruction);
             else{
+                cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``"<<index<<endl;
                 quadruple.insert(quadruple.begin()+index+1,myInstruction);
             }
 
@@ -314,6 +336,7 @@ class IR{
             TwoWordInstr* print = new TwoWordInstr();
             print->arg1 = instr;
             print->arg2 = arg2;
+            cout<<instr<<";;;\n";
             return insert(print);
         }
 
@@ -341,6 +364,25 @@ class IR{
             }
 
             return quadruple.size()-1;
+        }
+
+        int insertGetFromSymTable(string classs, string offset, string res){
+            SymbolTableOffset* instr = new SymbolTableOffset();
+            if(res=="")instr->result=getLocalVar();
+            else instr->result = res;
+            instr->classname = classs;
+            instr->offset = offset;
+            
+            return insert(instr);
+        }
+
+        int insertPointerAssignment(string start, string offset, string res){
+            PointerAssignment* instr = new PointerAssignment();
+            if(res=="")instr->result=getLocalVar();
+            else instr->result = res;
+            instr->start = start;
+            instr->offset = offset;
+            return insert(instr);
         }
 
         void print(){
