@@ -1,8 +1,8 @@
 class first
   {
-    public int tui;
+    private int tui;
     double zzzzzzzzzzz;
-      public int Count(int a, int b, int c)
+      private int Count(int a, int b, int c)
       {
           int i = a, cnt = 0;
           int aa[] = new int [4];
@@ -41,3 +41,12 @@ class first
           // print("\n");
       }
   }
+class second extends first{
+  public int tuii(){
+    double tt;
+    zzzzzzzzzzz = tt;
+    // int rrr = Count(0, 0, 0);
+    first ruru = new first(1);
+    ruru.tui= 1;
+  }
+}

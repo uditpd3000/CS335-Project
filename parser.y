@@ -984,7 +984,28 @@ TypeParameters:
 ;
 
 ClassExtends:
-  extends ClassType {$$ = new Node(); string t1=$1; $$->add(new Node(mymap[t1],t1)); $$->add($2);}
+  extends ClassType {
+    $$ = new Node(); 
+    string t1=$1; 
+    $$->add(new Node(mymap[t1],t1)); 
+    $$->add($2);
+    Class* cls = $2->cls;
+    cout<<cls->name<<"Inheritence\n";
+    SymbolTable* base = global_sym_table->linkmap[cls->name];
+    for(auto var: base->vars){
+      var->inherited = true;
+      global_sym_table->insert(var);
+    }
+    for(auto met: base->methods){
+      met->inherited = true;
+      global_sym_table->insert(met);
+    }
+    for(auto clss: base->classes){
+      clss->inherited = true;
+      global_sym_table->insert(clss);
+    }
+
+    }
 ;
 
 ClassImplements:
@@ -1304,6 +1325,13 @@ TypeName:
     Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
+      if(cls->inherited==true){
+        for(auto mod: cls->modifiers){
+          if(mod=="private"){
+            throwError("Class "+ t1 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->cls = cls;
       $$->type = "Class";
       if(cls->name=="String"){
@@ -1312,11 +1340,25 @@ TypeName:
       $$->anyName = $$->cls->name;
     }
     else if(met !=NULL){
+      if(met->inherited==true){
+        for(auto mod: met->modifiers){
+          if(mod=="private"){
+            throwError("Method "+ t1 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->method = met;
       $$->type = met->ret_type;
       $$->anyName=$$->method->name;
     }
     else if(var!=NULL){
+      if(var->inherited==true){
+        for(auto mod: var->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t1 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->var = var;
       $$->type = var->type;
       $$->anyName = var->classs_name;
@@ -1345,16 +1387,37 @@ TypeName:
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
     Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
     if(cls!=NULL){
+      if(cls->inherited==true){
+        for(auto mod: cls->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t2 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->cls = cls;
       $$->type = "Class";
       $$->anyName = cls->name;
 
     }
     else if(met !=NULL){
+      if(met->inherited==true){
+        for(auto mod: met->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t2 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->method = met;
       $$->type = met->ret_type;
     }
     else if(var!=NULL){
+      if(var->inherited==true){
+        for(auto mod: var->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t2 +" is of private access",yylineno);
+          }
+        }
+      }
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
@@ -1376,6 +1439,13 @@ ArrayAccess:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
+    if(v1->inherited==true){
+        for(auto mod: v1->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t1 +" is of private access",yylineno);
+          }
+        }
+      }
     $$->which_scope = global_sym_table->lookup_var_get_scope($1,1,global_sym_table->current_scope);
     if(v1->isArray==false){
       throwError(t1+"is not of type Array",yylineno);
@@ -1411,6 +1481,13 @@ ArrayAccess:
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4),$5,new Node(mymap[t6],t6)};
     $$->add(v);
     Variable* v1 = global_sym_table->lookup_var($3,1,$1->cls->name);
+    if(v1->inherited==true){
+        for(auto mod: v1->modifiers){
+          if(mod=="private"){
+            throwError("Variable "+ t3 +" is of private access",yylineno);
+          }
+        }
+      }
     if(v1->isArray==false){
       throwError(t3+" is not of type Array",yylineno);
     }

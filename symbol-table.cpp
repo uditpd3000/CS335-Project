@@ -22,6 +22,7 @@ class Variable{
     string classs_name;
     int size;
     int offset;
+    bool inherited;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;
@@ -70,6 +71,7 @@ class Method{
     vector<string> modifiers;
     int lineNo;
     bool ifConstructor = false;
+    bool inherited;
 
     Method(string myname, string myret_type, vector<Variable*> myparameters, vector<string> mymodifiers, int mylineNo){
         name = myname;
@@ -88,6 +90,7 @@ class Class{
     vector<string> modifiers;
     int lineNo;
     int scope_count;
+    bool inherited;
     Class(string myname, vector<string> mymodifiers, int mylineNo){
         name = myname;
         modifiers = mymodifiers;
