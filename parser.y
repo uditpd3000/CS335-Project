@@ -1000,6 +1000,8 @@ VariableDeclarator:
     }
     $$->var = new Variable($1,$4->type,{},yylineno,true,$2->var->dims,$4->var->dimsSize,$4->var->value);
     $$->dims=$4->dims;
+    for(auto ll:$4->var->dimsSize)cout<<"aaaooo"<<ll;
+    cout<<"zise"<<$4->var->dimsSize.size()<<endl;
     // cout<<"hurrahii"<<$$->type<<endl;
     $$->index = mycode->insertAss($4->result,"","",$1);
     $$->result = $4->result;
@@ -1023,6 +1025,7 @@ VariableInitializer:
 | ArrayInitializer {
     // $$ = new Node();
     $$ = $1;
+    reverse($$->var->dimsSize.begin(),$$->var->dimsSize.end());
     $$->dims++;
     } // 
 ; 
@@ -1508,16 +1511,22 @@ ArrayAccess:
       int ll=1;
       int zz = v1->dims-1; 
       // cout<<zz<<"hghgh"<<endl;
+      if(zz<0){
+      throwError("Dimension mismatch for "+t1,yylineno);
+    }
       while(zz>0){ll*=$$->var->dimsSize[zz];zz--;cout<<$$->var->dimsSize[zz]<<"udit\n";}
       $$->index = mycode->insertAss($3->result,to_string(ll),"*","");
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
-        int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*",t1);
+        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
         int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
       
+    }
+    else {
+      throwError("Array "+t1+" may not be initialised",yylineno);
     }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
@@ -1528,7 +1537,9 @@ ArrayAccess:
     string t2=$2,t3=$3,t4=$4,t6=$6;
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4),$5,new Node(mymap[t6],t6)};
     $$->add(v);
-    Variable* v1 = global_sym_table->lookup_var($3,1,$1->cls->name);
+    // exit(1);
+
+    Variable* v1 = global_sym_table->lookup_var($3,1,$1->anyName);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
           if(mod=="private"){
@@ -1539,8 +1550,35 @@ ArrayAccess:
     if(v1->isArray==false){
       throwError(t3+" is not of type Array",yylineno);
     }
+    if($5->type!="int"){
+      throwError("Array index cannot be of type "+$5->type,yylineno);
+    }
     $$->var= v1;
+    int ss = $$->var->dimsSize.size();
+    // cout<<ss<<"ghghgh"<<endl;
+    if(ss){
+      int ll=1;
+      int zz = v1->dims-1; 
+      // cout<<zz<<"hghgh"<<endl;
+      if(zz<0){
+      throwError("Dimension mismatch for "+$$->var->name,yylineno);
+    }
+      while(zz>0){ll*=$$->var->dimsSize[zz];zz--;cout<<$$->var->dimsSize[zz]<<"udit\n";}
+      $$->index = mycode->insertAss($5->result,to_string(ll),"*","");
+      if(v1->dims==1){
+        string t1 = mycode->getVar($$->index);
+        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        $$->result = mycode->getVar($$->index);
+      }
+      
+    }
+    else {
+      throwError("Array "+$$->var->name+" may not be initialised",yylineno);
+    }
     $$->dims=v1->dims-1;
+    $$->type = v1->type;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -1560,6 +1598,9 @@ ArrayAccess:
       int zz = ss-1; 
       int loo = $1->dims-1;
       for(auto i:$$->var->dimsSize)cout<<i<<"ul";
+      if(loo<0){
+      throwError("Dimension mismatch for "+$$->var->name,yylineno);
+    }
       while(loo--){ll*=$$->var->dimsSize[zz];zz--;cout<<"uditt\n";}
       int temp = mycode->insertAss($3->result,to_string(ll),"*","");
       string t1 = mycode->getVar(temp);
@@ -1578,6 +1619,7 @@ ArrayAccess:
     if($$->var->isArray==true){
       // cout<<"llllllllllllllllllllllll";
       $$->dims=$1->dims-1;
+      
       // cout<<$$->dims<<"----------";
       if($$->dims>$$->var->dims){
         throwError("Expected dimension of "+$$->var->name +" is "+(to_string)($$->var->dims)+" but provided more",yylineno);
@@ -2791,7 +2833,18 @@ DimExprs { $$=$1; }
     $$->dims = $1->dims+$2->var->dims;
     $$->var = $1->var;
     }
-| Dims ArrayInitializer {$$=new Node(); $$->add($1);$$->add($2);}
+| Dims ArrayInitializer {
+    $$=new Node(); 
+    $$->add($1);
+    $$->add($2);
+    if($1->var->dims!=$2->var->dimsSize.size()){
+      cout<<$1->var->dims<<" "<<$2->var->dimsSize.size();
+      throwError("Dimensions unmatched",yylineno);
+    }
+    $$->dims = $1->var->dims;
+    $$->var = $2->var;
+
+    }
 ;
 
 newprimtype:
@@ -2854,7 +2907,9 @@ ArrayInitializer:
     // $$->variables=$2->variables;
     $$->type = $2->type;
     $$->dims=$2->dims;
-    $$->var= new Variable("","",yylineno,{},"");
+    $$->var= $2->var;
+    cout<<"arrsize:"<<$2->arrSize<<endl;
+    // $$->var->dimsSize.push_back($2->arrSize);
     // $$->var->isArray=true;
     }
   | curly_open VariableInitializerList comma curly_close {
@@ -2869,7 +2924,8 @@ ArrayInitializer:
       // $$->variables=$2->variables;
       $$->type = $2->type;
       $$->dims=$2->dims;
-      $$->var= new Variable("","",yylineno,{},"");
+      // $$->var= new Variable("","",yylineno,{},"");
+      $$->var= $2->var;
       }
 ;
 
@@ -2881,6 +2937,9 @@ VariableInitializer {
   $$->type=$1->type;
   cout<<"yyyy"<<$$->type;
   $$->dims = $1->dims;
+  $$->arrSize = 1;
+  $$->var = $1->var;
+  $$->var->dimsSize.push_back(1);
   }
 | VariableInitializerList comma VariableInitializer {
   $$= $1; 
@@ -2890,6 +2949,10 @@ VariableInitializer {
   cout<<"hi\n" ;
   if($1->type!=$3->type) throwError("kuch  bhi ",yylineno);
   cout<<"::mo2\n";
+  $$->var = $1->var;
+  $$->var->dimsSize[$$->var->dimsSize.size()-1]++;
+  cout<<$$->var->dimsSize[$$->var->dimsSize.size()-1]<<"2903";
+  // $$->arrSize = $1->arrSize+1;
   // $$->variables.push_back($3->var);
   
   }
