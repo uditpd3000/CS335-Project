@@ -59,7 +59,15 @@ class second {
     float e=5;
     double f=6;
 
-    // a=b;
+    e=1*1.1;
+    e=+1.1;
+    ++f;
+    f++;
+    boolean p = true;
+    p=~p;
+    // while(p){
+    //   // boolean t = true;
+    // }
     // a=c;
     // a=d;
     // a=e;
@@ -77,10 +85,10 @@ class second {
     // c=e;
     // c=f;
 
-    d=a;
-    d=b;
-    d=c;
-    d=e;
+    // d=a;
+    // d=b;
+    // d=c;
+    // d=e;
     // d=f;
 
     // e=a;
@@ -89,16 +97,16 @@ class second {
     // e=d;
     // e=f;
 
-    f=a;
-    f=b;
-    f=c;
-    f=d;
-    f=e;
+    // f=a;
+    // f=b;
+    // f=c;
+    // f=d;
+    // f=e;
 
-    e=6;
-    if(1){
-      e++;
-    }
+    // e=6;
+    // if(1){
+    //   e++;
+    // }
 
     // if(1==1.0);
     // int z,y;

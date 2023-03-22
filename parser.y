@@ -1887,25 +1887,29 @@ AdditiveExpression:
 
       $$->lineno=yylineno;
 
-      map<string,int>priority;
-      priority["int"]=0;
-      priority["char"]=0;
-      priority["float"]=1;
-      priority["double"]=2;
-      priority["String"]=3;
-
-      if(priority.find($1->var->type)==priority.end() || priority.find($3->var->type)==priority.end()){
-        throwError("bad operand types for additive operator on line number",yylineno);
+      string myType;
+      if($1->var->type==$3->var->type){
+        myType=$1->var->type;
+      }
+      else if(!global_sym_table->typeCheckHelper($1->var->type, $3->var->type)){
+        // 1->3
+        cout<<"yesss1";
+        int p = mycode->insertAss("",$1->result,"cast_to_"+$3->var->type);
+        myType=$3->var->type;
+        $1->result = mycode->getVar(p);
+        cout<<"yesss2";
+      }
+      else if(!global_sym_table->typeCheckHelper($3->var->type, $1->var->type)){
+        int p = mycode->insertAss("",$3->result,"cast_to_"+$1->var->type);
+        myType=$1->var->type;
+        $3->result = mycode->getVar(p);
+      }
+      else {
+        throwError("Incompatible operand for additive operator of type " +$1->var->type+" & "+$3->var->type +" on line number",yylineno);
       }
 
-      int x1 = max(priority[$1->var->type],priority[$3->var->type]);
-
-      if(x1==0) $$->var=new Variable("","int",yylineno,{},"");
-      else if(x1==1) $$->var=new Variable("","float",yylineno,{},"");
-      else if(x1==2) $$->var=new Variable("","double",yylineno,{},"");
-      else if(x1==3) $$->var=new Variable("","String",yylineno,{},"");
-
-      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->var=new Variable("",myType,yylineno,{},"");
+      $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
@@ -1920,21 +1924,29 @@ MultiplicativeExpression:
       $$->add(v);
       
       $$->lineno=yylineno;
-      map<string,int>priority;
-      priority["int"]=0;
-      priority["char"]=0;
-      priority["float"]=1;
 
-      if(priority.find($1->var->type)==priority.end() || priority.find($3->var->type)==priority.end()){
-        throwError("bad operand types for additive operator on line number",yylineno);
+      string myType;
+      if(!global_sym_table->typeCheckHelperLiteral($1->var->type, $3->var->type)){
+        // 1->3
+        if($1->var->type!=$3->var->type){
+          int p = mycode->insertAss("",$1->result,"cast_to_"+$3->var->type);
+          $1->result = mycode->getVar(p);
+        }
+        myType=$3->var->type;
+      }
+      else if(!global_sym_table->typeCheckHelperLiteral($3->var->type, $1->var->type)){
+        if($1->var->type!=$3->var->type){
+          int p = mycode->insertAss("",$3->result,"cast_to_"+$1->var->type);
+          $3->result = mycode->getVar(p);
+        }
+        myType=$1->var->type;
+      }
+      else {
+        throwError("Incompatible operand for multiplicative operator of type " +$1->var->type +" & "+$3->var->type + " on line number",yylineno);
       }
 
-      int x1 = max(priority[$1->var->type],priority[$3->var->type]);
-
-      if(x1==0) $$->var=new Variable("","int",yylineno,{},"");
-      else if(x1==1) $$->var=new Variable("","float",yylineno,{},"");
-
-      $$->index = mycode->insertAss($1->result,$3->result,$2);
+      $$->var=new Variable("",myType,yylineno,{},"");
+      $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
 
@@ -1950,7 +1962,16 @@ UnaryExpression:
         vector<Node*>v{new Node(mymap[t1],$1),$2}; $$->add(v); 
         $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
-        $$->index = mycode->insertAss(t1+"1",$2->result,"*");
+        string x=t1+"1";
+        if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
+          throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
+        }
+        else if("int"!=$2->var->type){
+          int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
+          x = mycode->getVar(p);
+        }
+
+        $$->index = mycode->insertAss(x,$2->result,"*" + $2->var->type);
         $$->start = $2->start;
         $$->result = mycode->getVar($$->index);
     }
@@ -1965,8 +1986,17 @@ PreIncrDecrExpression:
       vector<Node*>v{new Node(mymap[t1],$1),$2};
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
+
+      string x="1";
+        if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
+          throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
+        }
+        else if("int"!=$2->var->type){
+          int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
+          x = mycode->getVar(p);
+        }
       
-      mycode->insertAss($2->result,"1",zz,$2->result);
+      mycode->insertAss($2->result,"1",zz+$2->var->type,$2->result);
       $$->start = $2->index;
       $$->index = $2->index;
       $$->result = mycode->getVar($$->index);
@@ -1982,9 +2012,11 @@ UnaryExpressionNotPlusMinus:
       vector<Node*>v{new Node(mymap[t1],$1),$2};$$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
-      if($2->var->type=="boolean"){
-        $$->index = mycode->insertAss($2->result,$1,"");
+      if(($2->var->type=="boolean" && t1=="!") || ($2->var->type=="int" && t1=="~")){
+        $$->index = mycode->insertAss("",$2->result,t1);
+        $$->result = mycode->getVar($$->index);
       }
+      else throwError("Type mismatch for "+$2->type + " with operand "+t1 ,yylineno);
     }
     ;
 
@@ -2004,7 +2036,17 @@ PostIncrDecrExpression:
     string zz = "";
     zz+=$2[0];
     $$->start = $1->index;
-    mycode->insertAss($1->result,"1",zz,$1->result);
+
+    string x="1";
+    if(global_sym_table->typeCheckHelperLiteral("int", $1->var->type)){
+      throwError("Incompatible operator + with operand of type "+ $1->var->type,yylineno);
+    }
+    else if("int"!=$1->var->type){
+      int p = mycode->insertAss("",x,"cast_to_"+$1->var->type);
+      x = mycode->getVar(p);
+    }
+
+    mycode->insertAss($1->result,x,zz,$1->result);
     $$->result = mycode->getVar(z);
     $$->index=$1->index;
     }

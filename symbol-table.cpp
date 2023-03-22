@@ -389,12 +389,12 @@ class GlobalSymbolTable {
     }
     bool typeCheckHelperLiteral(string s1,string s2){
         map<string,vector<string>> check_map;
-        vector<string> byte_conversion{"short","int","long","float","double"};
-        vector<string>short_conversion{"int","long","float","double"};
-        vector<string>int_conversion{"long","float","double","short","byte"};
-        vector<string>long_conversion{"float","double"};
-        vector<string>float_conversion{"double"};
-        vector<string>double_conversion{"float"};
+        vector<string> byte_conversion{"byte","short","int","long","float","double"};
+        vector<string>short_conversion{"short","int","long","float","double"};
+        vector<string>int_conversion{"int","long","float","double","short","byte"};
+        vector<string>long_conversion{"long","float","double"};
+        vector<string>float_conversion{"float","double"};
+        vector<string>double_conversion{"double","float"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
@@ -411,11 +411,11 @@ class GlobalSymbolTable {
 
     bool typeCheckHelper(string s1,string s2){
         map<string,vector<string>> check_map;
-        vector<string> byte_conversion{"short","int","long","float","double"};
-        vector<string>short_conversion{"int","long","float","double"};
-        vector<string>int_conversion{"long","float","double"};
-        vector<string>long_conversion{"float","double"};
-        vector<string>float_conversion{"double"};
+        vector<string> byte_conversion{"short","byte","int","long","float","double"};
+        vector<string>short_conversion{"int","short","long","float","double"};
+        vector<string>int_conversion{"long","int","float","double"};
+        vector<string>long_conversion{"float","long","double"};
+        vector<string>float_conversion{"float","double"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
