@@ -2477,6 +2477,8 @@ IF brac_open Expression brac_close Statement                                  {
   $$->add(v);
   $$->lineno=$3->lineno;
 
+  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
+
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
   // cout<<"Blockkkk\n";
@@ -2495,7 +2497,7 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
-  cout<<endl<<$7->start<<endl;
+  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
@@ -2514,6 +2516,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
   $$->add(v);
   $$->lineno=$3->lineno;
   global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
+
+  if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
 
   if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
