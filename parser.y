@@ -1257,14 +1257,11 @@ Primary dot Identifier              {
   if($1->type=="Class"){
     $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
     $$->type = $$->var->type;
+    int t3 = mycode->insertGetFromSymTable($1->anyName,to_string($$->var->offset),"");
+    $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
+    $$->result = mycode->getVar($$->index);
   }
-
-
-
-  // else if($1->type!="Method"){
-  //   $$->value=$1->value;
-  // }
-
+  
 
 
 
@@ -1296,6 +1293,7 @@ PrimaryNoNewArray:
     $$->cls= global_sym_table->lookup_class(t1,0,global_sym_table->current_scope);
     $$->type="Class";
     $$->anyName = $$->cls->name;
+    $$->which_scope=$$->cls->name;
 
     // exit(1);
     

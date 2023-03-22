@@ -52,7 +52,7 @@ class second {
     // zzzzzzzzzzz = tt;
     // int rrr = Count(0, 0, 0);
     first ruru = new first(1);
-    ruru.xza[4][2]=1;
+    ruru.xza[4][2]=1+2;
     ruru.zzzzzzzzzzz = tt;
 
     // first fff = new first(0);
