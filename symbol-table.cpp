@@ -370,27 +370,88 @@ class GlobalSymbolTable {
         }
     }
 
+    bool finalCheck(string symbol){
+        int flag=0;
+        for(auto x:lookup_var(symbol,0,current_scope)->modifiers){
+            if(x=="final"){
+                flag=1; 
+            }
+        }
+        if(flag==1){
+            cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
+            if(lookup_var(symbol,0,current_scope)->value!=""){
+                cout<<"    harshitxyz    ";
+                throwError("Error: cannot change value of final type :"+symbol,yylineno);
+                return false;
+            }
+        }
+        return true;
+    }
+    bool typeCheckHelperLiteral(string s1,string s2){
+        map<string,vector<string>> check_map;
+        vector<string> byte_conversion{"byte","short","int","long","float","double"};
+        vector<string>short_conversion{"short","int","long","float","double"};
+        vector<string>int_conversion{"int","long","float","double","short","byte"};
+        vector<string>long_conversion{"long","float","double"};
+        vector<string>float_conversion{"float","double"};
+        vector<string>double_conversion{"double","float"};
+        check_map["byte"]=byte_conversion;
+        check_map["short"]=short_conversion;
+        check_map["int"]=int_conversion;
+        check_map["long"]=long_conversion;
+        check_map["float"]=float_conversion;
+        check_map["double"]=double_conversion;
+        int flag=0;
+        for(auto x:check_map[s1]){
+            if(x==s2) flag++;
+        }
+        if(flag==0) return true;
+        else return false;
+    }
+
+    bool typeCheckHelper(string s1,string s2){
+        map<string,vector<string>> check_map;
+        vector<string> byte_conversion{"short","byte","int","long","float","double"};
+        vector<string>short_conversion{"int","short","long","float","double"};
+        vector<string>int_conversion{"long","int","float","double"};
+        vector<string>long_conversion{"float","long","double"};
+        vector<string>float_conversion{"float","double"};
+        check_map["byte"]=byte_conversion;
+        check_map["short"]=short_conversion;
+        check_map["int"]=int_conversion;
+        check_map["long"]=long_conversion;
+        check_map["float"]=float_conversion;
+        int flag=0;
+        for(auto x:check_map[s1]){
+            if(x==s2) flag++;
+        }
+        if(flag==0) return true;
+        else return false;
+    }
     bool typeCheckVar(string s1, string s2, int myLineno){
 
         Variable* v1 = lookup_var(s1,1,current_scope);
         Variable* v2 = lookup_var(s2,1,current_scope);
-        if(v1->type == "int"&& v2->type == "long")return true;
+        // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            else cout<<"     hello a     "<<endl;
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, Variable* v2,int myLineno){
-        if(v1->type == "int"&& v2->type == "long")return true;
+        // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            else cout<<"     hello b     "<<endl;
         }
         return true;   
     }
     bool typeCheckVar(Variable* v1, string myType,int myLineno){
-        if(v1->type == "int"&& myType == "long")return true;
+        // if(v1->type == "int"&& myType == "long")return true;
         if(v1->type!=myType){
-            throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            if(typeCheckHelperLiteral(v1->type,myType)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            else cout<<"     hello c     "<<endl;
         }
         return true;   
     }

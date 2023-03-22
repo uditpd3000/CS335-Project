@@ -1,14 +1,16 @@
+
+
 class first
   {
     private int tui;
+    double x=0.2;
     double zzzzzzzzzzz;
-    public int xza[][]={{1,2,3},{3,4,5}};
       private int Count(int a, int b, int c)
       {
           int i = a, cnt = 0;
-          int aa[]= new int[]{1,2,3};
+          int aa[] = new int [4];
           int lol = 1;
-          aa[9]=aa[2];
+          aa[1]=1;
           while(i < b){
               i = i + 1;
               cnt = cnt + 1;
@@ -16,17 +18,17 @@ class first
           return cnt*c;
       }
       first(int zz){
-        tui = zz;
+        this.tui = zz;
       }
 
-      // public void sum(){
-      //   int i=0;
-      //   while(i<10){
-      //     continue;
-      //     i=1;
-      //   }
-      //   return ;
-      // }
+      public void sum(){
+        int i=0;
+        while(i<10){
+          continue;
+          i=1;
+        }
+        return ;
+      }
 
       public void Main()
       {
@@ -34,22 +36,15 @@ class first
           // int sid[] = {4, 7, 8, 10};
           // int xxx = 2+3;
           int res = Count( i, j,k);
-          
-          // first.sum();
-          boolean z;
-
-          // int zz = z?i:j;
+          first fff = new first(0);
+          first.sum();
           // int res = Count(i, j, k);
 
           // print(res);
           // print("\n");
-
-          for(int jjj=0;jjj<10;jjj++){
-              jjj=10;
-          }
       }
   }
-class second extends first{
+class second {
   public int tuii(){
     final double tt = 0.1;
     // zzzzzzzzzzz = tt;
@@ -60,5 +55,73 @@ class second extends first{
 
     // first fff = new first(0);
     // ruru.tui= 1;
+
+    byte a=1;
+    short b=2;
+    int c=3;
+    long d=4;
+    float e=5;
+    double f=6;
+
+    // e=1*1.1;
+    // e=+1.1;
+    // ++f;
+    // f++;
+    // boolean p = true;
+    // p=~p;
+    // while(p){
+    //   // boolean t = true;
+    // }
+    // a=c;
+    // a=d;
+    // a=e;
+    // a=f;
+
+    // b=a;
+    // b=c;
+    // b=d;
+    // b=e;
+    // b=f;
+
+    // c=a;
+    // c=b;
+    // c=d;
+    // c=e;
+    // c=f;
+
+    // d=a;
+    // d=b;
+    // d=c;
+    // d=e;
+    // d=f;
+
+    // e=a;
+    // e=b;
+    // e=c;
+    // e=d;
+    // e=f;
+
+    // f=a;
+    // f=b;
+    // f=c;
+    // f=d;
+    // f=e;
+
+    // e=6;
+    // if(1){
+    //   e++;
+    // }
+
+    // if(1==1.0);
+    // int z,y;
+    // boolean b;
+    // float a =0.01;
+    // double dd =4;
+    // dd = 0.2;
+    // long uuu= 1;
+    // long u1= z;
+    // z = uuu;
+
+
   }
 }
