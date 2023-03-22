@@ -156,7 +156,11 @@ void throwError(string s, int lineno){
 %%
 
 input: 
-CompilationUnit {cout<<"ye9\n";generate_graph($$);cout<<"ye7\n";global_sym_table->printAll();}
+CompilationUnit {
+  cout<<"ye9\n";
+generate_graph($$);cout<<"ye7\n";
+global_sym_table->printAll();
+}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
@@ -1221,6 +1225,8 @@ Assignment:
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
     $$->start = min($$->index,$3->start);
     $$->result = $1->result;
+
+    // cout<<"dukh\n"; mycode->print(); exit(1);
     }
 ;
 
@@ -1634,21 +1640,33 @@ ClassLiteral:
 ConditionalExpression:
     ConditionalOrExpression                                                          {$$=$1;}
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
-      string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
+      // $$ = new Node("ConditionalExpression");
+      string t1=$2,t2=$4;
+      vector<Node*>v{new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
       $$->add(v);
 
-      // global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
+      cout<<$3->type<<"--dukh--"<<$5->var->type;
+      if($3->type!=$5->var->type) throwError("type mismatch",yylineno);
+      if($1->type!="boolean") throwError("type mismatch for conditional",yylineno);
+      $$->var->type = $3->type;
+      $$->type = $3->type;
 
-      // if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
-      // if(!mycode->quadruple[$3->start]->isBlock) $3->result = mycode->getVar(mycode->makeBlock($3->start));
-      // $$->index= mycode->insertIf($1->index,$1->result,$3->result,$5->result);
+      cout<<endl<<$3->start<<"pppp"<<$5->start<<endl;
+
+      if(!mycode->quadruple[mycode->quadruple.size()-1]->isBlock) $5->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-1));
+      if(!mycode->quadruple[mycode->quadruple.size()-2]->isBlock) $3->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-2,"",mycode->quadruple.size()-1));
+
+      $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
+      $$->index = mycode->quadruple.size()-1;
+      
       }
     ;
 
 ConditionalOrExpression:
     ConditionalAndExpression                                                         {$$=$1;}
   | ConditionalOrExpression OR ConditionalAndExpression                            {
-      string t2=$2;$$=new Node("ConditionalExpression");
+      string t2=$2;
+      $$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};$$->add(v); 
 
       $$->lineno=yylineno;
