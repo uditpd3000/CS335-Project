@@ -5,6 +5,7 @@ class first
     private int tui;
     double x=0.2;
     double zzzzzzzzzzz;
+    public int xza[][] = new int[][]{{1,2}};
       private int Count(int a, int b, int c)
       {
           int i = a, cnt = 0;
@@ -45,8 +46,9 @@ class first
       }
   }
 class second {
+  private int xx=0;
   public int tuii(){
-    final double tt = 0.1;
+   private double tt = 0.1;
     // zzzzzzzzzzz = tt;
     // int rrr = Count(0, 0, 0);
     first ruru = new first(1);
