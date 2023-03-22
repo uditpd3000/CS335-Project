@@ -30,7 +30,7 @@ class Node {
     int start;
     int index; // global IR vector
     string result=""; // result eg t1 = t2+t3
-    vector<string> resList;
+    vector<string> resList = vector<string>{};
 
 
     Node(){

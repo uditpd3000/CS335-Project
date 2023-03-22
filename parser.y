@@ -47,6 +47,7 @@ void generatetree(Node* n){
         fout<<"[label=\"";
         n->print();
         fout<<"\"];"<<endl;
+        // cout<<"ye1\n";
         
     }
     else{
@@ -69,6 +70,7 @@ void generate_graph(Node *n){
 
   fout<<"digraph G {\n";
   generatetree(n);
+  cout<<"yqq\n";
   fout <<"\n}";
 
   vout<<"\n Generation of the graph.dot file completed."<<endl;
@@ -154,11 +156,11 @@ void throwError(string s, int lineno){
 %%
 
 input: 
-CompilationUnit {generate_graph($$);global_sym_table->printAll();}
+CompilationUnit {cout<<"ye9\n";generate_graph($$);cout<<"ye7\n";global_sym_table->printAll();}
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
-| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);}
+| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);cout<<"ye1\n";}
 | CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
 ;
 
@@ -198,6 +200,7 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope();
+    cout<<"ye3\n";
   }
 ;
 
@@ -226,6 +229,7 @@ ClassBody:
     string t1=$1,t2=$3; $$ =new Node("ClassBody"); 
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2)}; 
     $$->add(v);
+    cout<<"ye2\n";
     }
 | curly_open curly_close {string t1=$1,t2=$2; $$ =new Node("ClassBody");vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; $$->add(v); }
 ;
@@ -254,11 +258,18 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
+
+    vector<string>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
+
+        params.push_back(i->name);
     }
+
+    reverse(params.begin(),params.end());
+    mycode->insertFunctnCall($2->method->name,params,1);
 
   } 
   ConstructorDeclarationEnd {
@@ -283,11 +294,18 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
+
+    vector<string>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
+
+        params.push_back(i->name);
     }
+
+    reverse(params.begin(),params.end());
+    mycode->insertFunctnCall($1->method->name,params,1);
   } 
   ConstructorDeclarationEnd {
     $$=new Node("ConstructorDeclaration"); 
@@ -489,6 +507,7 @@ BlockStatement:
    $$->result =$1->result;
   $$->index = $1->index; 
   $$->start = $1->start; 
+   
   }
 | Statement { 
   $$=new Node("BlockStatement"); 
@@ -538,18 +557,25 @@ MethodDeclaration:
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
+
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     mycode->insert(myIns);
+    vector<string>params;
+
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
+
+        params.push_back(i->name);
     }
-    cout<<"wow\n";
+
+    reverse(params.begin(),params.end());
+    mycode->insertFunctnCall($2->method->name,params,1);
   }
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -561,6 +587,7 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    cout<<"ye1\n";
     
     }
 
@@ -574,11 +601,18 @@ MethodDeclaration:
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
+
+    vector<string>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
+
+        params.push_back(i->name);
     }
+
+    reverse(params.begin(),params.end());
+    mycode->insertFunctnCall($2->method->name,params,1);
   }
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -590,6 +624,7 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    cout<<"ye1\n";
      }
 
 | MethodHeader{
@@ -602,11 +637,18 @@ MethodDeclaration:
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
+
+     vector<string>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
+
+        params.push_back(i->name);
     }
+
+    reverse(params.begin(),params.end());
+    mycode->insertFunctnCall($1->method->name,params,1);
   } 
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -619,12 +661,13 @@ MethodDeclaration:
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
+    cout<<"ye1\n";
     
     }
 ;
 
 MethodDeclarationEnd:
-  Block {$$=$1;}
+  Block {$$=$1;cout<<"yee\n";}
 | semi_colon {string t1=$1; $$=new Node(mymap[t1],t1); }
 ;
 
@@ -783,6 +826,7 @@ VariableDeclaratorId:
     $$->add(v);
     $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,{},"");
     $$->dims = $2->var->dims;
+
     }
 | Identifier {
     $$= new Node("VariableDeclaratorId"); 
@@ -794,7 +838,11 @@ VariableDeclaratorId:
 ;
 
 VariableArityParameter:
- dots Identifier {$$= new Node("VariableArityParameter"); string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; $$->add(v);}
+ dots Identifier {
+  $$= new Node("VariableArityParameter"); 
+  string t1=$1,t2=$2; vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
+  $$->add(v);
+  }
 ;
 
 ReceiverParameter:
@@ -918,7 +966,7 @@ VariableDeclarator:
     $$->dims = $2->dims;
   }
 | Identifier assign VariableInitializer {
-  // cout<<"---\n";
+  cout<<"---\n";
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$2; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3}; 
@@ -1458,7 +1506,16 @@ ClassLiteral:
 
 ConditionalExpression:
     ConditionalOrExpression                                                          {$$=$1;}
-    | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};$$->add(v);}
+    | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
+      string t1=$2,t2=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),$3,new Node(mymap[t2],t2),$5};
+      $$->add(v);
+
+      // global_sym_table->typeCheckVar($1->var, "boolean",$$->lineno);
+
+      // if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+      // if(!mycode->quadruple[$3->start]->isBlock) $3->result = mycode->getVar(mycode->makeBlock($3->start));
+      // $$->index= mycode->insertIf($1->index,$1->result,$3->result,$5->result);
+      }
     ;
 
 ConditionalOrExpression:
@@ -2730,7 +2787,7 @@ int main(int argc, char *argv[])
 
     /* printf("%d %d %d %d\n",titles,paras,words,sentences)); */
     /* fout<<titles<<" "<<paras<<" "<<words<<" "<<sentences<<endl; */
-
+    cout<<"qq\n";
     mycode->print();
 
     return 0;

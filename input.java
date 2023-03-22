@@ -1,6 +1,9 @@
 class first
-  {
-      public int Count(int a, int b, int c)
+  {   
+      first(int x,int y){
+
+      }
+      int Count(int a, int b, int c)
       {
           int i = a, cnt = 0;
           while(i < b){
@@ -27,6 +30,9 @@ class first
           // int xxx = 2+3;
           int res = Count( i, j,k);
           first.sum();
+          boolean z;
+
+          // int zz = z?i:j;
           // int res = Count(i, j, k);
 
           // print(res);

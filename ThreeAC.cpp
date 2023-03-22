@@ -96,9 +96,11 @@ class FunctnCall: public Instruction{
         string print(){
 
             string s="";
+
+            if(!isCall) return s;
+
             for(auto x:params){
-                if(isCall) s+= "\tparam "+x + "\n";
-                else s+= "\tpopparam\n";
+                s+= "\tparam "+x + "\n";
             }
             s=s.substr(0,s.length()-1);
 
@@ -328,8 +330,15 @@ class IR{
 
             quadruple.push_back(myInstruction);
 
-            if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
-            else insertAss("call "+funcName,"","");
+            if(!isdec){
+                if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
+                else insertAss("call "+funcName,"","");
+            }
+            else {
+                for(auto x : argList){
+                    insertAss("popparam","","",x);
+                }
+            }
 
             return quadruple.size()-1;
         }
