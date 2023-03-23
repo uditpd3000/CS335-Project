@@ -111,24 +111,22 @@ class FunctnCall: public Instruction{
         }
 };
 
-class ConstrCall: public Instruction{
+class ArrayInsert: public Instruction{
     public:
-        string name;
-        vector<string> params;
-        bool isCall=false;
+        vector<string> elements;
+        string array;
+        int typesize;
 
         string print(){
-
-            string s="";
-
-            if(!isCall) return s;
-
-            for(auto x:params){
-                s+= "\tparam "+x + "\n";
+            int off=0;
+            string s = "";
+            for(auto elem: elements){
+                if(elem=="")continue;
+                s+= "\tpushArr "+array+" "+elem+" "+ to_string(off)+"\n";
+                off+=typesize;
             }
-            s=s.substr(0,s.length()-1);
-
             return s;
+
         }
 };
 
@@ -439,6 +437,7 @@ class IR{
             quadruple.push_back(myJump);
             return quadruple.size()-1;
         }
+
         void updateIncompleteJump(string currBlock,string beforeBlock,string afterBlock){
             int i=0;
             for(auto x : blocks[currBlock]->codes){
@@ -472,6 +471,14 @@ class IR{
             insertIf(index,cond,first,sec);
 
             return res;
+        }
+
+        int insertArray(string arr, vector<string>elementss, int typeSize){
+            ArrayInsert *myins = new ArrayInsert();
+            myins->array = arr;
+            myins->elements = elementss;
+            myins->typesize = typeSize;
+            return insert(myins);
         }
 
         void print(){
