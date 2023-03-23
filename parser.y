@@ -2363,7 +2363,9 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
       throwError("Invalid type to print",yylineno);
      }
-     mycode->InsertTwoWordInstr("print",$3->result);
+     $$->index = mycode->InsertTwoWordInstr("print",$3->result);
+     $$->start = $$->index;
+
      }
 ;
 
@@ -2528,6 +2530,7 @@ Identifier colon Statement                                                    {
   $$->add(v);
 
   $$->index = mycode->makeBlock($3->start,t1);
+  $$->start = $$->index;
   $$->result = t1;
   }
 ;
