@@ -1,55 +1,65 @@
-// 
 
-// class first
-  // {
-  //   private int tui;
-  //   double x=0.2;
-  //   double zzzzzzzzzzz;
-  //     private int Count(int a, int b, int c)
-  //     {
-  //         int i = a, cnt = 0;
-  //         int aa[] = new int [4];
-  //         int lol = 1;
-  //         aa[1]=1;
-  //         while(i < b){
-  //             i = i + 1;
-  //             cnt = cnt + 1;
-  //         }
-  //         return cnt*c;
-  //     }
-  //     first(int zz){
-  //       this.tui = zz;
-  //     }
 
-  //     public void sum(){
-  //       int i=0;
-  //       while(i<10){
-  //         continue;
-  //         i=1;
-  //       }
-  //       return ;
-  //     }
+class first
+  {
+    private int tui;
+    double x=0.2;
+    double zzzzzzzzzzz;
+    public int xza[][] = new int[][]{{1,2}};
+      private int Count(int a, int b, int c)
+      {
+          int i = a, cnt = 0;
+          int aa[] = new int [4];
+          int lol = 1;
+          aa[1]=1;
+          while(i < b){
+              i = i + 1;
+              cnt = cnt + 1;
+          }
+          return cnt*c;
+      }
+      first(int zz){
+        this.Count(0, 1, 2);
+      }
 
-  //     public void Main()
-  //     {
-  //         int i = 9,j=10,k=11;
-  //         // int sid[] = {4, 7, 8, 10};
-  //         // int xxx = 2+3;
-  //         int res = Count( i, j,k);
-  //         first fff = new first(0);
-  //         first.sum();
-  //         // int res = Count(i, j, k);
+      public void sum(){
+        int i=0;
+        while(i<10){
+          continue;
+          i=1;
+        }
+        return ;
+      }
 
-  //         // print(res);
-  //         // print("\n");
-  //     }
-  // }
+      public void Main()
+      {
+          int i = 9,j=10,k=11;
+          // int sid[] = {4, 7, 8, 10};
+          // int xxx = 2+3;
+          int res = Count( i, j,k);
+          first fff = new first(0);
+          fff.tui = 1;
+          // first.sum();
+          // int res = Count(i, j, k);
+
+          // print(res);
+          // print("\n");
+      }
+  }
 class second {
+  private int xx=0;
   public int tuii(){
-    // double tt;
+   private double tt = 0.1;
     // zzzzzzzzzzz = tt;
     // int rrr = Count(0, 0, 0);
-    // first ruru = new first(1);
+    first ruru = new first(1);
+    // second tutu = new first(2);
+    // ruru.tui = 1;
+    ruru.xza[4][2]=1+2;
+    ruru.zzzzzzzzzzz = tt;
+    // ruru.Count(1,1,1);
+
+    // first fff = new first(0);
     // ruru.tui= 1;
 
     // byte a=1;
@@ -65,24 +75,24 @@ class second {
     // f++;
     // boolean p = true;
     // p=~p;
-    // int i,t;
-    // for(i=0;i<10;i++){
+    int i,pp;
+    for(i=0;i<10;i++){
       
-    //   for(i=5;i<10;i++){
-    //   // while(i==1){
-    //   //   t++;
-    //   //   if(i<10){
-    //   //     int j=10;
-    //   //     continue;
-    //   //   }
-    //   //   else break;
-    //   }
-    //   t++;
+      for(i=5;i<10;i++){
+      // while(i==1){
+      //   t++;
+      //   if(i<10){
+      //     int j=10;
+      //     continue;
+      //   }
+      //   else break;
+      }
+      pp++;
 
-    // // }
+    }
     // }
     boolean t=false;
-    int i,j,k;
+    int j,k;
     i = t?j+k:j-k;
     i++;
     // a=c;
