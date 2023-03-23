@@ -1747,6 +1747,7 @@ ConditionalExpression:
 
       $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
       $$->index = mycode->quadruple.size()-1;
+
       
       }
     ;
