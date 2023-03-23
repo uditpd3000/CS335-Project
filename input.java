@@ -322,31 +322,23 @@ public class AddMatrices {
       // System.out.println("k");
 
       // Adding Two matrices
-      // int sum[][] = new int[rows][columns];
-      int sum1[][] = new int[][]{{1,2},{2,2}};
+      int sum[][] = new int[rows][columns];
+      // int sum1[][] = new int[][]{{1,2},{2,2}};
       for(int i = 0; i < rows; i++) {
           for (int j = 0; j < columns; j++) {
             // int sum[][] = new int[rows][columns];
-              // sum[i][j] = firstMatrix[i][j] + secondMatrix[i][j];
+              sum[i][j] = firstMatrix[i][j] + secondMatrix[i][j];
+              int sum1[][] = new int[][]{{1,2},{2,2}};
           }
       }
 
       // // Displaying the result
       System.out.println("Sum of two matrices is: ");
-      for(int row[] : sum1) {
-          for (int column : row) {
-              System.out.println("    ");
-          }
-          System.out.println("end");
-      }
+      // for(int row[] : sum1) {
+      //     for (int column : row) {
+      //         System.out.println("    ");
+      //     }
+      //     System.out.println("end");
+      // }
   }
 }
-
-
-
-
-
-
-
-
-

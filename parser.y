@@ -22,6 +22,7 @@ IR* mycode =new IR();
 
 int num=0;
 int indd=0;
+vector<string> arrayRowMajor;
 
 ofstream fout;
 ofstream vout;
@@ -1046,6 +1047,22 @@ VariableDeclarator:
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$3; 
+    cout<<"kakaka";
+    if(arrayRowMajor.size()>0){
+        int allocmem =typeToSize[$4->type];
+        for(auto i:$4->var->dimsSize){
+          allocmem*=i;
+          cout<<"alloc"<<i<<" ";
+        }
+        int ind = mycode->insertAss(to_string(allocmem),"","","");
+        string z = mycode->getVar(ind);
+        mycode->InsertTwoWordInstr("\tparam",z);
+        mycode->InsertTwoWordInstr("\tallocmem","1");
+        string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+        $4->result = zz;
+        mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
+        arrayRowMajor.clear();
+    }
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
     $$->add(v);
     if($2->var->dims!=$4->dims){
@@ -1085,8 +1102,6 @@ VariableInitializer:
     reverse($$->var->dimsSize.begin(),$$->var->dimsSize.end());
     $$->dims++;
 
-    $$->start=$1->start;
-    $$->index=$1->index;
     } // 
 ; 
 
@@ -3073,8 +3088,21 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->type = $1->type;
   $$->var = $2->var;
 
+  int allocmem =typeToSize[$1->type];
+  for(auto i:$2->var->dimsSize){
+    allocmem*=i;
+    cout<<"alloc"<<i<<" ";
+  }
+  int ind = mycode->insertAss(to_string(allocmem),"","","");
+  string z = mycode->getVar(ind);
+  mycode->InsertTwoWordInstr("\tparam",z);
+  mycode->InsertTwoWordInstr("\tallocmem","1");
+  string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+  $$->result = zz;
+
   $$->start=$2->start;
-  $$->index=$2->index;
+  $$->index=mycode->quadruple.size()-1;
+
   }
 ;
 
@@ -3099,6 +3127,7 @@ DimExprs { $$=$1; }
     }
     $$->dims = $1->var->dims;
     $$->var = $2->var;
+    // arrayRowMajor = $2->arrayRowMajor;
 
     $$->start=$2->start;
     $$->index=$2->index;
@@ -3171,6 +3200,8 @@ ArrayInitializer:
     $$->type = $2->type;
     $$->dims=$2->dims;
     $$->var= $2->var;
+    // arrayRowMajor = $2->arrayRowMajor;
+    // cout<<"3153"<<arrayRowMajor.size();
     // $$->var->dimsSize.push_back($2->arrSize);
     // $$->var->isArray=true;
     $$->start=$2->start;
@@ -3209,6 +3240,9 @@ VariableInitializer {
 
   $$->start=$1->start;
   $$->index=$1->index;
+  // arrayRowMajor=$1->arrayRowMajor;
+  arrayRowMajor.push_back($1->result);
+  
   }
 | VariableInitializerList comma VariableInitializer {
   $$= $1; 
@@ -3217,12 +3251,13 @@ VariableInitializer {
   $$->add($3);
   cout<<"hi\n" ;
   if($1->type!=$3->type){
-    if(global_sym_table->typeCheckHelper($1->type,$3->type)) throwError("kuch  bhi ",yylineno);
+    throwError("TypeError: Array cannot be of 2 different datatypes "+$1->type+" and "+$3->type,yylineno);
   }
   cout<<"::mo2\n";
   $$->var = $1->var;
   $$->var->dimsSize[$$->var->dimsSize.size()-1]++;
   cout<<$$->var->dimsSize[$$->var->dimsSize.size()-1]<<"2903";
+  arrayRowMajor.push_back($3->result);
   // $$->arrSize = $1->arrSize+1;
   // $$->variables.push_back($3->var);
 
