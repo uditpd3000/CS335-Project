@@ -1,6 +1,8 @@
 TARGET = myASTgenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
+ThreeAddCode = output/ThreeAddressCode.txt
+output=output/graph.dot
 
 default: help
 
@@ -12,7 +14,7 @@ help: # Show help for each of the Makefile recipes.
 
 .PHONY: build
 build : # generate files for the executable
-	@echo "building your AST Generator...\n"
+	@echo "building your Three Address Code cum AST Generator...\n"
 	@flex lexer.l
 	@bison -d -t parser.y 2> error.txt
 	@g++ lex.yy.c parser.tab.c -o $(TARGET)
@@ -20,9 +22,11 @@ build : # generate files for the executable
 
 .PHONY: run
 run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
+	@echo "compiling up...\n"
 	@./$(TARGET) $(input) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
 	@dot -Tps $(output) -o graph.ps
+	@echo "find your results in output folder :p"
 
 .PHONY: verbose
 verbose: # run the executable in verbose like `make run input=filepath output=dotfilepath`
@@ -36,8 +40,14 @@ verbose: # run the executable in verbose like `make run input=filepath output=do
 graph: # to show dot file
 	@cat graph.dot
 
+.PHONY: ThreeAC
+ThreeAC: # to show Three Address Code
+	@cat output/ThreeAddressCode.txt
+
 .PHONY: clean
 clean : # clean up the generated files
 	@echo "cleaning up...\n"
-	@rm -f $(TARGET) $(SRCS) parser.output graph.dot
-	@rm output/*.csv
+	@rm -f $(TARGET) $(SRCS) parser.output graph.dot 2> error.txt
+	@rm output/symTables/*.csv 2> error.txt
+	@rm $(ThreeAddCode) 2> error.txt
+	@rm $(output) 2> error.txt

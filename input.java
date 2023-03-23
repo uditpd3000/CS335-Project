@@ -315,7 +315,7 @@
 public class AddMatrices {
   // data = new int[] {1,2,3};
   public static void main(String[] args) {
-      int rows = 4, columns = 3;
+      int rows = 1, columns = 3;
       int firstMatrix[][] = { {2, 3, 4}, {5, 2, 3} };
       int secondMatrix[][] = { {-4, 5, 3}, {5, 6, 3} };
       
