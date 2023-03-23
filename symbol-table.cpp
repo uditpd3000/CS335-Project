@@ -23,6 +23,7 @@ class Variable{
     int size;
     int offset;
     bool inherited;
+    string objName;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;

@@ -24,7 +24,7 @@ class Node {
     vector<Node*> objects;
 
     string type;
-
+    string objOffset;
     Variable* var;
     Method* method;
     Class* cls;
