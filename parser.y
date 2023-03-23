@@ -164,8 +164,22 @@ global_sym_table->printAll();
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
-| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);cout<<"ye1\n";}
-| CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
+| CompilationUnit ClassDeclaration  { 
+    $$=$1; 
+    $$->add($2);
+
+    for(auto x : $2->cls->modifiers){
+      if(x=="static") throwError("Modifier \"static\" not allowed for non-nested classes",$2->cls->lineNo);
+    } 
+  
+  }
+| CompilationUnit ImportDeclarations ClassDeclaration  {
+    $$=$1;vector<Node*>v{$2,$3};
+    $$->add(v);
+    for(auto x : $3->cls->modifiers){
+      if(x=="static") throwError("Modifier \"static\" not allowed for non-nested classes",$3->cls->lineNo);
+    }
+  }
 ;
 
 ClassDeclaration:
@@ -188,6 +202,9 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($5->objects); 
     global_sym_table->end_scope();
+
+
+    $$->cls = new Class($3,$1->var->modifiers,$1->var->lineNo);
      
   }
 | class_just_class Identifier {
@@ -205,6 +222,9 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope();
+
+    $$->cls = new Class($2,vector<string>{},yylineno);
+
     cout<<"ye3\n";
   }
 ;
@@ -1276,7 +1296,7 @@ Assignment:
     $$->result = $1->result;
 
     // cout<<"dukh\n"; mycode->print(); exit(1);
-    // global_sym_table->finalCheck($1)
+    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
     }
 ;
 
@@ -1303,6 +1323,11 @@ Primary dot Identifier              {
     $$->result = mycode->getVar($$->index);
     $$->dims = $$->var->dims;
   }
+  // else if($1->type!="Method"){
+  //   $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
+  //   $$->type = $$->var->type;
+  //   $$->scope=$$->var->scope;
+  // }
   
 
 
@@ -2051,14 +2076,18 @@ PreIncrDecrExpression:
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
+      global_sym_table->finalCheck($2->var->name,global_sym_table->current_scope,yylineno);
+
       string x="1";
-        if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
-          throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
-        }
-        else if("int"!=$2->var->type){
-          int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
-          x = mycode->getVar(p);
-        }
+      if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
+        throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
+      }
+      else if("int"!=$2->var->type){
+        int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
+        x = mycode->getVar(p);
+      }
+      
+
       
       mycode->insertAss($2->result,"1",zz+$2->var->type,$2->result);
       $$->start = $2->index;
@@ -2100,6 +2129,8 @@ PostIncrDecrExpression:
     string zz = "";
     zz+=$2[0];
     $$->start = $1->index;
+
+    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
 
     string x="1";
     if(global_sym_table->typeCheckHelperLiteral("int", $1->var->type)){
@@ -2428,7 +2459,9 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
       throwError("Invalid type to print",yylineno);
      }
-     mycode->InsertTwoWordInstr("print",$3->result);
+     $$->index = mycode->InsertTwoWordInstr("print",$3->result);
+     $$->start = $$->index;
+
      }
 ;
 
@@ -2591,6 +2624,7 @@ Identifier colon Statement                                                    {
   $$->add(v);
 
   $$->index = mycode->makeBlock($3->start,t1);
+  $$->start=$$->index;
   $$->result = t1;
   }
 ;
