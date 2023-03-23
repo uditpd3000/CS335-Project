@@ -16,8 +16,6 @@ class Node {
     string lexeme; //}
     string anyName;
     bool isObj;
-    bool isContinue;
-    int continueIndex;
     string which_scope;
     int arrSize = 0;
 
@@ -36,6 +34,7 @@ class Node {
     int index; // global IR vector
     string result=""; // result eg t1 = t2+t3
     vector<string> resList = vector<string>{};
+    vector<string> arrayRowMajor;
 
 
     Node(){

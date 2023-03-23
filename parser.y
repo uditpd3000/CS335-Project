@@ -22,6 +22,7 @@ IR* mycode =new IR();
 
 int num=0;
 int indd=0;
+vector<string> arrayRowMajor;
 
 ofstream fout;
 ofstream vout;
@@ -489,8 +490,6 @@ Block:
       //  $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($2->index);
        $$->start = $2->start;
-       $$->isContinue = $2->isContinue;
-       $$->continueIndex = $2->continueIndex;
 
        }
 | curly_open curly_close {
@@ -512,8 +511,6 @@ BlockStatements:
 
     $$->index = $1->index;
     $$->start = $1->start;
-    $$->isContinue= $1->isContinue;
-    $$->continueIndex = $1->continueIndex;
     }
 | BlockStatements BlockStatement {
   $$=$1; 
@@ -548,9 +545,6 @@ BlockStatement:
   $$->result =$1->result;
   $$->start = $1->start;
   $$->index = $1->index;
-  $$->isContinue= $1->isContinue;
-  $$->continueIndex = $1->continueIndex;
-  cout<<$1->continueIndex<<"++++++++"<<endl;
   }
 ;
 
@@ -1053,6 +1047,22 @@ VariableDeclarator:
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
     string t1=$1,t2=$3; 
+    cout<<"kakaka";
+    if(arrayRowMajor.size()>0){
+        int allocmem =typeToSize[$4->type];
+        for(auto i:$4->var->dimsSize){
+          allocmem*=i;
+          cout<<"alloc"<<i<<" ";
+        }
+        int ind = mycode->insertAss(to_string(allocmem),"","","");
+        string z = mycode->getVar(ind);
+        mycode->InsertTwoWordInstr("\tparam",z);
+        mycode->InsertTwoWordInstr("\tallocmem","1");
+        string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+        $4->result = zz;
+        mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
+        arrayRowMajor.clear();
+    }
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
     $$->add(v);
     if($2->var->dims!=$4->dims){
@@ -1092,8 +1102,6 @@ VariableInitializer:
     reverse($$->var->dimsSize.begin(),$$->var->dimsSize.end());
     $$->dims++;
 
-    $$->start=$1->start;
-    $$->index=$1->index;
     } // 
 ; 
 
@@ -1292,7 +1300,8 @@ Assignment:
     // cout<<$1->result<<"gayab??"
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
     else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
-    $$->start = min($$->index,$3->start);
+    if($1->start) $$->start = $1->start;
+    else $$->start = $3->start;
     $$->result = $1->result;
 
     // cout<<"dukh\n"; mycode->print(); exit(1);
@@ -1378,7 +1387,7 @@ PrimaryNoNewArray:
     }
 | FieldAccess                       {$$=$1;} 
 | ArrayAccess                       {$$=$1;} 
-| MethodInvocation                  {$$=$1;$$->var=new Variable("","",yylineno,{},"");} 
+| MethodInvocation                  {$$=$1;$$->var=new Variable("",$1->type,yylineno,{},"");} 
 | ClassInstanceCreationExpression   {$$=$1;cout<<"tukaha\n";$$->var=new Variable("","",yylineno,{},"");} 
 ;
 
@@ -1549,6 +1558,13 @@ TypeName:
     }
     else if(met !=NULL){
       cout<<"1488\n";
+      if(cur_class!=$1->anyName){
+        for(auto mod: met->modifiers){
+          if(mod=="static"){
+            throwError("Cannot make a non-static reference to the static method" + t2 +" of static ",yylineno);
+          }
+        }
+      }
       if(met->inherited==true||cur_class!=$1->anyName){
         for(auto mod: met->modifiers){
           if(mod=="private"){
@@ -1571,8 +1587,15 @@ TypeName:
       $$->type = var->type;
       $$->dims = var->dims;
       int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"");
-      int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-      $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
+      int flag=0;
+      for(auto x : $1->var->modifiers) {
+        if(x=="static") flag=1;
+      }
+      if(!flag){
+         int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
+          $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
+      }
+      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),to_string(0),"");
       $$->result = mycode->getVar($$->index);
     }
     else {
@@ -1587,6 +1610,7 @@ ArrayAccess:
     string t1=$1,t2=$2,t4=$4;
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
+    $$->start=$3->start;
     Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
@@ -1628,7 +1652,6 @@ ArrayAccess:
     }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
-
   }
 | TypeName dot Identifier box_open Expression box_close  {
     $$=new Node("ArrayAcc");
@@ -1674,6 +1697,7 @@ ArrayAccess:
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
+      $$->start=$1->start;
       
     }
     else {
@@ -1740,6 +1764,8 @@ ArrayAccess:
     if($3->type!="int"){
       throwError("Array index cannot be of type "+$3->type,yylineno);
     }
+
+    $$->start = $1->start;
 
     }
 
@@ -2460,7 +2486,7 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start; $$->isContinue = $1->isContinue;$$->continueIndex = $1->continueIndex;}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
@@ -2475,7 +2501,7 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
       throwError("Invalid type to print",yylineno);
      }
-     $$->index = mycode->InsertTwoWordInstr("print",$3->result);
+     $$->index = mycode->InsertTwoWordInstr("\tprint",$3->result);
      $$->start = $$->index;
 
      }
@@ -2527,8 +2553,6 @@ CONTINUE semi_colon                     {
   string t1= $1,t2=$2; 
   $$->add(new Node(mymap[t1],t1));
   $$->add(new Node(mymap[t2],t2));
-  $$->isContinue = true;
-  $$->continueIndex = mycode->quadruple.size()-1;
 
   $$->index = mycode->insertIncompleteJump("continue");
   $$->start = $$->index;
@@ -3071,8 +3095,21 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->type = $1->type;
   $$->var = $2->var;
 
+  int allocmem =typeToSize[$1->type];
+  for(auto i:$2->var->dimsSize){
+    allocmem*=i;
+    cout<<"alloc"<<i<<" ";
+  }
+  int ind = mycode->insertAss(to_string(allocmem),"","","");
+  string z = mycode->getVar(ind);
+  mycode->InsertTwoWordInstr("\tparam",z);
+  mycode->InsertTwoWordInstr("\tallocmem","1");
+  string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+  $$->result = zz;
+
   $$->start=$2->start;
-  $$->index=$2->index;
+  $$->index=mycode->quadruple.size()-1;
+
   }
 ;
 
@@ -3084,6 +3121,9 @@ DimExprs { $$=$1; }
     $$->add($2);
     $$->dims = $1->dims+$2->var->dims;
     $$->var = $1->var;
+
+    $$->start=$1->start;
+    $$->index=$1->index;
     }
 | Dims ArrayInitializer {
     $$=new Node(); 
@@ -3094,6 +3134,10 @@ DimExprs { $$=$1; }
     }
     $$->dims = $1->var->dims;
     $$->var = $2->var;
+    // arrayRowMajor = $2->arrayRowMajor;
+
+    $$->start=$2->start;
+    $$->index=$2->index;
 
     }
 ;
@@ -3125,6 +3169,9 @@ DimExprs:
     $$->add($2);
     $$->dims++;
     $$->var->dimsSize.push_back($2->var->dimsSize[0]);
+
+    $$->start=$1->start;
+    $$->index=$2->index;
     }
 ;
 
@@ -3143,6 +3190,9 @@ box_open Expression box_close  {
   ss.push_back((int)stoi($2->var->value));
   $$->var = new Variable("","",{},yylineno,true,1,ss,$2->var->value);
   $$->dims=1;
+
+  $$->start=$2->start;
+  $$->index=$2->index;
   }
 
 ArrayInitializer: 
@@ -3157,11 +3207,12 @@ ArrayInitializer:
     $$->type = $2->type;
     $$->dims=$2->dims;
     $$->var= $2->var;
-
-    $$->start=$2->start;
-    $$->index=$2->index;
+    // arrayRowMajor = $2->arrayRowMajor;
+    // cout<<"3153"<<arrayRowMajor.size();
     // $$->var->dimsSize.push_back($2->arrSize);
     // $$->var->isArray=true;
+    $$->start=$2->start;
+    $$->index=$2->index;
     }
   | curly_open VariableInitializerList comma curly_close {
       string t1=$1; 
@@ -3177,7 +3228,6 @@ ArrayInitializer:
       $$->dims=$2->dims;
       // $$->var= new Variable("","",yylineno,{},"");
       $$->var= $2->var;
-
       $$->start=$2->start;
       $$->index=$2->index;
       }
@@ -3194,6 +3244,12 @@ VariableInitializer {
   $$->arrSize = 1;
   $$->var = $1->var;
   $$->var->dimsSize.push_back(1);
+
+  $$->start=$1->start;
+  $$->index=$1->index;
+  // arrayRowMajor=$1->arrayRowMajor;
+  arrayRowMajor.push_back($1->result);
+  
   }
 | VariableInitializerList comma VariableInitializer {
   $$= $1; 
@@ -3202,14 +3258,18 @@ VariableInitializer {
   $$->add($3);
   cout<<"hi\n" ;
   if($1->type!=$3->type){
-    if(global_sym_table->typeCheckHelper($1->type,$3->type)) throwError("kuch  bhi ",yylineno);
+    throwError("TypeError: Array cannot be of 2 different datatypes "+$1->type+" and "+$3->type,yylineno);
   }
   cout<<"::mo2\n";
   $$->var = $1->var;
   $$->var->dimsSize[$$->var->dimsSize.size()-1]++;
   cout<<$$->var->dimsSize[$$->var->dimsSize.size()-1]<<"2903";
+  arrayRowMajor.push_back($3->result);
   // $$->arrSize = $1->arrSize+1;
   // $$->variables.push_back($3->var);
+
+  $$->start=$1->start;
+  $$->index=$3->index;
   
   }
 ;

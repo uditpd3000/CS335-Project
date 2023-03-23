@@ -1,142 +1,150 @@
-// Test Case 1 :: Nested Loops and Ifs.
+// // Test Case 1 :: Nested Loops and Ifs.
 
-public class Prime {
+// public class Prime {
 
-    public static void main(String[] args) {
+//     public static void main(String[] args) {
 
-        int low = 20, high = 50;
+//         int low = 20, high = 50;
 
-        while (low < high) {
-            boolean flag = false;
+//         while (low < high) {
+//             boolean flag = false;
 
-            for(int i = 2; i <= low/2; ++i) {
-                // condition for nonprime number
-                if(low % i == 0) {
-                    flag = true;
-                    break;
-                }
-            }
+//             for(int i = 2; i <= low/2; ++i) {
+//                 // condition for nonprime number
+//                 if(low % i == 0) {
+//                     flag = true;
+//                     break;
+//                 }
+//             }
 
-            if (!flag && low != 0 && low != 1)
-                System.out.println(low);
+//             if (!flag && low != 0 && low != 1)
+//                 System.out.println(low);
 
-            ++low;
-        }
-    }
-}
+//             ++low;
+//         }
+//     }
+// }
 
 
-// Test Case 2 :: Declaring and calling function from another function.
+// // Test Case 2 :: Declaring and calling function from another function.
 
-public class Armstrong {
+// public class Armstrong {
 
-    public static boolean checkArmstrong(int num) {
-        int digits = 0;
-        int result = 0;
-        int originalNumber = num;
+//     public static boolean checkArmstrong(int num) {
+//         int digits = 0;
+//         int result = 0;
+//         int originalNumber = num;
 
-        // number of digits calculation
-        while (originalNumber != 0) {
-            originalNumber /= 10;
-            ++digits;
-        }
+//         // number of digits calculation
+//         while (originalNumber != 0) {
+//             originalNumber /= 10;
+//             ++digits;
+//         }
 
-        originalNumber = num;
+//         originalNumber = num;
 
-        // result contains sum of nth power of its digits
-        while (originalNumber != 0) {
-            int remainder = originalNumber % 10;
-            // result += Math.pow(remainder, digits);
-            originalNumber /= 10;
-        }
+//         // result contains sum of nth power of its digits
+//         while (originalNumber != 0) {
+//             int remainder = originalNumber % 10;
+//             // result += Math.pow(remainder, digits);
+//             originalNumber /= 10;
+//         }
 
-        if (result == num)
-            return true;
+//         if (result == num)
+//             return true;
 
-        return false;
-    }
+//         return false;
+//     }
 
-    public static void main(String[] args) {
+//     public static void main(String[] args) {
 
-        int low = 999, high = 99999;
+//         int low = 999, high = 99999;
 
-        for(int number = low + 1; number < high; ++number) {
+//         for(int number = low + 1; number < high; ++number) {
 
-            if (checkArmstrong(number))
-                System.out.println(number);
-        }
-    }
-}
+//             if (checkArmstrong(number))
+//                 System.out.println(number);
+//         }
+//     }
+// }
 
-// Test Case 3 :: Conditional Statement
+// // Test Case 3 :: Conditional Statement
 
-public class LargestNumberExample  
-{  
-public static void main(String args[])  
-{  
-int x=69;  
-int y=89;  
-int z=79;  
-boolean res=z<y;
-int largestNumber= res ? z : x;  
-// System.out.println(largestNumber);  
-}  
-}
+// public class LargestNumberExample  
+// {  
+// public static void main(String args[])  
+// {  
+// int x=69;  
+// int y=89;  
+// int z=79;  
+// boolean res=z<y;
+// int largestNumber= res ? z : x;  
+// // System.out.println(largestNumber);  
+// }  
+// }
 
-// Test Case 4 :: Array
+// // Test Case 4 :: Array
 
-class Main {
- public static void main(String[] args) {
+// class Main {
+//  public static void main(String[] args) {
 
-   int numbers[] = {2, -9, 0, 5, 12, -25, 22, 9, 8, 12};
-  // int numbers[];
-  // for(int i=0;i<10;i++){
-  //   numbers[i]=i;
-  // }
-   int sum = 0;
-   double average;
+//    int numbers[] = {2, -9, 0, 5, 12, -25, 22, 9, 8, 12};
+//   // int numbers[];
+//   // for(int i=0;i<10;i++){
+//   //   numbers[i]=i;
+//   // }
+//    int sum = 0;
+//    double average;
    
-   // access all elements using for each loop
-   // add each element in sum
-    int arrayLength = 10;
+//    // access all elements using for each loop
+//    // add each element in sum
+//     int arrayLength = 10;
 
-   for (int i=0;i<arrayLength;i++) {
-     sum += numbers[i];
-   }
+//    for (int i=0;i<arrayLength;i++) {
+//      sum += numbers[i];
+//    }
   
-   // get the total number of elements
+//    // get the total number of elements
 
-   // calculate the average
-   // convert the average from int to double
-   average =  sum/arrayLength;
+//    // calculate the average
+//    // convert the average from int to double
+//    average =  sum/arrayLength;
 
-   System.out.println(sum);
-   System.out.println(average);
- }
-}
+//    System.out.println(sum);
+//    System.out.println(average);
+//  }
+// }
 
-// Test Case 5 :: type casting
+// // Test Case 5 :: type casting
 
 
-public class typeCast{
-  public static void main(String[] args){
-      byte a=1;
-      short b=2;
-      int c=3;
-      long d=4;
-      float e=5;
-      double f=6;
+// public class typeCast{
+//   public static void main(String[] args){
+//       byte a=1;
+//       short b=2;
+//       int c=3;
+//       long d=4;
+//       float e=5;
+//       double f=6;
 
-      e=1*1.1;
-      e=+1.1;
-      ++f;
-      f++;
+//       e=1*1.1;
+//       e=+1.1;
+//       ++f;
+//       f++;
 
-      f=c;
-      // c=f;
+//       f=c;
+//       // c=f;
 
-  }
-}
+//       // // Displaying the result
+//       System.out.println("Sum of two matrices is: ");
+//       // for(int row[] : sum1) {
+//       //     for (int column : row) {
+//       //         System.out.println("    ");
+//       //     }
+//       //     System.out.println("end");
+//       // }
+//   }
+// }
 
 // // Test Case 6 :: Recursion
 
