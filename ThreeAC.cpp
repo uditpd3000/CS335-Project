@@ -236,6 +236,18 @@ class IR{
 
             return quadruple.size()-1;
         }
+        int makeBlock(){
+            Block* myInstruction = new Block();
+            myInstruction->result = getLocalLabel();
+
+            blocks.insert({myInstruction->result,myInstruction});
+
+            Instruction* myInstruction2 = myInstruction;
+            myInstruction2->isBlock=true;
+            quadruple.push_back(myInstruction2);
+
+            return quadruple.size()-1;
+        }
 
         int insertAss(string myArg1, string myArg2, string op,string res=""){
             return insert(create(myArg1,myArg2,op,res));
@@ -463,10 +475,23 @@ class IR{
 
         string insertTernary(int index, string cond,string first, string sec){
             string res1,res2,res=getLocalVar();
-            res1=blocks[first]->codes[blocks[first]->codes.size()-1]->result;
-            res2=blocks[sec]->codes[blocks[sec]->codes.size()-1]->result;
 
+            if (blocks.find(first)!= blocks.end()){
+                res1=blocks[first]->codes[blocks[first]->codes.size()-1]->result;
+            }
+            else {
+                res1 = first;
+                first = getVar(makeBlock());
+            }
             blocks[first]->codes.push_back(create(res1,"","",res));
+
+            if (blocks.find(sec)!= blocks.end()){
+                res2=blocks[sec]->codes[blocks[sec]->codes.size()-1]->result;
+            }
+            else{
+                res2 = sec;
+                sec = getVar(makeBlock());
+            }
             blocks[sec]->codes.push_back(create(res2,"","",res));
 
             insertIf(index,cond,first,sec);

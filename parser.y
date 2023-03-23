@@ -1500,7 +1500,7 @@ TypeName:
       
     }
     else {
-      throwError("Variable "+t1 + "not declared in appropriate scope",yylineno);
+      throwError("Variable "+t1 + " not declared in appropriate scope",yylineno);
     }
 
     $$->result = $1;
@@ -1760,7 +1760,7 @@ ClassLiteral:
 ConditionalExpression:
     ConditionalOrExpression                                               {
           $$=$1;
-          cout<<"nottt"<<$1->anyName<<endl;
+          // cout<<"nottt"<<$1->anyName<<endl;
       }
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
       // $$ = new Node("ConditionalExpression");
@@ -1774,10 +1774,19 @@ ConditionalExpression:
       $$->var->type = $3->type;
       $$->type = $3->type;
 
-      if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
-      if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index) $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
+      cout<<$3->index<<"==="<<$3->start<<"=="<<mycode->quadruple.size()<<endl;
+      if($3->index+1 < mycode->quadruple.size()){
+        if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) 
+          $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
+      }
+      if($3->start != $3->index || $3->index<=mycode->quadruple.size()-1){
+        if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index)
+          $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
+      }
+      // if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
+      // if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index) $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
 
-      $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
+      $$->result=mycode->insertTernary($3->start-1,$1->result,$3->result,$5->result);
       $$->index = mycode->quadruple.size()-1;
       
       }

@@ -45,9 +45,9 @@ class first
   //         // print("\n");
   //     }
   // }
-// static class second {
+class second {
 //   private int xx=0;
-//   public int tuii(){
+  public int tuii(){
 //    private double tt = 0.1;
 //     // zzzzzzzzzzz = tt;
 //     // int rrr = Count(0, 0, 0);
@@ -90,9 +90,9 @@ class first
 
 //     }
 //     }
-    // boolean t=false;
-    // int j,k;
-    // i = t?j+k:j-k;
+    boolean t=false;
+    int i,j,k;
+    i = t?i+j:k+i+j;
     // i++;
     // a=c;
     // a=d;
@@ -145,5 +145,5 @@ class first
     // z = uuu;
 
 
-//   }
-// }
+  }
+}
