@@ -164,8 +164,22 @@ global_sym_table->printAll();
 ;
 
 CompilationUnit: {$$= new Node("CompilationUnit");}
-| CompilationUnit ClassDeclaration  { $$=$1; $$->add($2);cout<<"ye1\n";}
-| CompilationUnit ImportDeclarations ClassDeclaration  {$$=$1;vector<Node*>v{$2,$3};$$->add(v);}
+| CompilationUnit ClassDeclaration  { 
+    $$=$1; 
+    $$->add($2);
+
+    for(auto x : $2->cls->modifiers){
+      if(x=="static") throwError("Modifier \"static\" not allowed for non-nested classes",$2->cls->lineNo);
+    } 
+  
+  }
+| CompilationUnit ImportDeclarations ClassDeclaration  {
+    $$=$1;vector<Node*>v{$2,$3};
+    $$->add(v);
+    for(auto x : $3->cls->modifiers){
+      if(x=="static") throwError("Modifier \"static\" not allowed for non-nested classes",$3->cls->lineNo);
+    }
+  }
 ;
 
 ClassDeclaration:
@@ -188,6 +202,9 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($5->objects); 
     global_sym_table->end_scope();
+
+
+    $$->cls = new Class($3,$1->var->modifiers,$1->var->lineNo);
      
   }
 | class_just_class Identifier {
@@ -205,6 +222,9 @@ ClassDeclaration:
     $$->add(v); 
     $$->add($4->objects);
     global_sym_table->end_scope();
+
+    $$->cls = new Class($2,vector<string>{},yylineno);
+
     cout<<"ye3\n";
   }
 ;
