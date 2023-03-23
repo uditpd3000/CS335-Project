@@ -369,24 +369,6 @@ class GlobalSymbolTable {
             tablemap[i]->print_table_CSV();
         }
     }
-
-    // bool finalCheck(string symbol){
-    //     int flag=0;
-    //     for(auto x:lookup_var(symbol,0,current_scope)->modifiers){
-    //         if(x=="final"){
-    //             flag=1; 
-    //         }
-    //     }
-    //     if(flag==1){
-    //         // cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
-    //         if(lookup_var(symbol,0,current_scope)->value!=""){
-    //             // cout<<"    harshitxyz    ";
-    //             throwError("Error: cannot change value of final type :"+symbol,yylineno);
-    //             return false;
-    //         }
-    //     }
-    //     return true;
-    // }
     void finalCheck(string symbol,string scope,int myLineno){
         Variable* var_=lookup_var(symbol,0,scope);
         for(auto x:var_->modifiers){
@@ -396,6 +378,10 @@ class GlobalSymbolTable {
         }
         
     }
+    void staticCheck(string symbol){
+        
+    }
+
     bool typeCheckHelperLiteral(string s1,string s2){
         map<string,vector<string>> check_map;
         vector<string> byte_conversion{"byte","short","int","long","float","double"};

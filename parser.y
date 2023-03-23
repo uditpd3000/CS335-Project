@@ -940,6 +940,8 @@ VariableDeclaratorList:
     $$->add($1); 
     $$->variables.push_back($1->var);
     // cout<<"hi-- "<<$1->var->name<<" ";
+    $$->start=$1->start;
+    $$->index=$1->index;
     }
 | VariableDeclaratorList comma VariableDeclarator { 
     $$=$1; 
@@ -947,6 +949,9 @@ VariableDeclaratorList:
     vector<Node*>v{new Node(mymap[t1],t1),$3}; 
     $$->add(v); 
     $$->variables.push_back($3->var);
+
+    $$->start=$1->start;
+    $$->index=$3->index;
     }
 ;
 
@@ -971,6 +976,9 @@ VariableDeclarator:
     vector<Node*>v{new Node(mymap[t1],t1)}; 
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
+
+    $$->start=mycode->quadruple.size()-1;
+    $$->index=$$->start;
     }
 | Identifier Dims {
     $$ = new Node("VariableDeclarator"); 
@@ -979,6 +987,9 @@ VariableDeclarator:
     $$->add(v);
     $$->var = new Variable($1,"",{},yylineno,true,$2->var->dims,$2->var->dimsSize,"");
     $$->dims = $2->dims;
+
+    $$->start=mycode->quadruple.size()-1;
+    $$->index=$$->start;
   }
 | Identifier assign VariableInitializer {
   cout<<"---\n";
@@ -996,7 +1007,11 @@ VariableDeclarator:
 
     cout<<$3->result<<endl;
     $$->index = mycode->insertAss($3->result,"","",$1);
-    $$->result = $3->result;
+    $$->result = $1;
+
+    $$->start=$3->start;
+    $$->index=$3->index;
+
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
     $$ = new Node("VariableDeclarator"); 
@@ -1011,8 +1026,9 @@ VariableDeclarator:
     for(auto ll:$4->var->dimsSize)cout<<"aaaooo"<<ll;
     cout<<"zise"<<$4->var->dimsSize.size()<<endl;
     // cout<<"hurrahii"<<$$->type<<endl;
+    $$->start=$4->start;
     $$->index = mycode->insertAss($4->result,"","",$1);
-    $$->result = $4->result;
+    $$->result = $1;
     }
 ;
 
@@ -1029,12 +1045,17 @@ VariableInitializer:
     cout<<"$$\n";
     // mycode->print();
     // cout<<"$"<<$1->result<<"\n";
+    $$->start=$1->start;
+    $$->index=$1->index;
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
     $$ = $1;
     reverse($$->var->dimsSize.begin(),$$->var->dimsSize.end());
     $$->dims++;
+
+    $$->start=$1->start;
+    $$->index=$1->index;
     } // 
 ; 
 
@@ -1721,10 +1742,8 @@ ConditionalExpression:
       $$->var->type = $3->type;
       $$->type = $3->type;
 
-      cout<<endl<<$3->start<<"pppp"<<$5->start<<endl;
-
-      if(!mycode->quadruple[mycode->quadruple.size()-1]->isBlock) $5->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-1));
-      if(!mycode->quadruple[mycode->quadruple.size()-2]->isBlock) $3->result = mycode->getVar(mycode->makeBlock(mycode->quadruple.size()-2,"",mycode->quadruple.size()-1));
+      if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
+      if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index) $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
 
       $$->result=mycode->insertTernary(mycode->quadruple.size()-3,$1->result,$3->result,$5->result);
       $$->index = mycode->quadruple.size()-1;
@@ -2370,7 +2389,9 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
       throwError("Invalid type to print",yylineno);
      }
-     mycode->InsertTwoWordInstr("print",$3->result);
+
+     $$->index=mycode->InsertTwoWordInstr("print",$3->result);
+     $$->start=$$->index;
      }
 ;
 
@@ -2401,6 +2422,7 @@ BREAK  semi_colon                        {
   $$->add(new Node(mymap[t2],t2));
 
   $$->index = mycode->insertIncompleteJump("break");
+  $$->start = $$->index;
   }
 | BREAK Identifier semi_colon             {
   $$= new Node("BreakStatement"); 
@@ -2410,6 +2432,7 @@ BREAK  semi_colon                        {
   $$->add(new Node(mymap[t3],t3));
 
   $$->index = mycode->insertIncompleteJump("break");
+  $$->start = $$->index;
   }
 ;
 
@@ -2421,8 +2444,9 @@ CONTINUE semi_colon                     {
   $$->add(new Node(mymap[t2],t2));
   $$->isContinue = true;
   $$->continueIndex = mycode->quadruple.size()-1;
-  $$->start = mycode->quadruple.size();
+
   $$->index = mycode->insertIncompleteJump("continue");
+  $$->start = $$->index;
   }
 | CONTINUE Identifier semi_colon           {
   $$= new Node("ContinueStatement"); 
@@ -2430,8 +2454,9 @@ CONTINUE semi_colon                     {
   $$->add(new Node(mymap[t1],t1));
   $$->add(new Node(mymap[t2],t2)); 
   $$->add(new Node(mymap[t3],t3));
-  $$->start = mycode->quadruple.size();
+
   $$->index = mycode->insertIncompleteJump("continue");
+  $$->start = $$->index;
   }
 ;
 
@@ -2531,6 +2556,7 @@ Identifier colon Statement                                                    {
   $$->add(v);
 
   $$->index = mycode->makeBlock($3->start,t1);
+  $$->start=$$->index;
   $$->result = t1;
   }
 ;
@@ -2545,7 +2571,7 @@ IF brac_open Expression brac_close Statement                                  {
 
   if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
 
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+  if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,"");
   // cout<<"Blockkkk\n";
   $$->start = $3->start;
@@ -2565,8 +2591,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE Statement           {
 
   if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
 
-  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
+  if(!mycode->quadruple[$7->start]->isBlock || $7->start!=$7->index) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2585,8 +2611,8 @@ IF brac_open Expression brac_close StatementNoShortIf ELSE StatementNoShortIf  {
 
   if($3->type!="boolean") throwError($3->type+" cannot be converted to boolean type",$3->lineno);
 
-  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
+  if(!mycode->quadruple[$7->start]->isBlock || $7->start!=$7->index) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start,"",$7->start));
   $$->index = mycode->insertIf($5->start-1,$3->result,$5->result,$7->result);
 
   $$->start = $3->start;
@@ -2615,7 +2641,7 @@ WHILE brac_open Expression brac_close StatementNoShortIf             {$$ = new N
       global_sym_table->typeCheckVar($3->var,"boolean",$$->lineno);
 
       $$->start = $3->start;
-      if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+      if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start));
       $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
 
       $$->result=mycode->getVar($$->start);
@@ -2645,10 +2671,13 @@ BasicForStatementStart Statement                                       {
   $$=new Node("BasicForStatement"); 
   $$->add($1->objects); $$->add($2);
 
-  if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
-  $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
-  cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
+  if(!mycode->quadruple[$2->start]->isBlock || $2->start!=$2->index) $2->result = mycode->getVar(mycode->makeBlock($2->start));
+
+  cout<<$1->start<<"==="<<$1->index<<"==="<<$1->result<<"==="<<$2->start<<"==="<<$2->result<<endl;
+  $$->index = mycode->insertFor($1->prestart, $1->start,$1->index,$1->result, $2->result);
+  // cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
+  // mycode->print(); cout<<mycode->quadruple.size()-1<<endl; exit(1);
 
   }
 ;
@@ -2658,9 +2687,9 @@ BasicForStatementStart StatementNoShortIf                              {
   $$=new Node("BasicForStatementNoShortIf"); 
   $$->add($1->objects); $$->add($2);
 
-  if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
-  $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
-  cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
+  if(!mycode->quadruple[$2->start]->isBlock || $2->start!=$2->index) $2->result = mycode->getVar(mycode->makeBlock($2->start));
+  $$->index = mycode->insertFor($1->prestart,$1->start,$1->index,$1->result, $2->result);
+  // cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
   }
 
@@ -2671,6 +2700,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), new Node(mymap[t5], $5) };
    $$->add(v);
   
+  $$->prestart=-1;
   $$->start =-1;
   $$->index = mycode->quadruple.size();
   $$->result="";
@@ -2682,6 +2712,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), new Node(mymap[t6], $6) };
      $$->add(v);
 
+    $$->prestart=$3->start;
     $$->start =-1;
     $$->index = $3->index;
     $$->result="";
@@ -2694,6 +2725,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
 
+  $$->prestart=$4->start;
   $$->start =$4->start;
   $$->index = mycode->quadruple.size()-1;
   $$->result="";
@@ -2704,9 +2736,10 @@ forr brac_open semi_colon semi_colon brac_close                         {
    vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), new Node(mymap[t3], $3), new Node(mymap[t4], $4), $5, new Node(mymap[t6], $6) };
    $$->add(v);
 
+    $$->prestart= $5->start;
     $$->start =-1;
     $$->index = $5->start - 1;
-    if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+    if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start));
     $$->result=$5->result;
 
    }
@@ -2717,9 +2750,10 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->lineno=$4->lineno;
   global_sym_table->typeCheckVar($4->var,"boolean",$$->lineno);
 
+  $$->prestart= $4->start;
   $$->start =$4->start;
   $$->index = mycode->quadruple.size()-1;
-  if(!mycode->quadruple[$6->start]->isBlock) $6->result = mycode->getVar(mycode->makeBlock($6->start));
+  if(!mycode->quadruple[$6->start]->isBlock || $6->start!=$6->index) $6->result = mycode->getVar(mycode->makeBlock($6->start));
   $$->result=$6->result;
 
   }
@@ -2729,9 +2763,10 @@ forr brac_open semi_colon semi_colon brac_close                         {
   vector<Node*>v{new Node (mymap[t1],$1) , new Node(mymap[t2],$2), $3, new Node(mymap[t4], $4), new Node(mymap[t5], $5), $6, new Node(mymap[t7], $7) };
   $$->add(v);
 
+  $$->prestart= $3->start;
   $$->start =-1;
   $$->index = $3->index;
-  if(!mycode->quadruple[$6->start]->isBlock) $6->result = mycode->getVar(mycode->makeBlock($6->start));
+  if(!mycode->quadruple[$6->start]->isBlock || $6->start!=$6->index) $6->result = mycode->getVar(mycode->makeBlock($6->start));
   $$->result=$6->result;
 
   }
@@ -2743,6 +2778,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->lineno=$5->lineno;
   global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
 
+  $$->prestart= $3->start;
   $$->start =$5->start;
   $$->index = $5->index;
   $$->result="";
@@ -2756,10 +2792,12 @@ forr brac_open semi_colon semi_colon brac_close                         {
   $$->lineno=$5->lineno;
   global_sym_table->typeCheckVar($5->var,"boolean",$$->lineno);
 
+  $$->prestart= $3->start;
   $$->start =$5->start;
   $$->index = $5->index;
-  if(!mycode->quadruple[$7->start]->isBlock) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  if(!mycode->quadruple[$7->start]->isBlock || $7->start!=$7->index) $7->result = mycode->getVar(mycode->makeBlock($7->start));
   $$->result=$7->result;
+
   }
 ;
 
@@ -2835,11 +2873,11 @@ WHILE brac_open Expression brac_close Statement {
 
 
   $$->start = $3->start;
-  cout<<$3->index<<"---"<<$5->index<<endl;;
-  if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
+
+  if(!mycode->quadruple[$5->start]->isBlock || $5->start!=$5->index) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
   $$->result = mycode->getVar($3->start);
-  cout<<$$->result<<"RESSSSs\n";
+  
   }
 ;
 
@@ -2850,15 +2888,11 @@ LocalVariableType VariableDeclaratorList {
   $$->add($2);
   $$->type = $1->type;
   $$->dims = $1->dims+ $2->dims;
-  cout<<"Whyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy";
-  cout<<"hurrah"<<$$->dims<<endl;
   for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
-          cout<<"---iswaleme\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
-        cout<<i->dimsSize.size()<<"sizeeee";
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->dimsSize,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
@@ -2884,6 +2918,8 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
+    $$->start=$2->start;
+    $$->index=$2->index;
   }
 | Modifiers LocalVariableType VariableDeclaratorList {
     $$= new Node ("LocalVariableDeclaration"); 
@@ -2917,6 +2953,9 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
+
+    $$->start=$3->start;
+    $$->index=$3->index;
 
     }
 ;
