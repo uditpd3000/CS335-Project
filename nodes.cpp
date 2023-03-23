@@ -16,8 +16,6 @@ class Node {
     string lexeme; //}
     string anyName;
     bool isObj;
-    bool isContinue;
-    int continueIndex;
     string which_scope;
     int arrSize = 0;
 
