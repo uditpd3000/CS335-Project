@@ -62,12 +62,12 @@ class second {
     // first fff = new first(0);
     // ruru.tui= 1;
 
-    byte a=1;
-    short b=2;
-    int c=3;
-    long d=4;
-    float e=5;
-    double f=6;
+    // byte a=1;
+    // short b=2;
+    // int c=3;
+    // long d=4;
+    // float e=5;
+    // double f=6;
 
     // e=1*1.1;
     // e=+1.1;
@@ -75,9 +75,26 @@ class second {
     // f++;
     // boolean p = true;
     // p=~p;
-    // while(p){
-    //   // boolean t = true;
+    int i,pp;
+    for(i=0;i<10;i++){
+      
+      for(i=5;i<10;i++){
+      // while(i==1){
+      //   t++;
+      //   if(i<10){
+      //     int j=10;
+      //     continue;
+      //   }
+      //   else break;
+      }
+      pp++;
+
+    }
     // }
+    boolean t=false;
+    int j,k;
+    i = t?j+k:j-k;
+    i++;
     // a=c;
     // a=d;
     // a=e;

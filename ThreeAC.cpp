@@ -328,10 +328,10 @@ class IR{
 
             updateIncompleteJump(quadruple[x]->result,quadruple[x]->result,next);
 
-            return endindex;
+            return quadruple.size()-1;
         }
 
-        int insertFor(int startindex, int endindex, string changeExp, string arg2 ){
+        int insertFor(int mystart, int startindex, int endindex, string changeExp, string arg2 ){
             //  for (i=0;i<10;i++)
             // i=0;
             // L1:
@@ -356,6 +356,7 @@ class IR{
             insertJump(next, endindex+1); // goto next
 
             int x;
+            
             if(startindex>=0) x = makeBlock(startindex); // l1:
             else x = makeBlock(endindex+1);
 
@@ -367,7 +368,9 @@ class IR{
                 insertNextJump(arg2,quadruple[x]->result);
             }
 
-            // updateIncompleteJump(quadruple[x]->result,quadruple[x]->result,next);
+            if(mystart>=0) x = makeBlock(mystart);
+            
+            updateIncompleteJump(quadruple[x]->result,changeExp,next);
     
             return quadruple.size()-1;
         }
