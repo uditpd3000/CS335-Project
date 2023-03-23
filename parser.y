@@ -2965,7 +2965,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // conditional
   Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<=");
+  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
@@ -3011,7 +3011,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
 
   // conditional
   Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<=");
+  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
