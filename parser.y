@@ -1987,6 +1987,8 @@ AdditiveExpression:
       $$->lineno=yylineno;
 
       string myType;
+      // if(global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)!=NULL) $$->type=$1->type;
+
       if($1->var->type==$3->var->type){
         myType=$1->var->type;
       }
@@ -2007,6 +2009,8 @@ AdditiveExpression:
         throwError("Incompatible operand for additive operator of type " +$1->var->type+" & "+$3->var->type +" on line number",yylineno);
       }
 
+      // if(myType=="") $$->type=global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)->ret_type;
+
       $$->var=new Variable("",myType,yylineno,{},"");
       $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
       $$->start = $1->start;
@@ -2025,6 +2029,8 @@ MultiplicativeExpression:
       $$->lineno=yylineno;
 
       string myType;
+      // if(global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)) $$->type=$1->method->ret_type;
+
       if(!global_sym_table->typeCheckHelperLiteral($1->var->type, $3->var->type)){
         // 1->3
         if($1->var->type!=$3->var->type){
@@ -3053,6 +3059,9 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->dims = $2->dims;
   $$->type = $1->type;
   $$->var=$2->var;
+
+  $$->start=$2->start;
+  $$->index=$2->index;
   }
 | newprimtype ArrayCreationExpressionAfterType {
   $$= new Node("ArrayCreationExpression"); 
@@ -3061,6 +3070,9 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->dims = $2->dims;
   $$->type = $1->type;
   $$->var = $2->var;
+
+  $$->start=$2->start;
+  $$->index=$2->index;
   }
 ;
 
@@ -3145,6 +3157,9 @@ ArrayInitializer:
     $$->type = $2->type;
     $$->dims=$2->dims;
     $$->var= $2->var;
+
+    $$->start=$2->start;
+    $$->index=$2->index;
     // $$->var->dimsSize.push_back($2->arrSize);
     // $$->var->isArray=true;
     }
@@ -3162,6 +3177,9 @@ ArrayInitializer:
       $$->dims=$2->dims;
       // $$->var= new Variable("","",yylineno,{},"");
       $$->var= $2->var;
+
+      $$->start=$2->start;
+      $$->index=$2->index;
       }
 ;
 
