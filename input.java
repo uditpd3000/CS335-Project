@@ -65,22 +65,26 @@ class second {
     // f++;
     // boolean p = true;
     // p=~p;
-    int i,t;
-    for(i=0;i<10;i++){
+    // int i,t;
+    // for(i=0;i<10;i++){
       
-      for(i=5;i<10;i++){
-      // while(i==1){
-      //   t++;
-      //   if(i<10){
-      //     int j=10;
-      //     continue;
-      //   }
-      //   else break;
-      }
-      t++;
+    //   for(i=5;i<10;i++){
+    //   // while(i==1){
+    //   //   t++;
+    //   //   if(i<10){
+    //   //     int j=10;
+    //   //     continue;
+    //   //   }
+    //   //   else break;
+    //   }
+    //   t++;
 
+    // // }
     // }
-    }
+    boolean t=false;
+    int i,j,k;
+    i = t?j+k:j-k;
+    i++;
     // a=c;
     // a=d;
     // a=e;
