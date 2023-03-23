@@ -2953,6 +2953,37 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   if($3->variables[0]->dims!=$5->dims-1){
     throwError("Type mismatch: Cannot iterate over "+to_string($5->dims)+" dimensional object using "+to_string($3->dims)+" dimesnional object",$5->lineno);
   }
+
+  if(!mycode->quadruple[$7->start]->isBlock || $7->start!=$7->index) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  mycode->quadruple.pop_back();
+
+  string init,change;
+
+  // for init
+  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+
+  int pp,pp1, ss, ee;
+  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
+
+  $$->index = mycode->makeBlock(pp);
+  init = mycode->getVar($$->index);
+
+  // conditional
+  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+
+  // for changeexp
+  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  $$->index = mycode->makeBlock(ss);
+
+
+  Instruction* myInstruction = mycode->blocks[$7->result];
+  mycode->quadruple.push_back(myInstruction);
+  $$->start = pp;
+  $$->index = mycode->insertFor(pp,ee,ee,mycode->getVar(ss),$7->result);
+
   }
 ;
 
@@ -2967,6 +2998,38 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   if($3->variables[0]->dims!=$5->dims-1){
     throwError("Type mismatch: Cannot iterate over "+to_string($5->dims)+" dimensional object using "+to_string($3->dims)+" dimesnional object",$5->lineno);
   }
+
+
+   if(!mycode->quadruple[$7->start]->isBlock || $7->start!=$7->index) $7->result = mycode->getVar(mycode->makeBlock($7->start));
+  mycode->quadruple.pop_back();
+
+  string init,change;
+
+  // for init
+  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+
+  int pp,pp1, ss, ee;
+  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
+
+  $$->index = mycode->makeBlock(pp);
+  init = mycode->getVar($$->index);
+
+  // conditional
+  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+
+  // for changeexp
+  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  $$->index = mycode->makeBlock(ss);
+
+
+  Instruction* myInstruction = mycode->blocks[$7->result];
+  mycode->quadruple.push_back(myInstruction);
+  $$->start = pp;
+  $$->index = mycode->insertFor(pp,ee,ee,mycode->getVar(ss),$7->result);
+
   }
 ;
 
@@ -3032,6 +3095,7 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
+    $$->var  = $2->variables[0];
     $$->start=$2->start;
     $$->index=$2->index;
   }
@@ -3068,7 +3132,7 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
-
+    $$->var  = $2->variables[0];
     $$->start=$3->start;
     $$->index=$3->index;
 

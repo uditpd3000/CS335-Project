@@ -232,6 +232,23 @@ class GlobalSymbolTable {
         }
         return NULL;
     }
+    string getScope(string s,string scope, int pp=0){
+        SymbolTable* curr = linkmap[scope];
+
+        while(curr->parent!=NULL){
+            for(int i=0; i<curr->vars.size();i++){
+                if(curr->vars[i]->name==s)return curr->scope;
+            }
+            
+            curr=curr->parent;
+        }
+
+        if(pp){
+            cout<<"Error: Variable " << s << " is not declared in this scope"<<endl;
+            exit(1);
+        }
+        return "";
+    }
 
     string lookup_var_get_scope(string s, int pp, string scope){
 

@@ -422,12 +422,12 @@ class IR{
             return quadruple.size()-1;
         }
 
-        int insertGetFromSymTable(string classs, string offset, string res){
+        int insertGetFromSymTable(string classs, string name, string res){
             SymbolTableOffset* instr = new SymbolTableOffset();
             if(res=="")instr->result=getLocalVar();
             else instr->result = res;
             instr->classname = classs;
-            instr->offset = offset;
+            instr->offset = name;
             
             return insert(instr);
         }
