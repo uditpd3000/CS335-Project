@@ -379,24 +379,19 @@ class GlobalSymbolTable {
             tablemap[i]->print_table_CSV();
         }
     }
-
-    bool finalCheck(string symbol){
-        int flag=0;
-        for(auto x:lookup_var(symbol,0,current_scope)->modifiers){
+    void finalCheck(string symbol,string scope,int myLineno){
+        Variable* var_=lookup_var(symbol,0,scope);
+        for(auto x:var_->modifiers){
             if(x=="final"){
-                flag=1; 
+                throwError("Error : Changing value of final variable "+symbol,myLineno);
             }
         }
-        if(flag==1){
-            cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
-            if(lookup_var(symbol,0,current_scope)->value!=""){
-                cout<<"    harshitxyz    ";
-                throwError("Error: cannot change value of final type :"+symbol,yylineno);
-                return false;
-            }
-        }
-        return true;
+        
     }
+    void staticCheck(string symbol){
+        
+    }
+
     bool typeCheckHelperLiteral(string s1,string s2){
         map<string,vector<string>> check_map;
         vector<string> byte_conversion{"byte","short","int","long","float","double"};
@@ -444,7 +439,7 @@ class GlobalSymbolTable {
         Variable* v2 = lookup_var(s2,1,current_scope);
         // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("a  Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
             else cout<<"     hello a     "<<endl;
         }
         return true;   
@@ -452,7 +447,7 @@ class GlobalSymbolTable {
     bool typeCheckVar(Variable* v1, Variable* v2,int myLineno){
         // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
-            if(typeCheckHelper(v2->type,v1->type)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
+            if(typeCheckHelper(v2->type,v1->type)) throwError("b  Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
             else cout<<"     hello b     "<<endl;
         }
         return true;   
@@ -460,7 +455,10 @@ class GlobalSymbolTable {
     bool typeCheckVar(Variable* v1, string myType,int myLineno){
         // if(v1->type == "int"&& myType == "long")return true;
         if(v1->type!=myType){
-            if(typeCheckHelperLiteral(v1->type,myType)) throwError("Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            if(typeCheckHelperLiteral(v1->type,myType)){
+                cout<<myType<<"      "<<v1->type<<"     " << v1->modifiers.size()<<endl;
+                throwError("c  Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
+            }
             else cout<<"     hello c     "<<endl;
         }
         return true;   

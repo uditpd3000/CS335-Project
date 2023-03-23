@@ -1290,7 +1290,7 @@ Assignment:
     $$->result = $1->result;
 
     // cout<<"dukh\n"; mycode->print(); exit(1);
-    // global_sym_table->finalCheck($1)
+    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
     }
 ;
 
@@ -1314,6 +1314,11 @@ Primary dot Identifier              {
     $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
     $$->result = mycode->getVar($$->index);
   }
+  // else if($1->type!="Method"){
+  //   $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
+  //   $$->type = $$->var->type;
+  //   $$->scope=$$->var->scope;
+  // }
   
 
 
@@ -2046,14 +2051,18 @@ PreIncrDecrExpression:
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
+      global_sym_table->finalCheck($2->var->name,global_sym_table->current_scope,yylineno);
+
       string x="1";
-        if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
-          throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
-        }
-        else if("int"!=$2->var->type){
-          int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
-          x = mycode->getVar(p);
-        }
+      if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
+        throwError("Incompatible operator + with operand of type "+ $2->var->type,yylineno);
+      }
+      else if("int"!=$2->var->type){
+        int p = mycode->insertAss("",x,"cast_to_"+$2->var->type);
+        x = mycode->getVar(p);
+      }
+      
+
       
       mycode->insertAss($2->result,"1",zz+$2->var->type,$2->result);
       $$->start = $2->index;
@@ -2095,6 +2104,8 @@ PostIncrDecrExpression:
     string zz = "";
     zz+=$2[0];
     $$->start = $1->index;
+
+    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
 
     string x="1";
     if(global_sym_table->typeCheckHelperLiteral("int", $1->var->type)){
@@ -2587,7 +2598,7 @@ Identifier colon Statement                                                    {
   $$->add(v);
 
   $$->index = mycode->makeBlock($3->start,t1);
-  $$->start = $$->index;
+  $$->start=$$->index;
   $$->result = t1;
   }
 ;
