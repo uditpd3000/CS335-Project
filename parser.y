@@ -907,6 +907,7 @@ FieldDeclaration:
         Variable* varr = new Variable(i->name,$1->method->ret_type,$1->method->modifiers,yylineno,true,i->dims,i->dimsSize,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName = i->objName;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         
@@ -927,6 +928,7 @@ FieldDeclaration:
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName = i->objName;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         cout<<varr->name<<"---- "<<varr->classs_name<<endl;
@@ -1034,6 +1036,8 @@ VariableDeclarator:
     }
 
     $$->var = new Variable($1,$3->type,yylineno,{},$3->var->value);
+    $$->var->objName = $3->objOffset;
+    cout<<",,,,"<<$$->var->objName<<endl;
     if($3->isObj){$$->var->classs_name = $3->anyName;cout<<"gaja6b"<<$$->var->classs_name;}
     $$->dims=$3->dims;
 
@@ -1043,6 +1047,7 @@ VariableDeclarator:
 
     $$->start=$3->start;
     $$->index=$3->index;
+    // $$->objOffset = $3->objOffset;
 
   }
 | Identifier Dims assign VariableInitializer {                        // Change change
@@ -1074,6 +1079,7 @@ VariableInitializer:
     $$->anyName = $1->anyName;
     $$->dims = $1->dims;
     $$->result = $1->result;
+    $$->objOffset = $1->objOffset;
     cout<<"$$$$"<<$$->anyName<<endl;
     // mycode->print();
     // cout<<"$"<<$1->result<<"\n";
@@ -1307,12 +1313,15 @@ Primary dot Identifier              {
   string t1=$2,t2=$3;
   vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};
   $$->add(v);
+  cout<<"---11--1--1";
   if($1->type=="Class"){
     $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
     $$->type = $$->var->type;
-    int t3 = mycode->insertGetFromSymTable($1->anyName,to_string($$->var->offset),"");
+    int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"");
+    // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
     $$->result = mycode->getVar($$->index);
+    $$->dims = $$->var->dims;
   }
   // else if($1->type!="Method"){
   //   $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
@@ -1453,6 +1462,7 @@ TypeName:
     Class* cls = global_sym_table->lookup_class($1,0,global_sym_table->current_scope);
     Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
     Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
+    $$->result = $1;
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
       if(cls->inherited==true){
@@ -1489,6 +1499,11 @@ TypeName:
           }
         }
       }
+      // cout<<"+++++---"<<var->name<<endl;
+      if(var->objName!=""){
+        $$->objOffset = var->objName;
+        // cout<<"//0987"<<endl;
+      }
       $$->var = var;
       $$->type = var->type;
       $$->anyName = var->classs_name;
@@ -1503,7 +1518,7 @@ TypeName:
       throwError("Variable "+t1 + " not declared in appropriate scope",yylineno);
     }
 
-    $$->result = $1;
+    
     $$->index = mycode->quadruple.size();
     
     // exit(1);
@@ -1555,8 +1570,9 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
-      int t3 = mycode->insertGetFromSymTable($1->anyName,to_string(var->offset),"");
-      $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),to_string(0),"");
+      int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"");
+      int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
+      $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
       $$->result = mycode->getVar($$->index);
     }
     else {
@@ -1601,7 +1617,7 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string(v1->offset),"");
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"");
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
@@ -1620,6 +1636,7 @@ ArrayAccess:
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t4],t4),$5,new Node(mymap[t6],t6)};
     $$->add(v);
     // exit(1);
+    $$->objOffset=$1->objOffset;
 
     Variable* v1 = global_sym_table->lookup_var($3,1,$1->anyName);
     if(v1->inherited==true){
@@ -1651,8 +1668,10 @@ ArrayAccess:
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*",t1);
         cout<<"$1->anyname"<<$1->anyName<<endl;
-        int t3 = mycode->insertGetFromSymTable($1->anyName,to_string(v1->offset),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"");
+        int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
+        cout<<"dhappa\n";
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
       
@@ -1694,8 +1713,14 @@ ArrayAccess:
       if($1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,to_string($1->var->offset),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"");
+        if($1->objOffset!=""){
+          int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
+          $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
+        }
+        else {
+          $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        }
         $$->result = mycode->getVar($$->index);
       }
 
@@ -2373,6 +2398,7 @@ UnqualifiedClassInstanceCreationExpression:
     mycode->InsertTwoWordInstr("\tparam",z);
     mycode->InsertTwoWordInstr("\tallocmem","1");
     string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+    $$->objOffset = zz;
     mycode->InsertTwoWordInstr("\tparam",zz);
     cout<<"INSERTING"<<$4->resList.size();
     $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true);
@@ -2948,6 +2974,8 @@ LocalVariableType VariableDeclaratorList {
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->dimsSize,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName=i->objName;
+        cout<<"::::"<<varr->objName<<endl;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
@@ -2966,6 +2994,8 @@ LocalVariableType VariableDeclaratorList {
         Variable* varr = new Variable(i->name,$1->type,yylineno,{},i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName=i->objName;
+        cout<<"objjnn"<<varr->name<<" "<<varr->objName<<endl;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
@@ -2989,6 +3019,7 @@ LocalVariableType VariableDeclaratorList {
         Variable* varr = new Variable(i->name,$2->type,$1->var->modifiers,yylineno,true,i->dims,i->dimsSize,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName = i->objName;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         
@@ -3001,6 +3032,7 @@ LocalVariableType VariableDeclaratorList {
         Variable* varr = new Variable(i->name,$2->type,yylineno,$1->var->modifiers,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
+        varr->objName=i->objName;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
       }
