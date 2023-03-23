@@ -19,7 +19,7 @@ class first
           return cnt*c;
       }
       first(int zz){
-        this.tui = zz;
+        this.Count(0, 1, 2);
       }
 
       public void sum(){
@@ -38,7 +38,8 @@ class first
           // int xxx = 2+3;
           int res = Count( i, j,k);
           first fff = new first(0);
-          first.sum();
+          fff.tui = 1;
+          // first.sum();
           // int res = Count(i, j, k);
 
           // print(res);
@@ -52,8 +53,11 @@ class second {
     // zzzzzzzzzzz = tt;
     // int rrr = Count(0, 0, 0);
     first ruru = new first(1);
+    // second tutu = new first(2);
+    // ruru.tui = 1;
     ruru.xza[4][2]=1+2;
     ruru.zzzzzzzzzzz = tt;
+    // ruru.Count(1,1,1);
 
     // first fff = new first(0);
     // ruru.tui= 1;

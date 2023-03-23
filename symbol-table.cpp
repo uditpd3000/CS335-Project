@@ -295,6 +295,16 @@ class GlobalSymbolTable {
 
     }
 
+    string get_current_class(){
+        SymbolTable* curr = current_symbol_table;
+        while(curr->isClass==false){
+            curr=curr->parent;
+        }
+        return curr->scope;
+
+
+    }
+
     SymbolTable* makeTable(string scope){
 
         // SymbolTable* nnn = current_symbol_table

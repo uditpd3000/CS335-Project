@@ -195,6 +195,7 @@ ClassDeclaration:
     Class* classs =  new Class($2,mod,yylineno);
     global_sym_table->insert(classs);
     global_sym_table->makeTable($2);
+    global_sym_table->current_symbol_table->isClass=true;
     mycode->makeBlock(mycode->quadruple.size(),$2);
   } 
   ClassDecTillTypeParameters {
@@ -560,10 +561,12 @@ Modifiers UnannType {
   $$->add($1); 
   $$->add($2);
   $$->method = new Method("",$2->type,{},$1->var->modifiers,yylineno);
+  $$->anyName = $2->anyName;
   }
 | UnannType {$$=new Node(); 
   $$->add($1); 
   $$->method = new Method("",$1->type,{},{},yylineno);
+  $$->anyName = $1->anyName;
   }
 ;
 
@@ -873,6 +876,8 @@ FieldDeclaration:
     vector<Node*>v{$2,new Node(mymap[t1],t1)}; 
     $$->add(v);
     for(auto i:$2->variables){
+
+      cout<<"uuu"<<i->classs_name<<endl;
       if(i->isArray){
         if(i->type!=""){
           cout<<"MEko daanti\n";
@@ -889,8 +894,14 @@ FieldDeclaration:
       }
       else{
         cout<<"Meko daanti\n";
+        if(i->classs_name!=""){
+          if(i->classs_name!=$1->anyName){
+            throwError("Type error: Cannot convert from "+i->classs_name+" to "+$1->anyName,yylineno);
+          }
+        }
         if(i->type!=""){
-          cout<<i->type<<endl;
+          cout<<i->type;
+          cout<<"```````";
           global_sym_table->typeCheckVar(i,$1->method->ret_type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->method->ret_type,yylineno,$1->method->modifiers,i->value);
@@ -939,7 +950,7 @@ VariableDeclaratorList:
     $$= new Node("VariableDeclaratorList"); 
     $$->add($1); 
     $$->variables.push_back($1->var);
-    // cout<<"hi-- "<<$1->var->name<<" ";
+    // cout<<"hi-[]"<<$1->var->classs_name<<" ";
     }
 | VariableDeclaratorList comma VariableDeclarator { 
     $$=$1; 
@@ -961,6 +972,7 @@ UnannType:
     $$->add($1); 
     $$->type = $1->type;
     $$->dims = $1->dims;
+    $$->anyName = $1->anyName;
     }
 ;
 
@@ -991,7 +1003,7 @@ VariableDeclarator:
     }
 
     $$->var = new Variable($1,$3->type,yylineno,{},$3->var->value);
-    if($3->isObj)$$->var->classs_name = $3->anyName;
+    if($3->isObj){$$->var->classs_name = $3->anyName;cout<<"gaja6b"<<$$->var->classs_name;}
     $$->dims=$3->dims;
 
     cout<<$3->result<<endl;
@@ -1026,7 +1038,7 @@ VariableInitializer:
     $$->anyName = $1->anyName;
     $$->dims = $1->dims;
     $$->result = $1->result;
-    cout<<"$$\n";
+    cout<<"$$$$"<<$$->anyName<<endl;
     // mycode->print();
     // cout<<"$"<<$1->result<<"\n";
   } // $$->add($1);
@@ -1458,13 +1470,14 @@ TypeName:
     Class* cls = global_sym_table->lookup_class($3,0,$1->anyName);
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
     Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
+    string cur_class = global_sym_table->get_current_class();
     $$->result = $3;
     $$->index = mycode->quadruple.size();
     if(cls!=NULL){
       if(cls->inherited==true){
         for(auto mod: cls->modifiers){
           if(mod=="private"){
-            throwError("Variable "+ t2 +" is of private access",yylineno);
+            throwError("Class "+ t2 +" is of private access",yylineno);
           }
         }
       }
@@ -1474,10 +1487,11 @@ TypeName:
 
     }
     else if(met !=NULL){
-      if(met->inherited==true){
+      cout<<"1488\n";
+      if(met->inherited==true||cur_class!=$1->anyName){
         for(auto mod: met->modifiers){
           if(mod=="private"){
-            throwError("Variable "+ t2 +" is of private access",yylineno);
+            throwError("Method "+ t2 +" is of private access",yylineno);
           }
         }
       }
@@ -1485,7 +1499,7 @@ TypeName:
       $$->type = met->ret_type;
     }
     else if(var!=NULL){
-      if(var->inherited==true){
+      if(var->inherited==true || cur_class!=$1->anyName){
         for(auto mod: var->modifiers){
           if(mod=="private"){
             throwError("Variable "+ t2 +" is of private access",yylineno);
@@ -1501,10 +1515,7 @@ TypeName:
     }
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
-    }
-
-  
-    
+    } 
   }
 ;
 
@@ -1703,6 +1714,7 @@ ClassLiteral:
 ConditionalExpression:
     ConditionalOrExpression                                               {
           $$=$1;
+          cout<<"nottt"<<$1->anyName<<endl;
       }
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
       // $$ = new Node("ConditionalExpression");
@@ -2266,7 +2278,7 @@ MethodInvocation:
 ; 
 
 MethodIncovationStart:
-  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start;}
+  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start;cout<<"typenamedot";}
 | super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); $$->start = mycode->quadruple.size(); }
 | TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); $$->start = $1->start;}
 ;
@@ -2294,6 +2306,7 @@ UnqualifiedClassInstanceCreationExpression:
     $$->cls = $2->cls;
     $$->type = "Class";
     $$->anyName=$2->cls->name;
+    cout<<"notsogajab"<<$$->anyName<<endl;
 
     int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
     string z = mycode->getVar(ind);
@@ -2322,9 +2335,20 @@ ClassOrInterfaceTypeToInstantiate:
     $$=(new Node(mymap[t1],t1));
      
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
+    string curr_cls = global_sym_table->get_current_class();
+    if(curr_cls!=$$->cls->name){
+      for(auto method: global_sym_table->linkmap[$$->cls->name]->methods){
+        if(method->name==$$->cls->name){
+          for(auto mod: method->modifiers){
+            if(mod=="private"){
+              throwError("Constructor of "+method->name+ " is of private access type",yylineno);
+            }
+          }
+        }
+      }
+    }
     $$->type = "Class";
     $$->result = $1;
-    cout<<$$->cls->name<<"bana";
     
 
   }
@@ -2344,7 +2368,7 @@ ClassOrInterfaceType2:
 ;
 
 Statement:
-StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start; $$->isContinue = $1->isContinue;$$->continueIndex = $1->continueIndex;cout<<"??"<<$$->isContinue<<" \n";}
+StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start; $$->isContinue = $1->isContinue;$$->continueIndex = $1->continueIndex;}
 | LabeledStatement                       {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenStatement                        {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
 | IfThenElseStatement                    {$$= new Node("Statement");$$->add($1); $$->result =$1->result; $$->index = $1->index; $$->start = $1->start;}
@@ -2372,7 +2396,6 @@ StatementWithoutTrailingSubstatement:
     $$->result = $2->result;
     $$->index = $2->index;
     $$->start = $2->start;
-      cout<<"Blockkkk\n";
   }
 | semi_colon                    { string t1 = $1; $$=new Node(mymap[t1],$1);}
 | ExpressionStatement           {$$=$1;}
@@ -2464,7 +2487,6 @@ RETURN  semi_colon                         {
   while(parentTable->isMethod==false && parentTable->parent!=NULL){
     parentTable = parentTable->parent;
   }
-  cout<<"----\n";
   string methodName= parentTable->scope;
   parentTable = parentTable->parent;
   methodName= methodName.substr(parentTable->scope.length()+1,methodName.length() -(parentTable->scope.length()));
@@ -2636,7 +2658,6 @@ BasicForStatementStart Statement                                       {
 
   if(!mycode->quadruple[$2->start]->isBlock) $2->result = mycode->getVar(mycode->makeBlock($2->start));
   $$->index = mycode->insertFor($1->start,$1->index,$1->result, $2->result);
-  cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
 
   }
@@ -2824,11 +2845,9 @@ WHILE brac_open Expression brac_close Statement {
 
 
   $$->start = $3->start;
-  cout<<$3->index<<"---"<<$5->index<<endl;;
   if(!mycode->quadruple[$5->start]->isBlock) $5->result = mycode->getVar(mycode->makeBlock($5->start));
   $$->index = mycode->insertWhile($3->start,$5->start-1,$3->result,$5->result);
   $$->result = mycode->getVar($3->start);
-  cout<<$$->result<<"RESSSSs\n";
   }
 ;
 
@@ -2839,28 +2858,27 @@ LocalVariableType VariableDeclaratorList {
   $$->add($2);
   $$->type = $1->type;
   $$->dims = $1->dims+ $2->dims;
-  cout<<"Whyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy";
-  cout<<"hurrah"<<$$->dims<<endl;
   for(auto i:$2->variables){
       if(i->isArray){
         if(i->type!=""){
-          cout<<"---iswaleme\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
-        cout<<i->dimsSize.size()<<"sizeeee";
         Variable* varr = new Variable(i->name,$1->type,{},yylineno,true,i->dims,i->dimsSize,i->value);
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
-        cout<<varr->name<<"-- "<<varr->classs_name<<endl;
         
       }
       else{
-        
+
+        if(i->classs_name!=""){
+          if(i->classs_name!=$1->anyName){
+            throwError("Type error: Cannot convert from "+i->classs_name+" to "+$1->anyName,yylineno);
+          }
+        }
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$1->type,yylineno);
         }
         Variable* varr = new Variable(i->name,$1->type,yylineno,{},i->value);
@@ -2869,7 +2887,6 @@ LocalVariableType VariableDeclaratorList {
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         $$->variables.push_back(varr);
-        cout<<varr->name<<"-- "<<varr->classs_name<<endl;
       }
 
     }
@@ -2882,7 +2899,6 @@ LocalVariableType VariableDeclaratorList {
     for(auto i:$3->variables){
       if(i->isArray){
         if(i->type!=""){
-          // cout<<"MEko daanti\n";
           global_sym_table->typeCheckVar(i,$2->type,yylineno);
         }
         
@@ -2926,7 +2942,6 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->dims = $2->dims;
   $$->type = $1->type;
   $$->var = $2->var;
-  // cout<<"yyy"<<$$->type<<endl;
   }
 ;
 
@@ -2944,7 +2959,6 @@ DimExprs { $$=$1; }
     $$->add($1);
     $$->add($2);
     if($1->var->dims!=$2->var->dimsSize.size()){
-      cout<<$1->var->dims<<" "<<$2->var->dimsSize.size();
       throwError("Dimensions unmatched",yylineno);
     }
     $$->dims = $1->var->dims;
@@ -2980,7 +2994,6 @@ DimExprs:
     $$->add($2);
     $$->dims++;
     $$->var->dimsSize.push_back($2->var->dimsSize[0]);
-    cout<<$$->var->dimsSize.size()<<"LKJKLJKL";
     }
 ;
 
@@ -2996,7 +3009,6 @@ box_open Expression box_close  {
      throwError("Array cannot be initialized using "+$2->type+"as index",yylineno);
   }
   vector<int> ss;
-  cout<<$2->var->value<<"lexeme"<<endl;
   ss.push_back((int)stoi($2->var->value));
   $$->var = new Variable("","",{},yylineno,true,1,ss,$2->var->value);
   $$->dims=1;
@@ -3014,7 +3026,6 @@ ArrayInitializer:
     $$->type = $2->type;
     $$->dims=$2->dims;
     $$->var= $2->var;
-    cout<<"arrsize:"<<$2->arrSize<<endl;
     // $$->var->dimsSize.push_back($2->arrSize);
     // $$->var->isArray=true;
     }
