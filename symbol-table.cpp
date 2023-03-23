@@ -370,31 +370,40 @@ class GlobalSymbolTable {
         }
     }
 
-    bool finalCheck(string symbol){
-        int flag=0;
-        for(auto x:lookup_var(symbol,0,current_scope)->modifiers){
+    // bool finalCheck(string symbol){
+    //     int flag=0;
+    //     for(auto x:lookup_var(symbol,0,current_scope)->modifiers){
+    //         if(x=="final"){
+    //             flag=1; 
+    //         }
+    //     }
+    //     if(flag==1){
+    //         // cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
+    //         if(lookup_var(symbol,0,current_scope)->value!=""){
+    //             // cout<<"    harshitxyz    ";
+    //             throwError("Error: cannot change value of final type :"+symbol,yylineno);
+    //             return false;
+    //         }
+    //     }
+    //     return true;
+    // }
+    void finalCheck(string symbol,string scope,int myLineno){
+        Variable* var_=lookup_var(symbol,0,scope);
+        for(auto x:var_->modifiers){
             if(x=="final"){
-                flag=1; 
+                throwError("Error : Changing value of final variable "+symbol,myLineno);
             }
         }
-        if(flag==1){
-            // cout<<"  harshit    "<<lookup_var(symbol,0,current_scope)->value<<yylineno;
-            if(lookup_var(symbol,0,current_scope)->value!=""){
-                // cout<<"    harshitxyz    ";
-                throwError("Error: cannot change value of final type :"+symbol,yylineno);
-                return false;
-            }
-        }
-        return true;
+        
     }
     bool typeCheckHelperLiteral(string s1,string s2){
         map<string,vector<string>> check_map;
-        vector<string> byte_conversion{"short","int","long","float","double"};
-        vector<string>short_conversion{"int","long","float","double"};
-        vector<string>int_conversion{"long","float","double","short","byte"};
-        vector<string>long_conversion{"float","double"};
-        vector<string>float_conversion{"double"};
-        vector<string>double_conversion{"float"};
+        vector<string> byte_conversion{"byte","short","int","long","float","double"};
+        vector<string>short_conversion{"short","int","long","float","double"};
+        vector<string>int_conversion{"int","long","float","double","short","byte"};
+        vector<string>long_conversion{"long","float","double"};
+        vector<string>float_conversion{"float","double"};
+        vector<string>double_conversion{"double","float"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
@@ -411,11 +420,11 @@ class GlobalSymbolTable {
 
     bool typeCheckHelper(string s1,string s2){
         map<string,vector<string>> check_map;
-        vector<string> byte_conversion{"short","int","long","float","double"};
-        vector<string>short_conversion{"int","long","float","double"};
-        vector<string>int_conversion{"long","float","double"};
-        vector<string>long_conversion{"float","double"};
-        vector<string>float_conversion{"double"};
+        vector<string> byte_conversion{"short","byte","int","long","float","double"};
+        vector<string>short_conversion{"int","short","long","float","double"};
+        vector<string>int_conversion{"long","int","float","double"};
+        vector<string>long_conversion{"float","long","double"};
+        vector<string>float_conversion{"float","double"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
