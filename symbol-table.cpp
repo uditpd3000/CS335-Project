@@ -35,7 +35,6 @@ class Variable{
         dims=0;
         if(typeToSize.find(mytype)!=typeToSize.end()){
             size = typeToSize[mytype];
-            cout<<myname<<"---------------------------------------------------------------"<<size<<"\n";
             
         }
 
@@ -52,7 +51,6 @@ class Variable{
         if(typeToSize.find(mytype)!=typeToSize.end()){
             int size1= typeToSize[mytype];
             if(dimsSize.size()!=0){    
-                cout<<dimsSize.size()<<"sizeeeeeeeeeeeeeeeeeeeeeee\n";
                 for (int i=0;i<dimsSize.size();i++){
                     size1*=dimsSize[dimsSize.size()-1-i];
                 }
@@ -71,6 +69,8 @@ class Method{
     vector<Variable*> parameters ; 
     vector<string> modifiers;
     int lineNo;
+    int size;
+    int offset;
     bool ifConstructor = false;
     bool inherited;
 
@@ -80,6 +80,7 @@ class Method{
         parameters = myparameters;
         modifiers = mymodifiers;
         lineNo = mylineNo;
+        size = 4;
     }
 
 
@@ -92,6 +93,8 @@ class Class{
     int lineNo;
     int scope_count;
     bool inherited;
+    int size;
+    int offset;
     Class(string myname, vector<string> mymodifiers, int mylineNo){
         name = myname;
         modifiers = mymodifiers;
@@ -170,13 +173,11 @@ class SymbolTable {
 
     void print_table_CSV(){
         std::ofstream myfile;
-        string fileName="output/"+scope+".csv";
+        string fileName="output/symTables/"+scope+".csv";
         myfile.open (fileName);
         myfile<<"Token,Symbol,Type,isArray,dims,LineNo,Size,offset\n";
-        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";
-        if(i->dimsSize.size()!=0)for(auto jj:i->dimsSize)cout<<jj<<" ";}
-        for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<"\n";}
-        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<"\n";}
+        for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
+        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<i->size<<","<<i->offset<<"\n";}
         myfile.close();
     }
 };
@@ -195,7 +196,7 @@ class GlobalSymbolTable {
 
     GlobalSymbolTable(){
 
-        current_scope="Yayyy";
+        current_scope="Global";
         SymbolTable* initial = new SymbolTable(NULL, current_scope, scope_count++);
         tablemap[scope_count-1]=initial;
         linkmap[current_scope]= initial;
@@ -458,7 +459,6 @@ class GlobalSymbolTable {
         // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
             if(typeCheckHelper(v2->type,v1->type)) throwError("a  Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
-            else cout<<"     hello a     "<<endl;
         }
         return true;   
     }
@@ -466,7 +466,6 @@ class GlobalSymbolTable {
         // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
             if(typeCheckHelper(v2->type,v1->type)) throwError("b  Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);
-            else cout<<"     hello b     "<<endl;
         }
         return true;   
     }
@@ -474,10 +473,8 @@ class GlobalSymbolTable {
         // if(v1->type == "int"&& myType == "long")return true;
         if(v1->type!=myType){
             if(typeCheckHelperLiteral(v1->type,myType)){
-                cout<<myType<<"      "<<v1->type<<"     " << v1->modifiers.size()<<endl;
                 throwError("c  Type mismatch: "+v1->type+" cannot be converted to "+myType,myLineno);
             }
-            else cout<<"     hello c     "<<endl;
         }
         return true;   
     }

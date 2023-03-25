@@ -136,7 +136,7 @@ class SymbolTableOffset: public Instruction{
         string offset;
 
         string print(){
-            string s="\t"+result+" := SymTable( "+classname+" , "+offset+")";
+            string s="\t"+result+" := getFromSymTable( "+classname+" , "+offset+")";
             return s;
         }
 };
@@ -147,7 +147,7 @@ class PointerAssignment: public Instruction{
         string offset;
 
         string print(){
-            string s="\t"+result+" :=  *("+start+" + "+offset+")";
+            string s="\t"+result+" :=  *("+start+" +int "+offset+")";
             return s;
         }
 };
@@ -280,9 +280,7 @@ class IR{
 
             Instruction* myJump= myInstruction;
 
-            // cout<<arg1<<"uuuuuuuuuuuuu"<<blocks[arg1]->codes.size()<<endl;
             blocks[arg1]->codes.push_back(myJump);
-            // cout<<arg1<<"uuuuuuuuuuuuu"<<blocks[arg1]->codes.size()<<endl;
 
             if(blocks.find(jumphere)==blocks.end()){
                 Block* myBlock = new Block();
@@ -390,7 +388,6 @@ class IR{
             TwoWordInstr* print = new TwoWordInstr();
             print->arg1 = instr;
             print->arg2 = arg2;
-            cout<<instr<<";;;\n";
             return insert(print);
         }
 
@@ -466,7 +463,6 @@ class IR{
                     myJump->arg2=arg2;
 
                     blocks[currBlock]->codes[i]=myJump;
-                    // cout<<x->print()<<"\nmyjump\n"<<myJump->print();
                 }
                 i++;
             }
@@ -507,10 +503,11 @@ class IR{
         }
 
         void print(){
+            ofstream tacout;
+            tacout.open("output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
-                // cout<<i<<": ";
-                cout<<quadruple[i]->print();
-                cout<<endl;
+                tacout<<quadruple[i]->print();
+                tacout<<endl;
             }
         }
 };
