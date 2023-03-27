@@ -10,7 +10,6 @@
 *.yy.cc
 *.txt
 a.out
-*.java
 *.out
 *.output
 *.dot
