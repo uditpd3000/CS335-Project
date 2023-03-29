@@ -1,8 +1,8 @@
 TARGET = myASTgenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
-ThreeAddCode = output/ThreeAddressCode.txt
-output=output/graph.dot
+ThreeAddCode = ../output/ThreeAddressCode.txt
+output=../output/graph.dot
 
 default: help
 
@@ -38,16 +38,16 @@ verbose: # run the executable in verbose like `make run input=filepath output=do
 
 .PHONY: graph
 graph: # to show dot file
-	@cat graph.dot
+	@cat $(output)
 
 .PHONY: ThreeAC
 ThreeAC: # to show Three Address Code
-	@cat output/ThreeAddressCode.txt
+	@cat ../output/ThreeAddressCode.txt
 
 .PHONY: clean
 clean : # clean up the generated files
 	@echo "cleaning up...\n"
-	@rm -f $(TARGET) $(SRCS) parser.output graph.dot 2> error.txt
-	@rm output/symTables/*.csv 2> error.txt
-	@rm $(ThreeAddCode) 2> error.txt
-	@rm $(output) 2> error.txt
+	@rm $(TARGET) $(SRCS)
+	@rm ../output/symTables/*.csv
+	@rm $(ThreeAddCode)
+	@rm $(output)

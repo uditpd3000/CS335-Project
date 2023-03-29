@@ -504,7 +504,7 @@ class IR{
 
         void print(){
             ofstream tacout;
-            tacout.open("output/ThreeAddressCode.txt");
+            tacout.open("../output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
                 tacout<<quadruple[i]->print();
                 tacout<<endl;

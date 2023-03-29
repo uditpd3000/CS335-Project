@@ -24,6 +24,7 @@ int num=0;
 int indd=0;
 vector<string> arrayRowMajor;
 
+string sourceFile;
 ofstream fout;
 ofstream vout;
 
@@ -1262,22 +1263,28 @@ Assignment:
     $$=new Node("Assignment");
     vector<Node*>v{$1,$2,$3};
     $$->add(v);
-    if($1->type!=$3->type){
-      if(global_sym_table->typeCheckHelperLiteral($3->type,$1->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if(($1->type=="byte" || $1->type=="short") && $3->type=="int") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if($1->type=="float" && $3->type=="double") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-    }
+
     if($1->dims!=$3->dims){
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
       
     }
+
+    if($1->type!=$3->type){
+      if(!global_sym_table->typeCheckHelper($3->type, $1->type)){
+        int p = mycode->insertAss("",$3->result,"cast_to_"+$1->type);
+        $3->result = mycode->getVar(p);
+      }
+      else {
+        throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
+      }
+    }
+
     $$->type=$1->type;
     $$->var = $3->var;
     string x = "";
     x+=($2->lexeme)[0];
-    // cout<<$1->result<<"gayab??"
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
-    else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
+    else $$->index = mycode->insertAss($3->result,$1->result,x+$1->type,$1->result);
     if($1->start) $$->start = $1->start;
     else $$->start = $3->start;
     $$->result = $1->result;
@@ -1796,6 +1803,7 @@ ConditionalExpression:
 
       $$->result=mycode->insertTernary($3->start-1,$1->result,$3->result,$5->result);
       $$->index = mycode->quadruple.size()-1;
+
       
       }
     ;
@@ -1814,6 +1822,10 @@ ConditionalOrExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
       }
 ;
 
@@ -1830,6 +1842,10 @@ ConditionalAndExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1846,6 +1862,10 @@ InclusiveOrExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1863,6 +1883,10 @@ ExclusiveOrExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1880,6 +1904,10 @@ AndExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
     }
     ;
 
@@ -1915,6 +1943,10 @@ EqualityExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
 
       }
     ;
@@ -1969,6 +2001,8 @@ AdditiveExpression:
       $$->lineno=yylineno;
 
       string myType;
+      // if(global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)!=NULL) $$->type=$1->type;
+
       if($1->var->type==$3->var->type){
         myType=$1->var->type;
       }
@@ -1986,6 +2020,13 @@ AdditiveExpression:
       else {
         throwError("Incompatible operand for additive operator of type " +$1->var->type+" & "+$3->var->type +" on line number",yylineno);
       }
+
+      
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
+      // if(myType=="") $$->type=global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)->ret_type;
 
       $$->var=new Variable("",myType,yylineno,{},"");
       $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
@@ -2005,6 +2046,8 @@ MultiplicativeExpression:
       $$->lineno=yylineno;
 
       string myType;
+      // if(global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)) $$->type=$1->method->ret_type;
+
       if(!global_sym_table->typeCheckHelperLiteral($1->var->type, $3->var->type)){
         // 1->3
         if($1->var->type!=$3->var->type){
@@ -2023,6 +2066,10 @@ MultiplicativeExpression:
       else {
         throwError("Incompatible operand for multiplicative operator of type " +$1->var->type +" & "+$3->var->type + " on line number",yylineno);
       }
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
 
       $$->var=new Variable("",myType,yylineno,{},"");
       $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
@@ -2194,13 +2241,11 @@ MethodInvocation:
       method = $1->method;
     }
     if(method->parameters.size()!=$3->variables.size()){
-      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$3->variables.size()<<endl;
-      exit(1);
+      throwError("Error: Expected number of arguments: "+to_string(method->parameters.size())+" Found: "+to_string($3->variables.size()),yylineno);
     }
     for(int i=0;i<method->parameters.size();i++){
       if(method->parameters[i]->type!=$3->variables[i]->type){
-        cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$3->variables[i]->type<<endl;
-        exit(1);
+        throwError("TypeError: Expected type of argument["+to_string(i+1)+"] : "+method->parameters[i]->type + ", Found: " + $3->variables[i]->type,yylineno);
       }
     }
     $$->type= method->ret_type;
@@ -3319,6 +3364,7 @@ int main(int argc, char *argv[])
 	{
 		set_input_file(argv[1]);
     fout.open(argv[2]);
+    sourceFile = argv[1];
 	}
   else{
     fout.open("graph.dot");

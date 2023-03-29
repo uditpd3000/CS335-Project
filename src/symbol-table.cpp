@@ -4,6 +4,7 @@ using namespace std;
 extern ofstream fout;
 
 extern int yylineno;
+extern string sourceFile;
 
 extern map<string,int> typeToSize;
 
@@ -24,6 +25,7 @@ class Variable{
     int offset;
     bool inherited;
     string objName;
+
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue){
         name = myname;
@@ -115,6 +117,7 @@ class SymbolTable {
     vector<Class*> classes;
     vector<Method*> methods;
     int offset = 0;
+    string sourcefile = sourceFile;
 
     bool isMethod=false, isClass=false;
 
@@ -173,11 +176,12 @@ class SymbolTable {
 
     void print_table_CSV(){
         std::ofstream myfile;
-        string fileName="output/symTables/"+scope+".csv";
+        string fileName="../output/symTables/"+scope+".csv";
         myfile.open (fileName);
         myfile<<"Token,Symbol,Type,isArray,dims,LineNo,Size,offset\n";
+        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
         for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
-        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<i->size<<","<<i->offset<<"\n";}
+        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
         myfile.close();
     }
 };
