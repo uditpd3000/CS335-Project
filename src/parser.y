@@ -3124,7 +3124,7 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
-    $$->var  = $2->variables[0];
+    $$->var  = $3->variables[0];
     $$->start=$3->start;
     $$->index=$3->index;
 
