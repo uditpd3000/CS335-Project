@@ -487,6 +487,7 @@ Block:
       //  $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($2->index);
        $$->start = $2->start;
+       $$->index=$2->index;
 
        }
 | curly_open curly_close {
@@ -495,7 +496,7 @@ Block:
   vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
   $$->add(v);
 
-  $$->index = mycode->makeBlock(mycode->quadruple.size());
+  $$->index = mycode->makeBlock();
   $$->result = mycode->getVar($$->index);
   $$->start = $$->index;
   }
@@ -866,6 +867,7 @@ VariableDeclaratorId:
     vector<Node*>v{(new Node(mymap[t1],t1))}; 
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
+    // $$->var->value = $1; fixme
   }
 ;
 
@@ -1263,22 +1265,28 @@ Assignment:
     $$=new Node("Assignment");
     vector<Node*>v{$1,$2,$3};
     $$->add(v);
-    if($1->type!=$3->type){
-      if(global_sym_table->typeCheckHelperLiteral($3->type,$1->type)) throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if(($1->type=="byte" || $1->type=="short") && $3->type=="int") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-      else if($1->type=="float" && $3->type=="double") throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
-    }
+
     if($1->dims!=$3->dims){
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
       
     }
+
+    if($1->type!=$3->type){
+      if(!global_sym_table->typeCheckHelper($3->type, $1->type)){
+        int p = mycode->insertAss("",$3->result,"cast_to_"+$1->type);
+        $3->result = mycode->getVar(p);
+      }
+      else {
+        throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
+      }
+    }
+
     $$->type=$1->type;
     $$->var = $3->var;
     string x = "";
     x+=($2->lexeme)[0];
-    // cout<<$1->result<<"gayab??"
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
-    else $$->index = mycode->insertAss($3->result,$1->result,x,$1->result);
+    else $$->index = mycode->insertAss($3->result,$1->result,x+$1->type,$1->result);
     if($1->start) $$->start = $1->start;
     else $$->start = $3->start;
     $$->result = $1->result;
@@ -1304,7 +1312,7 @@ Primary dot Identifier              {
   if($1->type=="Class"){
     $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
     $$->type = $$->var->type;
-    int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"");
+    int t3 = mycode->insertGetFromSymTable($$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
     $$->result = mycode->getVar($$->index);
@@ -1552,7 +1560,7 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
-      int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"");
+      int t3 = mycode->insertGetFromSymTable(var->offset);
       int flag=0;
       for(auto x : $1->var->modifiers) {
         if(x=="static") flag=1;
@@ -1607,7 +1615,7 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"");
+        int t3 = mycode->insertGetFromSymTable(v1->offset);
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
@@ -1656,7 +1664,7 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"");
+        int t3 = mycode->insertGetFromSymTable(v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
@@ -1697,7 +1705,7 @@ ArrayAccess:
       if($1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"");
+        int t3 = mycode->insertGetFromSymTable($1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
@@ -1816,6 +1824,10 @@ ConditionalOrExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
       }
 ;
 
@@ -1832,6 +1844,10 @@ ConditionalAndExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1848,6 +1864,10 @@ InclusiveOrExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1865,6 +1885,10 @@ ExclusiveOrExpression:
         $$->index = mycode->insertAss($1->result,$3->result,$2);
         $$->start = $1->start;
         $$->result = mycode->getVar($$->index);
+        if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
         }
     ;
 
@@ -1882,6 +1906,10 @@ AndExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
     }
     ;
 
@@ -1917,6 +1945,10 @@ EqualityExpression:
       $$->index = mycode->insertAss($1->result,$3->result,$2);
       $$->start = $1->start;
       $$->result = mycode->getVar($$->index);
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
 
       }
     ;
@@ -1991,6 +2023,11 @@ AdditiveExpression:
         throwError("Incompatible operand for additive operator of type " +$1->var->type+" & "+$3->var->type +" on line number",yylineno);
       }
 
+      
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
       // if(myType=="") $$->type=global_sym_table->lookup_method($1->result,0,global_sym_table->current_scope)->ret_type;
 
       $$->var=new Variable("",myType,yylineno,{},"");
@@ -2031,6 +2068,10 @@ MultiplicativeExpression:
       else {
         throwError("Incompatible operand for multiplicative operator of type " +$1->var->type +" & "+$3->var->type + " on line number",yylineno);
       }
+      if($1->dims!=$3->dims){
+      throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
+      
+    }
 
       $$->var=new Variable("",myType,yylineno,{},"");
       $$->index = mycode->insertAss($1->result,$3->result,$2+myType);
@@ -2202,13 +2243,11 @@ MethodInvocation:
       method = $1->method;
     }
     if(method->parameters.size()!=$3->variables.size()){
-      cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$3->variables.size()<<endl;
-      exit(1);
+      throwError("Error: Expected number of arguments: "+to_string(method->parameters.size())+" Found: "+to_string($3->variables.size()),yylineno);
     }
     for(int i=0;i<method->parameters.size();i++){
       if(method->parameters[i]->type!=$3->variables[i]->type){
-        cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$3->variables[i]->type<<endl;
-        exit(1);
+        throwError("TypeError: Expected type of argument["+to_string(i+1)+"] : "+method->parameters[i]->type + ", Found: " + $3->variables[i]->type,yylineno);
       }
     }
     $$->type= method->ret_type;
@@ -2579,8 +2618,8 @@ RETURN  semi_colon                         {
       }
     }
   }
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
+  $$->start = $2->start;
+  $$->index = $2->index;
   mycode->InsertTwoWordInstr("\treturn",$2->result);
 
   }
@@ -2913,10 +2952,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   string init,change;
 
   // for init
-  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp = mycode->insertGetFromSymTable(var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
@@ -2924,8 +2964,8 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   init = mycode->getVar($$->index);
 
   // conditional
-  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+  // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
@@ -2959,10 +2999,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   string init,change;
 
   // for init
-  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp = mycode->insertGetFromSymTable(var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
@@ -2970,8 +3011,8 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   init = mycode->getVar($$->index);
 
   // conditional
-  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+  // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
@@ -3083,7 +3124,7 @@ LocalVariableType VariableDeclaratorList {
       }
 
     }
-    $$->var  = $2->variables[0];
+    $$->var  = $3->variables[0];
     $$->start=$3->start;
     $$->index=$3->index;
 

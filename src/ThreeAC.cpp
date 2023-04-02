@@ -132,11 +132,11 @@ class ArrayInsert: public Instruction{
 
 class SymbolTableOffset: public Instruction{
     public:
-        string classname;
-        string offset;
+        string comment = "\t // setting offset";
+        int offset;
 
         string print(){
-            string s="\t"+result+" := getFromSymTable( "+classname+" , "+offset+")";
+            string s="\t"+result+" := "+to_string(offset)+comment;
             return s;
         }
 };
@@ -419,14 +419,16 @@ class IR{
             return quadruple.size()-1;
         }
 
-        int insertGetFromSymTable(string classs, string name, string res){
+        int insertGetFromSymTable(int myoffset){
             SymbolTableOffset* instr = new SymbolTableOffset();
-            if(res=="")instr->result=getLocalVar();
-            else instr->result = res;
-            instr->classname = classs;
-            instr->offset = name;
-            
-            return insert(instr);
+            instr->result=getLocalVar();
+            // else instr->result = res;
+            // instr->classname = classs;
+            instr->offset = myoffset;
+
+            quadruple.push_back(instr);
+  
+            return quadruple.size()-1;
         }
 
         int insertPointerAssignment(string start, string offset, string res){
@@ -504,7 +506,7 @@ class IR{
 
         void print(){
             ofstream tacout;
-            tacout.open("output/ThreeAddressCode.txt");
+            tacout.open("../output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
                 tacout<<quadruple[i]->print();
                 tacout<<endl;

@@ -176,11 +176,12 @@ class SymbolTable {
 
     void print_table_CSV(){
         std::ofstream myfile;
-        string fileName="output/symTables/"+scope+".csv";
+        string fileName="../output/symTables/"+scope+".csv";
         myfile.open (fileName);
         myfile<<"Token,Symbol,Type,isArray,dims,LineNo,Size,offset\n";
+        for(auto i:vars){myfile<<"Variable,"<<i->name<<","<<i->type<<","<<i->isArray<<","<<i->dims<<","<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
         for(auto i:methods){myfile<<"Function,"<<i->name<<","<<i->ret_type<<",0,0,"<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
-        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<i->size<<","<<i->offset<<"\n";}
+        for(auto i:classes){myfile<<"Class,"<<i->name<<","<<""<<",0,0,"<<i->lineNo<<","<<i->size<<","<<i->offset<<"\n";}
         myfile.close();
     }
 };
