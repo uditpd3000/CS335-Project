@@ -487,6 +487,7 @@ Block:
       //  $$->index = (mycode->makeBlock($2->start));
        $$->result = mycode->getVar($2->index);
        $$->start = $2->start;
+       $$->index=$2->index;
 
        }
 | curly_open curly_close {
@@ -495,7 +496,7 @@ Block:
   vector<Node*>v{(new Node(mymap[t1],t1)),(new Node(mymap[t2],t2))}; 
   $$->add(v);
 
-  $$->index = mycode->makeBlock(mycode->quadruple.size());
+  $$->index = mycode->makeBlock();
   $$->result = mycode->getVar($$->index);
   $$->start = $$->index;
   }
@@ -866,6 +867,7 @@ VariableDeclaratorId:
     vector<Node*>v{(new Node(mymap[t1],t1))}; 
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
+    // $$->var->value = $1; fixme
   }
 ;
 
@@ -1310,7 +1312,7 @@ Primary dot Identifier              {
   if($1->type=="Class"){
     $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
     $$->type = $$->var->type;
-    int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"");
+    int t3 = mycode->insertGetFromSymTable($$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
     $$->result = mycode->getVar($$->index);
@@ -1558,7 +1560,7 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
-      int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"");
+      int t3 = mycode->insertGetFromSymTable(var->offset);
       int flag=0;
       for(auto x : $1->var->modifiers) {
         if(x=="static") flag=1;
@@ -1613,7 +1615,7 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"");
+        int t3 = mycode->insertGetFromSymTable(v1->offset);
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
       }
@@ -1662,7 +1664,7 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"");
+        int t3 = mycode->insertGetFromSymTable(v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = mycode->getVar($$->index);
@@ -1703,7 +1705,7 @@ ArrayAccess:
       if($1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"");
+        int t3 = mycode->insertGetFromSymTable($1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
@@ -2616,8 +2618,8 @@ RETURN  semi_colon                         {
       }
     }
   }
-  $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
+  $$->start = $2->start;
+  $$->index = $2->index;
   mycode->InsertTwoWordInstr("\treturn",$2->result);
 
   }
@@ -2950,10 +2952,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   string init,change;
 
   // for init
-  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp = mycode->insertGetFromSymTable(var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
@@ -2961,8 +2964,8 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   init = mycode->getVar($$->index);
 
   // conditional
-  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+  // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
@@ -2996,10 +2999,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   string init,change;
 
   // for init
-  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(myscope,$5->result,"");
+  pp = mycode->insertGetFromSymTable(var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
@@ -3007,8 +3011,8 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   init = mycode->getVar($$->index);
 
   // conditional
-  Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(vp->size),"<");
+  // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
+  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
