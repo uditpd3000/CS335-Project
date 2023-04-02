@@ -15,6 +15,7 @@ extern int yylineno;
 extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
+
 map<string,int> typeToSize;
 
 GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
@@ -27,6 +28,11 @@ vector<string> arrayRowMajor;
 string sourceFile;
 ofstream fout;
 ofstream vout;
+
+ofstream tacout;
+void set_tac_file(const char* filename){
+  tacout.open(filename);
+}
 
 void generatetree(Node* n){
   int ptr=num;
@@ -3364,15 +3370,12 @@ int yyerror(string s)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 3)
-	{
+	
 		set_input_file(argv[1]);
     fout.open(argv[2]);
     sourceFile = argv[1];
-	}
-  else{
-    fout.open("graph.dot");
-  }
+    set_tac_file(argv[3]);
+
 	
 	yyparse();
 

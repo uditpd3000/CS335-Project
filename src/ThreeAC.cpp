@@ -3,6 +3,8 @@
 using namespace std;
 // extern ofstream fout;
 
+extern ofstream tacout;
+
 class Instruction{
     public:
 
@@ -505,33 +507,10 @@ class IR{
         }
 
         void print(){
-            ofstream tacout;
-            tacout.open("../output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
                 tacout<<quadruple[i]->print();
                 tacout<<endl;
             }
+            tacout.close();
         }
 };
-
-// int main(){
-
-//     IR* mycode = new IR();
-//     int i1= mycode->insert(mycode->create("a","b",">"));
-//     int i2 = mycode->insert(mycode->create("a","b","+"));
-//     mycode->insert(mycode->create(mycode->getVar(i2),"b","+","a"));
-
-//     // int i3 = mycode->insertIf(i1,i2);
-//     mycode->insertWhile(i1);
-//     int i3 = mycode->insert(mycode->create("e","f","+"));
-//     // mycode->insert(i1);
-
-//     // for(i=0;i<10;i++)
-//     int i4= mycode->insert("0","i");
-//     mycode->insert(mycode->create("g","h","+"));
-//     mycode->insertFor(i4,mycode->create("i","10","<"),mycode->create("i","1","+","i"));
-
-//     mycode->print();
-
-//     return 0;
-// }
