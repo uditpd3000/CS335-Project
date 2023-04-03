@@ -98,19 +98,22 @@ class FunctnCall: public Instruction{
         bool isConstr = false;
         string constrName = "";
 
+        string mysize;
+
         string print(){
 
             string s="";
 
             if(!isCall) {
-                s+= "\tpush ebp\n\tmov ebp, esp";
                 return s;
             }
 
             for(auto x:params){
                 s+= "\tparam "+x + "\n";
             }
-            s=s.substr(0,s.length()-1);
+            // s=s.substr(0,s.length()-1);
+            s+= "\tpush ebp\n\tebp := esp\n";
+            s+= "\tesp := esp -int "+mysize;
 
             return s;
         }
@@ -397,12 +400,13 @@ class IR{
         }
 
 
-        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false){
+        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false, string mysize=""){
             FunctnCall* myCall = new FunctnCall();
             myCall->name = funcName;
             for(auto x: argList){
                 myCall->params.push_back(x.first);
             }
+            myCall->mysize = mysize;
             if(!isdec) myCall->isCall=true;
 
             Instruction* myInstruction = myCall;

@@ -2303,6 +2303,7 @@ MethodInvocation:
     string t2=$2,t3=$4;
     vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};
     $$->add(v);
+    string mysize;
     Method* method;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
@@ -2310,6 +2311,7 @@ MethodInvocation:
     else {
       method = $1->method;
     }
+    mysize = global_sym_table->getSize($1->method->name,global_sym_table->current_scope);
     if(method->parameters.size()!=$3->variables.size()){
       throwError("Error: Expected number of arguments: "+to_string(method->parameters.size())+" Found: "+to_string($3->variables.size()),yylineno);
     }
@@ -2321,7 +2323,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,$3->resList);
+    $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
 
@@ -2330,13 +2332,17 @@ MethodInvocation:
     $$=new Node("MethodInvocation");
     string t2=$2,t3=$3;
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
-    $$->add(v);  Method* method;
+    $$->add(v);  
+
+    string mysize;
+    Method* method;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
     } 
     else {
       method = $1->method;
     }
+    mysize = global_sym_table->getSize($1->method->name,global_sym_table->current_scope);
     if(method->parameters.size()!=0){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
       exit(1);
@@ -2344,7 +2350,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{});
+    $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
 
@@ -2375,7 +2381,9 @@ MethodInvocation:
     $$->add($1->objects); 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
     $$->add(v); 
+    
     Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($2,$1->cls->name);
     if(method->parameters.size()!=0){
         cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
         exit(1);
@@ -2383,7 +2391,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{});
+    $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
     
@@ -2395,6 +2403,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};
     $$->add(v);
     Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($2,$1->cls->name);
     if(method->parameters.size()!=$4->variables.size()){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$4->variables.size()<<endl;
       exit(1);
@@ -2408,7 +2417,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,$4->resList);
+    $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
 
@@ -2420,6 +2429,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$5,new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($3,$1->cls->name);
     if(method->parameters.size()!=$5->variables.size()){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$5->variables.size()<<endl;
       exit(1);
@@ -2433,7 +2443,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,$5->resList);
+    $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
   }
@@ -2444,6 +2454,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($3,$1->cls->name);
     if(method->parameters.size()!=0){
         cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
         exit(1);
@@ -2451,7 +2462,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
+    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
   }

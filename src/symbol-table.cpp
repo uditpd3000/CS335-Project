@@ -256,6 +256,21 @@ class GlobalSymbolTable {
         return "";
     }
 
+    string getSize(string s, string scope){
+        SymbolTable* curr = linkmap[scope];
+
+         while(curr->parent!=NULL){
+
+            if(curr->isClass) break;
+            
+            curr=curr->parent;
+        }
+
+        string s1 = curr->scope + "_" + s;
+        curr = linkmap[s1];
+        return to_string(curr->offset);
+    }
+
     string lookup_var_get_scope(string s, int pp, string scope){
 
         SymbolTable* curr = linkmap[scope];
