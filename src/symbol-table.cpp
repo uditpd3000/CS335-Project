@@ -219,11 +219,12 @@ class GlobalSymbolTable {
     }
 
     // lookups
-    Variable* lookup_var(string s, int pp, string scope){
+    Variable* lookup_var(string s, int pp, int classLookup, string scope){
 
         SymbolTable* curr = linkmap[scope];
 
         while(curr->parent!=NULL){
+            if(curr->isClass && classLookup==0)break;
             for(int i=0; i<curr->vars.size();i++){
                 if(curr->vars[i]->name==s)return curr->vars[i];
             }
@@ -366,7 +367,7 @@ class GlobalSymbolTable {
     }
 
     bool insertCheck(string symbol){
-        if(lookup_var(symbol,0,current_scope)==NULL){
+        if(lookup_var(symbol,0,0,current_scope)==NULL){
             if(lookup_method(symbol,0,current_scope)==NULL){
                 if(lookup_class(symbol,0,current_scope)==NULL){
                     return true;
@@ -403,7 +404,7 @@ class GlobalSymbolTable {
         }
     }
     void finalCheck(string symbol,string scope,int myLineno){
-        Variable* var_=lookup_var(symbol,0,scope);
+        Variable* var_=lookup_var(symbol,0,1,scope);
         for(auto x:var_->modifiers){
             if(x=="final"){
                 throwError("Error : Changing value of final variable "+symbol,myLineno);
@@ -458,8 +459,8 @@ class GlobalSymbolTable {
     }
     bool typeCheckVar(string s1, string s2, int myLineno){
 
-        Variable* v1 = lookup_var(s1,1,current_scope);
-        Variable* v2 = lookup_var(s2,1,current_scope);
+        Variable* v1 = lookup_var(s1,1,1,current_scope);
+        Variable* v2 = lookup_var(s2,1,1,current_scope);
         // if(v1->type == "int"&& v2->type == "long")return true;
         if(v1->type!=v2->type){
             if(typeCheckHelper(v2->type,v1->type)) throwError("a  Type mismatch: "+v1->type+" cannot be converted to "+v2->type,myLineno);

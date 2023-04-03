@@ -23,6 +23,7 @@ IR* mycode =new IR();
 int num=0;
 int indd=0;
 vector<string> arrayRowMajor;
+string someThing;
 
 string sourceFile;
 ofstream fout;
@@ -293,8 +294,8 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertAss("popparam","","","");
-    //  mycode -> getVar($$->index);
+    int tp = mycode->insertAss("popparam","","","");    
+    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($2->method->name,params,1,true);
 
   } 
@@ -331,8 +332,9 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertAss("popparam","","","");
-    //  mycode -> getVar($$->index);
+    int tp = mycode->insertAss("popparam","","","");
+    
+    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($1->method->name,params,1,true);
   } 
   ConstructorDeclarationEnd {
@@ -466,6 +468,17 @@ StaticInitializer:
     $$ =new Node("StaticInitializer");
     vector<Node*>v{new Node("Keyword",t1),$3};
     $$->add(v); 
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
     if(global_sym_table->isForScope==false)global_sym_table->end_scope();
     }
 ;
@@ -474,6 +487,17 @@ InstanceInitializer:
  {global_sym_table->makeTable();}
  Block {
   $$ = $2;
+  SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
   global_sym_table->end_scope();
   }
 ;
@@ -1310,13 +1334,17 @@ Primary dot Identifier              {
   vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};
   $$->add(v);
   if($1->type=="Class"){
-    $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
-    $$->type = $$->var->type;
+    // cout<<$1->anyName;
+    $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
+    // $$->type = $$->var->type;
     int t3 = mycode->insertGetFromSymTable($$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
-    $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
-    $$->result = mycode->getVar($$->index);
+    // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
+    $$->result = "*("+mycode->getVar(t3)+")";
+    // cout<<$1->lexeme<<endl;
+    if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
     $$->dims = $$->var->dims;
+    $$->type = $$->var->type;
   }
 
   }
@@ -1339,7 +1367,7 @@ PrimaryNoNewArray:
     $$= new Node(mymap[t1],t1);
     SymbolTable* temp;
     temp=global_sym_table->current_symbol_table;
-    while(temp->parent->scope!="Yayyy"){
+    while(temp->parent->scope!="Global"){
       temp=temp->parent;
     }
     t1= temp->scope;
@@ -1447,7 +1475,7 @@ TypeName:
     $$->add(new Node("Identifier",t1));
     Class* cls = global_sym_table->lookup_class($1,0,global_sym_table->current_scope);
     Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
-    Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
+    Variable *var = global_sym_table->lookup_var($1,0,1,global_sym_table->current_scope);
     $$->result = $1;
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
@@ -1514,7 +1542,7 @@ TypeName:
     $$->add(v);
     Class* cls = global_sym_table->lookup_class($3,0,$1->anyName);
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
-    Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
+    Variable *var = global_sym_table->lookup_var($3,0,1,$1->anyName);
     string cur_class = global_sym_table->get_current_class();
     $$->result = $3;
     $$->index = mycode->quadruple.size();
@@ -1585,7 +1613,7 @@ ArrayAccess:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
     $$->start=$3->start;
-    Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
+    Variable* v1 = global_sym_table->lookup_var($1,1,1,global_sym_table->current_scope);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
           if(mod=="private"){
@@ -1616,8 +1644,8 @@ ArrayAccess:
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
         int t3 = mycode->insertGetFromSymTable(v1->offset);
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
+        // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
       }
       
     }
@@ -1635,7 +1663,7 @@ ArrayAccess:
     // exit(1);
     $$->objOffset=$1->objOffset;
 
-    Variable* v1 = global_sym_table->lookup_var($3,1,$1->anyName);
+    Variable* v1 = global_sym_table->lookup_var($3,1,1,$1->anyName);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
           if(mod=="private"){
@@ -1666,8 +1694,9 @@ ArrayAccess:
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
         int t3 = mycode->insertGetFromSymTable(v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
+        // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
+        $$->result = "*( "+mycode->getVar(t4)+" + "+mycode->getVar(t5)+" )";
+        // $$->result = mycode->getVar($$->index);
       }
       $$->start=$1->start;
       
@@ -1708,12 +1737,14 @@ ArrayAccess:
         int t3 = mycode->insertGetFromSymTable($1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
+          $$->result = "*( "+mycode->getVar(t5)+" + "+mycode->getVar(t4)+" )";
+          // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         }
         else {
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+          
+          $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
         }
-        $$->result = mycode->getVar($$->index);
+        // $$->result = mycode->getVar($$->index);
       }
 
     }
@@ -2504,6 +2535,17 @@ StatementWithoutTrailingSubstatement:
 {if(global_sym_table->isForScope==false)global_sym_table->makeTable();global_sym_table->isForScope=false;} 
   Block {
     $$=$2;
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+       it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
     global_sym_table->end_scope();
 
     $$->result = $2->result;
@@ -2953,7 +2995,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // for init
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
-  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
+  Variable* var = global_sym_table->lookup_var($5->result,1, 1,global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
   pp = mycode->insertGetFromSymTable(var->offset);
@@ -3000,7 +3042,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
 
   // for init
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
-  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
+  Variable* var = global_sym_table->lookup_var($5->result,1,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
   pp = mycode->insertGetFromSymTable(var->offset);
