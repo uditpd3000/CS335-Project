@@ -23,6 +23,7 @@ IR* mycode =new IR();
 
 int num=0;
 int indd=0;
+bool gotReturn=false;
 vector<string> arrayRowMajor;
 
 string sourceFile;
@@ -289,13 +290,13 @@ ConstructorDeclaration:
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -327,13 +328,13 @@ ConstructorDeclaration:
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -396,7 +397,7 @@ ArgumentList:
     $$->variables.push_back($1->var);
 
     $$->index = $1->index; $$->start = $1->start;
-    $$->resList.push_back($1->result);
+    $$->resList.push_back(make_pair($1->result,typeToSize[$1->type]));
     }
 | ArgumentList comma Expression   {
     $$=new Node("Arglist");
@@ -406,7 +407,7 @@ ArgumentList:
     $$->variables.push_back($3->var);
 
     $$->index = $3->index; $$->start = $1->start;
-    $1->resList.push_back($3->result);
+    $1->resList.push_back(make_pair($3->result,typeToSize[$3->type]));
     $$->resList = $1->resList;
     }
 ;
@@ -597,11 +598,13 @@ MethodDeclaration:
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
 
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     mycode->insert(myIns);
-    vector<string>params;
+    vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
@@ -609,7 +612,7 @@ MethodDeclaration:
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -621,11 +624,19 @@ MethodDeclaration:
     $$->add($2->objects); 
     $$->add($4->objects); 
     global_sym_table->end_scope();
+
+    if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
-    
+
+      gotReturn=false;
     }
 
 | Modifiers MethodHeader {
@@ -635,19 +646,21 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -659,10 +672,19 @@ MethodDeclaration:
     $$->add($2);
      $$->add($4->objects);
      global_sym_table->end_scope();
+
+     if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
+
      TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    gotReturn=false;
      }
 
 | MethodHeader{
@@ -672,19 +694,21 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$1->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
-     vector<string>params;
+     vector<pair<string,int>>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -696,11 +720,18 @@ MethodDeclaration:
     $$->add($3->objects); 
     global_sym_table->end_scope();
 
+    if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="EndFunc";
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
+    gotReturn=false;
     
     }
 ;
@@ -2282,7 +2313,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,vector<string>{});
+    $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
 
@@ -2303,7 +2334,7 @@ MethodInvocation:
   vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
   $$->add(v);
 
-    $$->index = mycode->insertFunctnCall($3,vector<string>{});
+    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
   }
@@ -2321,7 +2352,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,vector<string>{});
+    $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
     
@@ -2389,7 +2420,7 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,vector<string>{});
+    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
   }
@@ -2593,6 +2624,9 @@ RETURN  semi_colon                         {
   }
   $$->start = mycode->quadruple.size();
   $$->index = mycode->quadruple.size();
+
+  gotReturn=true;
+  mycode->InsertTwoWordInstr("\tpop","ebp");
   mycode->InsertTwoWordInstr("\treturn","");
 
 
@@ -2626,7 +2660,10 @@ RETURN  semi_colon                         {
   }
   $$->start = $2->start;
   $$->index = $2->index;
-  mycode->InsertTwoWordInstr("\treturn",$2->result);
+  gotReturn=true;
+  mycode->insertAss($2->result,"","","eax");
+  mycode->InsertTwoWordInstr("\tpop","ebp");
+  mycode->InsertTwoWordInstr("\treturn","");
 
   }
 ;

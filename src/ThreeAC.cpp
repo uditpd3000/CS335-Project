@@ -102,7 +102,10 @@ class FunctnCall: public Instruction{
 
             string s="";
 
-            if(!isCall) return s;
+            if(!isCall) {
+                s+= "\tpush ebp\n\tmov ebp, esp";
+                return s;
+            }
 
             for(auto x:params){
                 s+= "\tparam "+x + "\n";
@@ -394,15 +397,13 @@ class IR{
         }
 
 
-        int insertFunctnCall(string funcName, vector<string> argList, int isdec=0, bool isConstr=false){
+        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false){
             FunctnCall* myCall = new FunctnCall();
             myCall->name = funcName;
             for(auto x: argList){
-                myCall->params.push_back(x);
+                myCall->params.push_back(x.first);
             }
             if(!isdec) myCall->isCall=true;
-
-            
 
             Instruction* myInstruction = myCall;
 
@@ -411,10 +412,25 @@ class IR{
             if(!isdec){
                 if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
                 else insertAss("call "+funcName,"","");
+
+                int t=0;
+                for(auto x : argList){
+                    t+=x.second;
+                }
+
+                insertAss("esp",to_string(t),"+int","esp");
             }
             else {
+                int t=8;
                 for(auto x : argList){
-                    insertAss("popparam","","",x);
+
+                    PointerAssignment* intr = new PointerAssignment();
+                    intr->result = x.first;
+                    intr->start = "ebp";
+                    intr->offset=to_string(t);
+                    quadruple.push_back(intr);
+
+                    t+=x.second;
                 }
             }
 
@@ -424,8 +440,6 @@ class IR{
         int insertGetFromSymTable(int myoffset){
             SymbolTableOffset* instr = new SymbolTableOffset();
             instr->result=getLocalVar();
-            // else instr->result = res;
-            // instr->classname = classs;
             instr->offset = myoffset;
 
             quadruple.push_back(instr);
