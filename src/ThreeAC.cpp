@@ -3,6 +3,8 @@
 using namespace std;
 // extern ofstream fout;
 
+extern ofstream tacout;
+
 class Instruction{
     public:
 
@@ -100,7 +102,10 @@ class FunctnCall: public Instruction{
 
             string s="";
 
-            if(!isCall) return s;
+            if(!isCall) {
+                s+= "\tpush ebp\n\tmov ebp, esp";
+                return s;
+            }
 
             for(auto x:params){
                 s+= "\tparam "+x + "\n";
@@ -392,15 +397,13 @@ class IR{
         }
 
 
-        int insertFunctnCall(string funcName, vector<string> argList, int isdec=0, bool isConstr=false){
+        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false){
             FunctnCall* myCall = new FunctnCall();
             myCall->name = funcName;
             for(auto x: argList){
-                myCall->params.push_back(x);
+                myCall->params.push_back(x.first);
             }
             if(!isdec) myCall->isCall=true;
-
-            
 
             Instruction* myInstruction = myCall;
 
@@ -409,10 +412,25 @@ class IR{
             if(!isdec){
                 if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
                 else insertAss("call "+funcName,"","");
+
+                int t=0;
+                for(auto x : argList){
+                    t+=x.second;
+                }
+
+                insertAss("esp",to_string(t),"+int","esp");
             }
             else {
+                int t=8;
                 for(auto x : argList){
-                    insertAss("popparam","","",x);
+
+                    PointerAssignment* intr = new PointerAssignment();
+                    intr->result = x.first;
+                    intr->start = "ebp";
+                    intr->offset=to_string(t);
+                    quadruple.push_back(intr);
+
+                    t+=x.second;
                 }
             }
 
@@ -422,8 +440,6 @@ class IR{
         int insertGetFromSymTable(int myoffset){
             SymbolTableOffset* instr = new SymbolTableOffset();
             instr->result=getLocalVar();
-            // else instr->result = res;
-            // instr->classname = classs;
             instr->offset = myoffset;
 
             quadruple.push_back(instr);
@@ -505,33 +521,10 @@ class IR{
         }
 
         void print(){
-            ofstream tacout;
-            tacout.open("../output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
                 tacout<<quadruple[i]->print();
                 tacout<<endl;
             }
+            tacout.close();
         }
 };
-
-// int main(){
-
-//     IR* mycode = new IR();
-//     int i1= mycode->insert(mycode->create("a","b",">"));
-//     int i2 = mycode->insert(mycode->create("a","b","+"));
-//     mycode->insert(mycode->create(mycode->getVar(i2),"b","+","a"));
-
-//     // int i3 = mycode->insertIf(i1,i2);
-//     mycode->insertWhile(i1);
-//     int i3 = mycode->insert(mycode->create("e","f","+"));
-//     // mycode->insert(i1);
-
-//     // for(i=0;i<10;i++)
-//     int i4= mycode->insert("0","i");
-//     mycode->insert(mycode->create("g","h","+"));
-//     mycode->insertFor(i4,mycode->create("i","10","<"),mycode->create("i","1","+","i"));
-
-//     mycode->print();
-
-//     return 0;
-// }
