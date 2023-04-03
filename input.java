@@ -6,8 +6,9 @@
 //     public int xza[][] = new int[4][5];
 //       int Count(int a, int b, int c)
 //       {
-//           int i = a, cnt \= 0;
-//           int aa[] = new int [4];
+//           int i = a, cnt = 0;
+          
+//           int aa[] = new int [2];
 //           int lol = 1;
 //           aa[1]=1;
 //           while(i < b){
@@ -18,7 +19,7 @@
 //       }
       
 //       first(int zz){
-//         this.Count(0, 1, 2);
+//         Count(0, 1, 2);
 //       }
 
 //       static public void sum(){
@@ -31,21 +32,21 @@
 //       }
 // }
 
-//   //     public void Main()
-//   //     {
-//   //         int i = 9,j=10,k=11;
-//   //         // int sid[] = {4, 7, 8, 10};
-//   //         // int xxx = 2+3;
-//   //         int res = Count( i, j,k);
-//   //         first fff = new first(0);
-//   //         fff.tui = 1;
-//   //         // first.sum();
-//   //         // int res = Count(i, j, k);
+      // public void Main()
+      // {
+      //     int i = 9,j=10,k=11;
+      //     // int sid[] = {4, 7, 8, 10};
+      //     // int xxx = 2+3;
+      //     int res = Count( i, j,k);
+      //     first fff = new first(0);
+      //     fff.tui = 1;
+      //     // first.sum();
+      //     // int res = Count(i, j, k);
 
-//   //         // print(res);
-//   //         // print("\n");
-//   //     }
-//   // }
+      //     // print(res);
+      //     // print("\n");
+      // }
+  // }
 // class second {
 // //   private int xx=0;
 //   public int tuii(){
@@ -157,30 +158,31 @@
 
 // // Test Case 1 :: Nested Loops and Ifs.
 
-// public class Prime {
+public class Prime {
 
-//     public static void main(String[] args) {
+    public int main(String[] args) {
 
-//         int low = 20, high = 50;
+        int low = 20, high = 50;
 
-//         while (low < high) {
-//             boolean flag = false;
+        while (low < high) {
+            boolean flag = false;
 
-//             for(int i = 2; i <= low/2; ++i) {
-//                 // condition for nonprime number
-//                 if(low % i == 0) {
-//                     flag = true;
-//                     break;
-//                 }
-//             }
+            for(int i = 2; i <= low/2; ++i) {
+                // condition for nonprime number
+                if(low % i == 0) {
+                    flag = true;
+                    break;
+                }
+            }
 
-//             if (!flag && low != 0 && low != 1)
-//                 System.out.println(low);
+            if (!flag && low != 0 && low != 1)
+                System.out.println(low);
 
-//             ++low;
-//         }
-//     }
-// }
+            ++low;
+        }
+        return 0;
+    }
+}
 
 
 // // Test Case 2 :: Declaring and calling function from another function.
@@ -295,14 +297,15 @@
 //   }
 // }
 
-// // Test Case 6 :: Recursion
+// Test Case 6 :: Recursion
 
 // public class Main {
 //   public static int sum(int start, int end) {
 //     if (end > start) {
-//       return end + sum(start, end - 1);
-//     } else {
-//       return end;
+//       return end ;
+//     } 
+//     else {
+//       return end+ sum(start, end - 1);
 //     }
 //   }
 //   public static void main(String[] args) {
@@ -312,33 +315,33 @@
 // }
 
 //Test Case 7 :: array initiazing
-public class AddMatrices {
-  // data = new int[] {1,2,3};
-  public static void main(String[] args) {
-      int rows = 1, columns = 3;
-      int firstMatrix[][] = { {2, 3, 4}, {5, 2, 3} };
-      int secondMatrix[][] = { {-4, 5, 3}, {5, 6, 3} };
+// public class AddMatrices {
+//   // data = new int[] {1,2,3};
+//   public static void main(String[] args) {
+//       int rows = 1, columns = 3;
+//       int firstMatrix[][] = { {2, 3, 4}, {5, 2, 3} };
+//       int secondMatrix[][] = { {-4, 5, 3}, {5, 6, 3} };
       
-      // System.out.println("k");
+//       // System.out.println("k");
 
-      // Adding Two matrices
-      int sum[][] = new int[rows][columns];
-      // int sum1[][] = new int[][]{{1,2},{2,2}};
-      for(int i = 0; i < rows; i++) {
-          for (int j = 0; j < columns; j++) {
-            // int sum[][] = new int[rows][columns];
-              sum[i][j] = firstMatrix[i][j] + secondMatrix[i][j];
-              int sum1[][] = new int[][]{{1,2},{2,2}};
-          }
-      }
+//       // Adding Two matrices
+//       int sum[][] = new int[rows][columns];
+//       // int sum1[][] = new int[][]{{1,2},{2,2}};
+//       for(int i = 0; i < rows; i++) {
+//           for (int j = 0; j < columns; j++) {
+//             // int sum[][] = new int[rows][columns];
+//               sum[i][j] = firstMatrix[i][j] + secondMatrix[i][j];
+//               int sum1[][] = new int[][]{{1,2},{2,2}};
+//           }
+//       }
 
-      // // Displaying the result
-      System.out.println("Sum of two matrices is: ");
-      // for(int row[] : sum1) {
-      //     for (int column : row) {
-      //         System.out.println("    ");
-      //     }
-      //     System.out.println("end");
-      // }
-  }
-}
+//       // // Displaying the result
+//       System.out.println("Sum of two matrices is: ");
+//       // for(int row[] : sum1) {
+//       //     for (int column : row) {
+//       //         System.out.println("    ");
+//       //     }
+//       //     System.out.println("end");
+//       // }
+//   }
+// }

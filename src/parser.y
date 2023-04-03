@@ -2623,11 +2623,10 @@ RETURN  semi_colon                         {
     }
   }
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
 
   gotReturn=true;
-  mycode->InsertTwoWordInstr("\tpop","ebp");
-  mycode->InsertTwoWordInstr("\treturn","");
+  $$->start = mycode->InsertTwoWordInstr("\tpop","ebp");
+ $$->index =  mycode->InsertTwoWordInstr("\treturn","");
 
 
   }
@@ -2659,11 +2658,10 @@ RETURN  semi_colon                         {
     }
   }
   $$->start = $2->start;
-  $$->index = $2->index;
   gotReturn=true;
   mycode->insertAss($2->result,"","","eax");
   mycode->InsertTwoWordInstr("\tpop","ebp");
-  mycode->InsertTwoWordInstr("\treturn","");
+  $$->index = mycode->InsertTwoWordInstr("\treturn","");
 
   }
 ;
