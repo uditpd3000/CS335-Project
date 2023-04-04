@@ -452,6 +452,7 @@ ConstructorDeclaratorEnd:
     $$->method = $2->method;
     }
 | FormalParameterList brac_close {
+  cout<<"ending\n";
     $$ = new Node(); 
     string t1=$2; 
     vector<Node*>v{$1,new Node(mymap[t1],t1)}; 
@@ -617,12 +618,13 @@ Modifiers UnannType {
 
 MethodDeclaration:
   MethodAndFieldStart MethodDeclarator {
+    cout<<"==\n";
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     _method->offset = global_sym_table->current_symbol_table->offset;
     global_sym_table->current_symbol_table->offset+=4;
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
-
+    
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
 
     gotReturn=false;
@@ -643,6 +645,7 @@ MethodDeclaration:
 
     reverse(params.begin(),params.end());
     mycode->insertFunctnCall($2->method->name,params,1);
+    
   }
   MethodDeclarationEnd {
     $$=new Node("MethodDeclaration"); 
@@ -663,9 +666,12 @@ MethodDeclaration:
     mycode->insert(myIns); 
 
       gotReturn=false;
+      
     }
+    
 
 | Modifiers MethodHeader {
+  cout<<"==\n";
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     _method->offset = global_sym_table->current_symbol_table->offset;
     global_sym_table->current_symbol_table->offset+=4;
@@ -1094,6 +1100,7 @@ VariableDeclarator:
 
     $$->index = mycode->insertAss($3->result,"","",$1);
     $$->result = $1;
+    global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
 
     $$->start=$3->start;
     // $$->objOffset = $3->objOffset;
@@ -1115,6 +1122,7 @@ VariableDeclarator:
         $4->result = zz;
         mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
         arrayRowMajor.clear();
+        // global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
     }
     vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4}; 
     $$->add(v);
@@ -1126,6 +1134,7 @@ VariableDeclarator:
     $$->start=$4->start;
     $$->index = mycode->insertAss($4->result,"","",$1);
     $$->result = $1;
+    global_sym_table->staticCheck($4->var->isField,$4->staticOk,global_sym_table->current_scope,yylineno);
     }
 ;
 
@@ -1321,7 +1330,7 @@ Expression:
 
 AssignmentExpression: 
 Assignment                {$$=$1;  }
-| ConditionalExpression   {$$=$1; if($$->var!=NULL&& $$->var->type!="")$$->type=$1->var->type; }
+| ConditionalExpression   {$$=$1; if($$->var!=NULL&& $$->var->type!=""){$$->type=$1->var->type;} }
 ;
 
 Assignment:
@@ -1358,6 +1367,10 @@ Assignment:
     // cout<<"dukh\n"; mycode->print(); exit(1);
     global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
+    global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
+    cout<<$3->var->name<<" ";
+    cout<<$3->var->isField<<$3->staticOk<<endl;
+
     }
 ;
 
@@ -1380,12 +1393,14 @@ Primary dot Identifier              {
     // cout<<$1->anyName<<endl;
     $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
     // $$->type = $$->var->type;
-    int t3 = mycode->insertGetFromSymTable($$->var->offset);
+    cout<<"ending\n";
+    int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"",$$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
     $$->result = "*("+mycode->getVar(t3)+")";
     // cout<<$1->lexeme<<endl;
     if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+    // someThing = "";
     $$->dims = $$->var->dims;
     $$->type = $$->var->type;
   }
@@ -1570,6 +1585,12 @@ TypeName:
         
         $$->anyName=$$->var->name;
       }
+      if(var->isField){
+      SymbolTable* curr = global_sym_table->current_symbol_table;
+      while(curr->parent!=NULL && curr->isClass==false)curr=curr->parent;
+      int t3 = mycode->insertGetFromSymTable(curr->scope,t1,"",var->offset);
+        $$->result = "*( "+ mycode->getVar(t3)+" )";
+    }
       
     }
     else {
@@ -1635,7 +1656,8 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
-      int t3 = mycode->insertGetFromSymTable(var->offset);
+      cout<<"ending\n";
+      int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"", var->offset);
       int flag=0;
       for(auto x : $1->var->modifiers) {
         if(x=="static") flag=1;
@@ -1690,7 +1712,8 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable(v1->offset);
+        cout<<"ending\n";
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"",v1->offset);
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
       }
@@ -1739,7 +1762,8 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable(v1->offset);
+        cout<<"ending\n";
+        int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"",v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = "*( "+mycode->getVar(t4)+" + "+mycode->getVar(t5)+" )";
@@ -1781,7 +1805,8 @@ ArrayAccess:
       if($1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*int",t1);
-        int t3 = mycode->insertGetFromSymTable($1->var->offset);
+        cout<<"ending\n";
+        int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"",$1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           $$->result = "*( "+mycode->getVar(t5)+" + "+mycode->getVar(t4)+" )";
@@ -1857,6 +1882,7 @@ ClassLiteral:
 ConditionalExpression:
     ConditionalOrExpression                                               {
           $$=$1;
+          // cout<<"yaha"<<$1->var->isField<<" "<<$1->staticOk<<"\n";
           // cout<<"nottt"<<$1->anyName<<endl;
       }
     | ConditionalOrExpression ques_mark Expression colon ConditionalExpression       {
@@ -2194,6 +2220,7 @@ PreIncrDecrExpression:
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
       global_sym_table->finalCheck($2->var->name,global_sym_table->current_scope,yylineno);
+      global_sym_table->staticCheck($2->var->isField,$2->staticOk,global_sym_table->current_scope,yylineno);
 
       string x="1";
       if(global_sym_table->typeCheckHelperLiteral("int", $2->var->type)){
@@ -2248,7 +2275,7 @@ PostIncrDecrExpression:
     $$->start = $1->index;
 
     global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
-
+    global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     string x="1";
     if(global_sym_table->typeCheckHelperLiteral("int", $1->var->type)){
       throwError("Incompatible operator + with operand of type "+ $1->var->type,yylineno);
@@ -3110,11 +3137,13 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   string init,change;
 
   // for init
-  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1, 1,global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(var->offset);
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  cout<<"ending\n";
+  pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
@@ -3157,11 +3186,13 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   string init,change;
 
   // for init
-  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
-  pp = mycode->insertGetFromSymTable(var->offset);
+  cout<<"ending\n";
+  // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
+  pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
