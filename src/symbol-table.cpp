@@ -19,7 +19,7 @@ class Variable{
     bool isArray;
     int dims;
     int lineNo;
-    vector<int> dimsSize;
+    vector<string> dimsSize;
     string classs_name;
     int size;
     int offset;
@@ -42,7 +42,7 @@ class Variable{
         }
 
     }
-    Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize, string myvalue){
+    Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<string> mysize, string myvalue){
         name = myname;
         type = mytype;
         isArray = true;
@@ -55,7 +55,8 @@ class Variable{
             int size1= typeToSize[mytype];
             if(dimsSize.size()!=0){    
                 for (int i=0;i<dimsSize.size();i++){
-                    size1*=dimsSize[dimsSize.size()-1-i];
+                    if(isdigit(dimsSize[0][0]))
+                    size1*=stoi(dimsSize[dimsSize.size()-1-i]);
                 }
             }
             size = size1;
@@ -269,7 +270,14 @@ class GlobalSymbolTable {
         }
 
         string s1 = curr->scope + "_" + s;
-        curr = linkmap[s1];
+        if(linkmap.find(s1)!=linkmap.end()){
+            curr = linkmap[s1];
+            cout << "000";
+        }
+            else
+            {
+                curr = linkmap["cons_" + s];
+                cout << "000";}
         return to_string(curr->offset);
     }
 

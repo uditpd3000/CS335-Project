@@ -421,7 +421,7 @@ class IR{
                 if(argList.size()) InsertTwoWordInstr("\tcall "+funcName,to_string(argList.size()));
                 else InsertTwoWordInstr("\tcall "+funcName,"");
 
-                if(!isVoid) insertAss("pop result","","");
+                if(!isVoid) insertAss("popReturnValue","","");
 
                 int t=0;
                 for(auto x : argList){
@@ -450,7 +450,7 @@ class IR{
         int insertGetFromSymTable(string classs, string name, string res, int offset)
         {
             SymbolTableOffset *instr = new SymbolTableOffset();
-            
+
             if (res == "")
                 instr->result = getLocalVar();
             else
