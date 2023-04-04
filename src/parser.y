@@ -3165,7 +3165,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
-  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  ss = mycode->insertAss(mycode->getVar(pp2),to_string(typeToSize[$3->type]),"+",mycode->getVar(pp2));
   $$->index = mycode->makeBlock(ss);
 
 
@@ -3214,7 +3214,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
-  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  ss = mycode->insertAss(mycode->getVar(pp2),to_string(typeToSize[$3->type]),"+",mycode->getVar(pp2));
   $$->index = mycode->makeBlock(ss);
 
 
