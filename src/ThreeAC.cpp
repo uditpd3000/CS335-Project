@@ -138,13 +138,16 @@ class ArrayInsert: public Instruction{
         }
 };
 
-class SymbolTableOffset: public Instruction{
+class SymbolTableOffset : public Instruction
+{
     public:
-        string comment = "\t // setting offset";
-        int offset;
+        string classname;
+        string offset;
+        int offValue;
 
-        string print(){
-            string s="\t"+result+" := "+to_string(offset)+comment;
+        string print()
+        {
+            string s = "\t" + result + " := getFromSymTable( " + classname + " , " + offset + ") = "+to_string(offValue) ;
             return s;
         }
 };
@@ -444,16 +447,20 @@ class IR{
             return quadruple.size()-1;
         }
 
-        int insertGetFromSymTable(int myoffset){
-            SymbolTableOffset* instr = new SymbolTableOffset();
-            instr->result=getLocalVar();
-            instr->offset = myoffset;
+        int insertGetFromSymTable(string classs, string name, string res, int offset)
+        {
+            SymbolTableOffset *instr = new SymbolTableOffset();
+            
+            if (res == "")
+                instr->result = getLocalVar();
+            else
+                instr->result = res;
+            instr->classname = classs;
+            instr->offset = name;
+            instr->offValue = offset;
 
-            quadruple.push_back(instr);
-  
-            return quadruple.size()-1;
+            return insert(instr);
         }
-
         int insertPointerAssignment(string start, string offset, string res){
             PointerAssignment* instr = new PointerAssignment();
             if(res=="")instr->result=getLocalVar();
