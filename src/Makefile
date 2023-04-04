@@ -3,6 +3,7 @@ SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
 output = ../output/ThreeAddressCode.3ac
 dot_output=../output/graph.dot
+ps_output=../output/graph.ps
 
 default: help
 
@@ -25,7 +26,7 @@ run: # run the executable using input like `make run input=filepath output=dotfi
 	@echo "compiling up...\n"
 	@./$(TARGET) $(input) $(dot_output) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
-	@dot -Tps $(dot_output) -o ../output/graph.ps
+	@dot -Tps $(dot_output) -o $(ps_output)
 	@echo "find your results in output folder :p"
 
 .PHONY: verbose
@@ -34,7 +35,7 @@ verbose: # run the executable in verbose like `make run input=filepath output=ta
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
 	@ rm $(VERBOSE)
-	@dot -Tps $(dot_output) -o graph.ps
+	@dot -Tps $(dot_output) -o $(ps_output)
 
 .PHONY: graph
 graph: # to show dot file
@@ -50,4 +51,4 @@ clean : # clean up the generated files
 	@rm $(TARGET) $(SRCS)
 	@rm ../output/symTables/*.csv
 	@rm $(output)
-	@rm $(dot_output)
+	@rm $(dot_output) $(ps_output)
