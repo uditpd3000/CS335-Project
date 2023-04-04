@@ -396,6 +396,7 @@ ArgumentList:
     $$=new Node("Arglist");
     vector<Node*>v{$1};
     $$->add(v);
+    $1->var->type = $1->type;
     $$->variables.push_back($1->var);
 
     $$->index = $1->index; $$->start = $1->start;
@@ -406,6 +407,7 @@ ArgumentList:
     string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};
     $$->add(v);
     $$->variables=$1->variables;
+    $3->var->type = $3->type;
     $$->variables.push_back($3->var);
 
     $$->index = $3->index; $$->start = $1->start;
@@ -696,12 +698,12 @@ MethodDeclaration:
     $$->add($2);
      $$->add($4->objects);
      global_sym_table->end_scope();
-
+    
      if(!gotReturn){
       mycode->InsertTwoWordInstr("\tpop","basePointer");
       mycode->InsertTwoWordInstr("\treturn","");
 
-      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+      if($2->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
     }
 
      TwoWordInstr* myIns = new TwoWordInstr();
@@ -1315,7 +1317,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  {indd = mycode->quadruple.size();} AssignmentExpression {$$=$2; $$->lineno=yylineno;$$->start = indd;}
+  {indd = mycode->quadruple.size();} AssignmentExpression {$$=$2; $$->lineno=yylineno;$$->start = indd; $$->var->type = $$->type;}
 ;
 
 AssignmentExpression: 

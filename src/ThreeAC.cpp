@@ -98,7 +98,7 @@ class FunctnCall: public Instruction{
         bool isConstr = false;
         string constrName = "";
 
-        string mysize;
+        string mysize="";
 
         string print(){
 
@@ -406,6 +406,7 @@ class IR{
             for(auto x: argList){
                 myCall->params.push_back(x.first);
             }
+            myCall->isConstr = isConstr;
             myCall->mysize = mysize;
             if(!isdec) myCall->isCall=true;
 
