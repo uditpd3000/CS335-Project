@@ -112,8 +112,8 @@ class FunctnCall: public Instruction{
                 s+= "\tparam "+x + "\n";
             }
             // s=s.substr(0,s.length()-1);
-            s+= "\tpush ebp\n\tebp := esp\n";
-            s+= "\tesp := esp -int "+mysize;
+            s+= "\tpush basePointer\n\tbasePointer := stackPointer\n";
+            s+= "\tstackPointer := stackPointer -int "+mysize;
 
             return s;
         }
@@ -400,7 +400,7 @@ class IR{
         }
 
 
-        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false, string mysize=""){
+        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false, string mysize="", bool isVoid=true){
             FunctnCall* myCall = new FunctnCall();
             myCall->name = funcName;
             for(auto x: argList){
@@ -414,15 +414,17 @@ class IR{
             quadruple.push_back(myInstruction);
 
             if(!isdec){
-                if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
-                else insertAss("call "+funcName,"","");
+                if(argList.size()) InsertTwoWordInstr("\tcall "+funcName,to_string(argList.size()));
+                else InsertTwoWordInstr("\tcall "+funcName,"");
+
+                if(!isVoid) insertAss("pop result","","");
 
                 int t=0;
                 for(auto x : argList){
                     t+=x.second;
                 }
 
-                insertAss("esp",to_string(t),"+int","esp");
+                insertAss("stackPointer",to_string(t),"+int","stackPointer");
             }
             else {
                 int t=8;
@@ -430,7 +432,7 @@ class IR{
 
                     PointerAssignment* intr = new PointerAssignment();
                     intr->result = x.first;
-                    intr->start = "ebp";
+                    intr->start = "basePointer";
                     intr->offset=to_string(t);
                     quadruple.push_back(intr);
 

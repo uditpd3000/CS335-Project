@@ -650,7 +650,7 @@ MethodDeclaration:
     global_sym_table->end_scope();
 
     if(!gotReturn){
-      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
       mycode->InsertTwoWordInstr("\treturn","");
 
       if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
@@ -698,7 +698,7 @@ MethodDeclaration:
      global_sym_table->end_scope();
 
      if(!gotReturn){
-      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
       mycode->InsertTwoWordInstr("\treturn","");
 
       if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
@@ -745,7 +745,7 @@ MethodDeclaration:
     global_sym_table->end_scope();
 
     if(!gotReturn){
-      mycode->InsertTwoWordInstr("\tpop","ebp");
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
       mycode->InsertTwoWordInstr("\treturn","");
 
       if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
@@ -2323,8 +2323,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
+    
     $$->result = mycode->getVar($$->index);
 
     }
@@ -2350,8 +2354,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
 
     }
@@ -2361,8 +2369,12 @@ MethodInvocation:
   vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};
   $$->add(v);
 
-    $$->index = mycode->insertFunctnCall($3,$5->resList);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,"",false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,$5->resList);
+
     $$->result = mycode->getVar($$->index);
   }
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {
@@ -2371,8 +2383,12 @@ MethodInvocation:
   vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
   $$->add(v);
 
-    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,"",false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
+
     $$->result = mycode->getVar($$->index);
   }
 | MethodIncovationStart Identifier  brac_open brac_close                               {
@@ -2391,8 +2407,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
     
   }
@@ -2417,8 +2437,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
 
     }
@@ -2443,8 +2467,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
   }
   | Primary dot Identifier brac_open brac_close {
@@ -2462,8 +2490,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
   }
 ; 
@@ -2678,7 +2710,7 @@ RETURN  semi_colon                         {
   $$->start = mycode->quadruple.size();
 
   gotReturn=true;
-  $$->start = mycode->InsertTwoWordInstr("\tpop","ebp");
+  $$->start = mycode->InsertTwoWordInstr("\tpop","basePointer");
  $$->index =  mycode->InsertTwoWordInstr("\treturn","");
 
 
@@ -2712,8 +2744,8 @@ RETURN  semi_colon                         {
   }
   $$->start = $2->start;
   gotReturn=true;
-  mycode->insertAss($2->result,"","","eax");
-  mycode->InsertTwoWordInstr("\tpop","ebp");
+  mycode->InsertTwoWordInstr("\tpush",$2->result);
+  mycode->InsertTwoWordInstr("\tpop","basePointer");
   $$->index = mycode->InsertTwoWordInstr("\treturn","");
 
   }
