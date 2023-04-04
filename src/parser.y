@@ -15,6 +15,7 @@ extern int yylineno;
 extern void set_input_file(const char* filename);
 extern void set_output_file(const char* filename);
 extern void close_output_file();
+
 map<string,int> typeToSize;
 
 GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
@@ -22,11 +23,18 @@ IR* mycode =new IR();
 
 int num=0;
 int indd=0;
+bool gotReturn=false;
 vector<string> arrayRowMajor;
+string someThing;
 
 string sourceFile;
 ofstream fout;
 ofstream vout;
+
+ofstream tacout;
+void set_tac_file(const char* filename){
+  tacout.open(filename);
+}
 
 void generatetree(Node* n){
   int ptr=num;
@@ -283,18 +291,18 @@ ConstructorDeclaration:
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertAss("popparam","","","");
-    //  mycode -> getVar($$->index);
+    int tp = mycode->insertAss("popparam","","","");    
+    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($2->method->name,params,1,true);
 
   } 
@@ -321,18 +329,19 @@ ConstructorDeclaration:
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
-    mycode->insertAss("popparam","","","");
-    //  mycode -> getVar($$->index);
+    int tp = mycode->insertAss("popparam","","","");
+    
+    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($1->method->name,params,1,true);
   } 
   ConstructorDeclarationEnd {
@@ -390,7 +399,7 @@ ArgumentList:
     $$->variables.push_back($1->var);
 
     $$->index = $1->index; $$->start = $1->start;
-    $$->resList.push_back($1->result);
+    $$->resList.push_back(make_pair($1->result,typeToSize[$1->type]));
     }
 | ArgumentList comma Expression   {
     $$=new Node("Arglist");
@@ -400,7 +409,7 @@ ArgumentList:
     $$->variables.push_back($3->var);
 
     $$->index = $3->index; $$->start = $1->start;
-    $1->resList.push_back($3->result);
+    $1->resList.push_back(make_pair($3->result,typeToSize[$3->type]));
     $$->resList = $1->resList;
     }
 ;
@@ -466,6 +475,17 @@ StaticInitializer:
     $$ =new Node("StaticInitializer");
     vector<Node*>v{new Node("Keyword",t1),$3};
     $$->add(v); 
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
     if(global_sym_table->isForScope==false)global_sym_table->end_scope();
     }
 ;
@@ -474,6 +494,17 @@ InstanceInitializer:
  {global_sym_table->makeTable();}
  Block {
   $$ = $2;
+  SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
   global_sym_table->end_scope();
   }
 ;
@@ -591,11 +622,13 @@ MethodDeclaration:
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
 
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     mycode->insert(myIns);
-    vector<string>params;
+    vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
     for(auto i:_method->parameters){
@@ -603,7 +636,7 @@ MethodDeclaration:
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -615,11 +648,19 @@ MethodDeclaration:
     $$->add($2->objects); 
     $$->add($4->objects); 
     global_sym_table->end_scope();
+
+    if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
-    
+
+      gotReturn=false;
     }
 
 | Modifiers MethodHeader {
@@ -629,19 +670,21 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
-    vector<string>params;
+    vector<pair<string,int>>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -653,10 +696,19 @@ MethodDeclaration:
     $$->add($2);
      $$->add($4->objects);
      global_sym_table->end_scope();
+
+     if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
+
      TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    gotReturn=false;
      }
 
 | MethodHeader{
@@ -666,19 +718,21 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$1->method->name);
+
+    gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
-     vector<string>params;
+     vector<pair<string,int>>params;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
         global_sym_table->current_symbol_table->offset+=i->size;
 
-        params.push_back(i->name);
+        params.push_back(make_pair(i->name,typeToSize[i->type]));
     }
 
     reverse(params.begin(),params.end());
@@ -690,11 +744,18 @@ MethodDeclaration:
     $$->add($3->objects); 
     global_sym_table->end_scope();
 
+    if(!gotReturn){
+      mycode->InsertTwoWordInstr("\tpop","basePointer");
+      mycode->InsertTwoWordInstr("\treturn","");
+
+      if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
+    }
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="EndFunc";
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
+    gotReturn=false;
     
     }
 ;
@@ -1313,14 +1374,19 @@ Primary dot Identifier              {
   vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2)};
   $$->add(v);
   if($1->type=="Class"){
-    $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
     
     $$->type = $$->var->type;
+    // cout<<$1->anyName;
+    $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
+    // $$->type = $$->var->type;
     int t3 = mycode->insertGetFromSymTable($$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
-    $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
-    $$->result = mycode->getVar($$->index);
+    // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
+    $$->result = "*("+mycode->getVar(t3)+")";
+    // cout<<$1->lexeme<<endl;
+    if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
     $$->dims = $$->var->dims;
+    $$->type = $$->var->type;
   }
 
   }
@@ -1453,7 +1519,7 @@ TypeName:
     $$->add(new Node("Identifier",t1));
     Class* cls = global_sym_table->lookup_class($1,0,global_sym_table->current_scope);
     Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
-    Variable *var = global_sym_table->lookup_var($1,0,global_sym_table->current_scope);
+    Variable *var = global_sym_table->lookup_var($1,0,1,global_sym_table->current_scope);
     $$->result = $1;
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
@@ -1521,7 +1587,7 @@ TypeName:
     $$->add(v);
     Class* cls = global_sym_table->lookup_class($3,0,$1->anyName);
     Method* met = global_sym_table->lookup_method($3,0,$1->anyName);
-    Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
+    Variable *var = global_sym_table->lookup_var($3,0,1,$1->anyName);
     string cur_class = global_sym_table->get_current_class();
     $$->result = $3;
     $$->staticOk = true;
@@ -1593,7 +1659,7 @@ ArrayAccess:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$3,new Node(mymap[t4],t4)};
     $$->add(v);
     $$->start=$3->start;
-    Variable* v1 = global_sym_table->lookup_var($1,1,global_sym_table->current_scope);
+    Variable* v1 = global_sym_table->lookup_var($1,1,1,global_sym_table->current_scope);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
           if(mod=="private"){
@@ -1624,8 +1690,8 @@ ArrayAccess:
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
         int t3 = mycode->insertGetFromSymTable(v1->offset);
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
+        // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+        $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
       }
       
     }
@@ -1643,7 +1709,7 @@ ArrayAccess:
     // exit(1);
     $$->objOffset=$1->objOffset;
 
-    Variable* v1 = global_sym_table->lookup_var($3,1,$1->anyName);
+    Variable* v1 = global_sym_table->lookup_var($3,1,1,$1->anyName);
     if(v1->inherited==true){
         for(auto mod: v1->modifiers){
           if(mod=="private"){
@@ -1674,8 +1740,9 @@ ArrayAccess:
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
         int t3 = mycode->insertGetFromSymTable(v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-        $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
-        $$->result = mycode->getVar($$->index);
+        // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
+        $$->result = "*( "+mycode->getVar(t4)+" + "+mycode->getVar(t5)+" )";
+        // $$->result = mycode->getVar($$->index);
       }
       $$->start=$1->start;
       
@@ -1716,12 +1783,14 @@ ArrayAccess:
         int t3 = mycode->insertGetFromSymTable($1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
+          $$->result = "*( "+mycode->getVar(t5)+" + "+mycode->getVar(t4)+" )";
+          // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         }
         else {
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
+          
+          $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
         }
-        $$->result = mycode->getVar($$->index);
+        // $$->result = mycode->getVar($$->index);
       }
 
     }
@@ -2243,6 +2312,7 @@ MethodInvocation:
     string t2=$2,t3=$4;
     vector<Node*>v{$1,new Node(mymap[t2],t2),$3,new Node(mymap[t3],t3)};
     $$->add(v);
+    string mysize;
     Method* method;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
@@ -2250,6 +2320,7 @@ MethodInvocation:
     else {
       method = $1->method;
     }
+    mysize = global_sym_table->getSize($1->method->name,global_sym_table->current_scope);
     if(method->parameters.size()!=$3->variables.size()){
       throwError("Error: Expected number of arguments: "+to_string(method->parameters.size())+" Found: "+to_string($3->variables.size()),yylineno);
     }
@@ -2261,8 +2332,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,$3->resList);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
+    
     $$->result = mycode->getVar($$->index);
     bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2273,13 +2348,17 @@ MethodInvocation:
     $$=new Node("MethodInvocation");
     string t2=$2,t3=$3;
     vector<Node*>v{$1,new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
-    $$->add(v);  Method* method;
+    $$->add(v);  
+
+    string mysize;
+    Method* method;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
     } 
     else {
       method = $1->method;
     }
+    mysize = global_sym_table->getSize($1->method->name,global_sym_table->current_scope);
     if(method->parameters.size()!=0){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
       exit(1);
@@ -2287,8 +2366,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($1->result,vector<string>{});
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2302,8 +2385,12 @@ MethodInvocation:
   vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),$5,new Node(mymap[t3],t3)};
   $$->add(v);
 
-    $$->index = mycode->insertFunctnCall($3,$5->resList);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,"",false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,$5->resList);
+
     $$->result = mycode->getVar($$->index);
   }
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {
@@ -2312,8 +2399,12 @@ MethodInvocation:
   vector<Node*>v{$2,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
   $$->add(v);
 
-    $$->index = mycode->insertFunctnCall($3,vector<string>{});
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,"",false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
+
     $$->result = mycode->getVar($$->index);
   }
 | MethodIncovationStart Identifier  brac_open brac_close                               {
@@ -2322,7 +2413,9 @@ MethodInvocation:
     $$->add($1->objects); 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};
     $$->add(v); 
+    
     Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($2,$1->cls->name);
     if(method->parameters.size()!=0){
         cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
         exit(1);
@@ -2330,8 +2423,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,vector<string>{});
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2345,6 +2442,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),$4,new Node(mymap[t3],t3)};
     $$->add(v);
     Method* method = global_sym_table->lookup_method($2,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($2,$1->cls->name);
     if(method->parameters.size()!=$4->variables.size()){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$4->variables.size()<<endl;
       exit(1);
@@ -2358,8 +2456,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($2,$4->resList);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2374,6 +2476,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$5,new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($3,$1->cls->name);
     if(method->parameters.size()!=$5->variables.size()){
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$5->variables.size()<<endl;
       exit(1);
@@ -2387,8 +2490,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,$5->resList);
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2402,6 +2509,7 @@ MethodInvocation:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
+    string mysize = global_sym_table->getSize($3,$1->cls->name);
     if(method->parameters.size()!=0){
         cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<0<<endl;
         exit(1);
@@ -2409,8 +2517,12 @@ MethodInvocation:
     $$->type= method->ret_type;
     $$->method=method;
 
-    $$->index = mycode->insertFunctnCall($3,vector<string>{});
     $$->start = $1->start;
+    if($$->type!="void"){
+      $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize,false);
+    }
+    else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
+
     $$->result = mycode->getVar($$->index);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
@@ -2534,6 +2646,17 @@ StatementWithoutTrailingSubstatement:
 {if(global_sym_table->isForScope==false)global_sym_table->makeTable();global_sym_table->isForScope=false;} 
   Block {
     $$=$2;
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+       it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      parentTable->insert_variable(it);
+    }
     global_sym_table->end_scope();
 
     $$->result = $2->result;
@@ -2616,8 +2739,10 @@ RETURN  semi_colon                         {
     }
   }
   $$->start = mycode->quadruple.size();
-  $$->index = mycode->quadruple.size();
-  mycode->InsertTwoWordInstr("\treturn","");
+
+  gotReturn=true;
+  $$->start = mycode->InsertTwoWordInstr("\tpop","basePointer");
+ $$->index =  mycode->InsertTwoWordInstr("\treturn","");
 
 
   }
@@ -2649,8 +2774,10 @@ RETURN  semi_colon                         {
     }
   }
   $$->start = $2->start;
-  $$->index = $2->index;
-  mycode->InsertTwoWordInstr("\treturn",$2->result);
+  gotReturn=true;
+  mycode->InsertTwoWordInstr("\tpush",$2->result);
+  mycode->InsertTwoWordInstr("\tpop","basePointer");
+  $$->index = mycode->InsertTwoWordInstr("\treturn","");
 
   }
 ;
@@ -2983,7 +3110,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // for init
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
-  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
+  Variable* var = global_sym_table->lookup_var($5->result,1, 1,global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
   pp = mycode->insertGetFromSymTable(var->offset);
@@ -3030,7 +3157,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
 
   // for init
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
-  Variable* var = global_sym_table->lookup_var($5->result,1, global_sym_table->current_scope);
+  Variable* var = global_sym_table->lookup_var($5->result,1,1, global_sym_table->current_scope);
 
   int pp,pp1, ss, ee;
   pp = mycode->insertGetFromSymTable(var->offset);
@@ -3394,15 +3521,12 @@ int yyerror(string s)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 3)
-	{
+	
 		set_input_file(argv[1]);
     fout.open(argv[2]);
     sourceFile = argv[1];
-	}
-  else{
-    fout.open("graph.dot");
-  }
+    set_tac_file(argv[3]);
+
 	
 	yyparse();
 

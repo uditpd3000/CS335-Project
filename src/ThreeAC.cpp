@@ -3,6 +3,8 @@
 using namespace std;
 // extern ofstream fout;
 
+extern ofstream tacout;
+
 class Instruction{
     public:
 
@@ -96,16 +98,22 @@ class FunctnCall: public Instruction{
         bool isConstr = false;
         string constrName = "";
 
+        string mysize;
+
         string print(){
 
             string s="";
 
-            if(!isCall) return s;
+            if(!isCall) {
+                return s;
+            }
 
             for(auto x:params){
                 s+= "\tparam "+x + "\n";
             }
-            s=s.substr(0,s.length()-1);
+            // s=s.substr(0,s.length()-1);
+            s+= "\tpush basePointer\n\tbasePointer := stackPointer\n";
+            s+= "\tstackPointer := stackPointer -int "+mysize;
 
             return s;
         }
@@ -392,27 +400,43 @@ class IR{
         }
 
 
-        int insertFunctnCall(string funcName, vector<string> argList, int isdec=0, bool isConstr=false){
+        int insertFunctnCall(string funcName, vector<pair<string,int>> argList, int isdec=0, bool isConstr=false, string mysize="", bool isVoid=true){
             FunctnCall* myCall = new FunctnCall();
             myCall->name = funcName;
             for(auto x: argList){
-                myCall->params.push_back(x);
+                myCall->params.push_back(x.first);
             }
+            myCall->mysize = mysize;
             if(!isdec) myCall->isCall=true;
-
-            
 
             Instruction* myInstruction = myCall;
 
             quadruple.push_back(myInstruction);
 
             if(!isdec){
-                if(argList.size()) insertAss("call "+funcName + " " + to_string(argList.size()),"","");
-                else insertAss("call "+funcName,"","");
+                if(argList.size()) InsertTwoWordInstr("\tcall "+funcName,to_string(argList.size()));
+                else InsertTwoWordInstr("\tcall "+funcName,"");
+
+                if(!isVoid) insertAss("pop result","","");
+
+                int t=0;
+                for(auto x : argList){
+                    t+=x.second;
+                }
+
+                insertAss("stackPointer",to_string(t),"+int","stackPointer");
             }
             else {
+                int t=8;
                 for(auto x : argList){
-                    insertAss("popparam","","",x);
+
+                    PointerAssignment* intr = new PointerAssignment();
+                    intr->result = x.first;
+                    intr->start = "basePointer";
+                    intr->offset=to_string(t);
+                    quadruple.push_back(intr);
+
+                    t+=x.second;
                 }
             }
 
@@ -422,8 +446,6 @@ class IR{
         int insertGetFromSymTable(int myoffset){
             SymbolTableOffset* instr = new SymbolTableOffset();
             instr->result=getLocalVar();
-            // else instr->result = res;
-            // instr->classname = classs;
             instr->offset = myoffset;
 
             quadruple.push_back(instr);
@@ -505,33 +527,10 @@ class IR{
         }
 
         void print(){
-            ofstream tacout;
-            tacout.open("../output/ThreeAddressCode.txt");
             for(int i=0;i<quadruple.size();i++){
                 tacout<<quadruple[i]->print();
                 tacout<<endl;
             }
+            tacout.close();
         }
 };
-
-// int main(){
-
-//     IR* mycode = new IR();
-//     int i1= mycode->insert(mycode->create("a","b",">"));
-//     int i2 = mycode->insert(mycode->create("a","b","+"));
-//     mycode->insert(mycode->create(mycode->getVar(i2),"b","+","a"));
-
-//     // int i3 = mycode->insertIf(i1,i2);
-//     mycode->insertWhile(i1);
-//     int i3 = mycode->insert(mycode->create("e","f","+"));
-//     // mycode->insert(i1);
-
-//     // for(i=0;i<10;i++)
-//     int i4= mycode->insert("0","i");
-//     mycode->insert(mycode->create("g","h","+"));
-//     mycode->insertFor(i4,mycode->create("i","10","<"),mycode->create("i","1","+","i"));
-
-//     mycode->print();
-
-//     return 0;
-// }

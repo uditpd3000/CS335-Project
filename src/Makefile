@@ -1,8 +1,9 @@
 TARGET = myASTgenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
-ThreeAddCode = ../output/ThreeAddressCode.txt
-output=../output/graph.dot
+output = ../output/ThreeAddressCode.3ac
+dot_output=../output/graph.dot
+ps_output=../output/graph.ps
 
 default: help
 
@@ -23,31 +24,31 @@ build : # generate files for the executable
 .PHONY: run
 run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
 	@echo "compiling up...\n"
-	@./$(TARGET) $(input) $(output)
+	@./$(TARGET) $(input) $(dot_output) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
-	@dot -Tps $(output) -o graph.ps
+	@dot -Tps $(dot_output) -o $(ps_output)
 	@echo "find your results in output folder :p"
 
 .PHONY: verbose
-verbose: # run the executable in verbose like `make run input=filepath output=dotfilepath`
-	@ ./$(TARGET) $(input) $(output)
+verbose: # run the executable in verbose like `make run input=filepath output=tacfilepath`
+	@ ./$(TARGET) $(input) $(dot_output) $(output)
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
 	@ rm $(VERBOSE)
-	@dot -Tps $(output) -o graph.ps
+	@dot -Tps $(dot_output) -o $(ps_output)
 
 .PHONY: graph
 graph: # to show dot file
-	@cat $(output)
+	@cat $(dot_output)
 
 .PHONY: ThreeAC
 ThreeAC: # to show Three Address Code
-	@cat ../output/ThreeAddressCode.txt
+	@cat $(output)
 
 .PHONY: clean
 clean : # clean up the generated files
 	@echo "cleaning up...\n"
 	@rm $(TARGET) $(SRCS)
 	@rm ../output/symTables/*.csv
-	@rm $(ThreeAddCode)
 	@rm $(output)
+	@rm $(dot_output) $(ps_output)

@@ -33,7 +33,7 @@ class Node {
     int start;
     int index; // global IR vector
     string result=""; // result eg t1 = t2+t3
-    vector<string> resList = vector<string>{};
+    vector<pair<string,int>> resList = vector<pair<string,int>>{};
     vector<string> arrayRowMajor;
 
     bool staticOk = false;
