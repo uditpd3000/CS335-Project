@@ -1376,8 +1376,8 @@ Primary dot Identifier              {
   $$->add(v);
   if($1->type=="Class"){
     
-    $$->type = $$->var->type;
-    // cout<<$1->anyName;
+    // $$->type = $1->var->type;
+    // cout<<$1->anyName<<endl;
     $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
     // $$->type = $$->var->type;
     int t3 = mycode->insertGetFromSymTable($$->var->offset);
