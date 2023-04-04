@@ -462,7 +462,7 @@ StaticInitializer:
     global_sym_table->makeTable();
     }
   Block {
-    string t1=$1; 
+    string t1=$1;
     $$ =new Node("StaticInitializer");
     vector<Node*>v{new Node("Keyword",t1),$3};
     $$->add(v); 
@@ -902,6 +902,7 @@ FieldDeclaration:
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
         varr->objName = i->objName;
+        varr->isField = true;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
         
@@ -920,6 +921,7 @@ FieldDeclaration:
         varr->classs_name=i->classs_name;
         varr->offset = global_sym_table->current_symbol_table->offset;
         varr->objName = i->objName;
+        varr->isField = true;
         global_sym_table->insert(varr);
         global_sym_table->current_symbol_table->offset+=varr->size;
       }
@@ -1293,6 +1295,7 @@ Assignment:
 
     // cout<<"dukh\n"; mycode->print(); exit(1);
     global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
+    global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     }
 ;
 
@@ -1311,6 +1314,7 @@ Primary dot Identifier              {
   $$->add(v);
   if($1->type=="Class"){
     $$->var=global_sym_table->lookup_var($3,1,$1->anyName);
+    
     $$->type = $$->var->type;
     int t3 = mycode->insertGetFromSymTable($$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
@@ -1335,11 +1339,12 @@ PrimaryNoNewArray:
   literal                           {$$=$1;$$->result = $1->var->value;$$->index = -1;}
 | ClassLiteral                      {$$=$1;}
 | THIS                              {
+  cout<<"999\n";
     string t1=$1; 
     $$= new Node(mymap[t1],t1);
     SymbolTable* temp;
     temp=global_sym_table->current_symbol_table;
-    while(temp->parent->scope!="Yayyy"){
+    while(temp->parent->scope!="Global"){
       temp=temp->parent;
     }
     t1= temp->scope;
@@ -1347,6 +1352,7 @@ PrimaryNoNewArray:
     $$->type="Class";
     $$->anyName = $$->cls->name;
     $$->which_scope=$$->cls->name;
+    
 
     // exit(1);
     
@@ -1488,6 +1494,7 @@ TypeName:
       if(var->objName!=""){
         $$->objOffset = var->objName;
       }
+      for(auto mod: var->modifiers)if(mod=="static")$$->staticOk = true;
       $$->var = var;
       $$->type = var->type;
       $$->anyName = var->classs_name;
@@ -1517,6 +1524,7 @@ TypeName:
     Variable *var = global_sym_table->lookup_var($3,0,$1->anyName);
     string cur_class = global_sym_table->get_current_class();
     $$->result = $3;
+    $$->staticOk = true;
     $$->index = mycode->quadruple.size();
     if(cls!=NULL){
       if(cls->inherited==true){
@@ -2256,6 +2264,9 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($1->result,$3->resList);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
+    bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
 
     }
 | TypeName brac_open brac_close                                                      {
@@ -2279,6 +2290,10 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($1->result,vector<string>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
+     bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
+
 
     }
 | MethodIncovationStart TypeArguments Identifier  brac_open ArgumentList brac_close    {
@@ -2318,7 +2333,10 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($2,vector<string>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
-    
+     bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
+
   }
 | MethodIncovationStart Identifier  brac_open ArgumentList brac_close                  {
     $$=new Node("MethodInvocation");
@@ -2343,6 +2361,10 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($2,$4->resList);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
+     bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
+
 
     }
   | Primary dot Identifier brac_open ArgumentList brac_close {
@@ -2368,6 +2390,10 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($3,$5->resList);
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
+     bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
+
   }
   | Primary dot Identifier brac_open brac_close {
     $$=new Node("MethodInvocation");
@@ -2386,6 +2412,10 @@ MethodInvocation:
     $$->index = mycode->insertFunctnCall($3,vector<string>{});
     $$->start = $1->start;
     $$->result = mycode->getVar($$->index);
+     bool boo = false;
+    for (auto it:method->modifiers)if(it=="static")boo=true;
+    global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
+
   }
 ; 
 

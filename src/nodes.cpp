@@ -36,6 +36,8 @@ class Node {
     vector<string> resList = vector<string>{};
     vector<string> arrayRowMajor;
 
+    bool staticOk = false;
+
 
     Node(){
         label="";

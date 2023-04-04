@@ -24,6 +24,7 @@ class Variable{
     int size;
     int offset;
     bool inherited;
+    bool isField= false;
     string objName;
 
 
@@ -216,6 +217,7 @@ class GlobalSymbolTable {
         typeToSize["long"]=8;
         typeToSize["byte"]=1;
         typeToSize["short"]=2;
+        typeToSize["boolean"]=1;
     }
 
     // lookups
@@ -411,8 +413,20 @@ class GlobalSymbolTable {
         }
         
     }
-    void staticCheck(string symbol){
-        
+    void staticCheck(bool isfield, bool st, string scope, int myline){
+        SymbolTable* curr = linkmap[scope];
+        while(curr->isMethod==false && curr->scope!="Global"){
+            curr=curr->parent;
+        }
+        if(curr->scope=="Global")return;
+        string methodName = curr->scope;
+        methodName = methodName.substr(curr->parent->scope.length() + 1, methodName.length() - (curr->parent->scope.length()));
+        Method* met = lookup_method(methodName, 0,curr->scope);
+        for(auto mod: met->modifiers)if(mod=="static"){
+            if(st==false && isfield){
+                    throwError("Error : Cannot make non-static reference from static function  " , myline);
+            }
+        }
     }
 
     bool typeCheckHelperLiteral(string s1,string s2){
