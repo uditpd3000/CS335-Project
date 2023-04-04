@@ -1094,7 +1094,6 @@ VariableDeclarator:
     $$->result = $1;
 
     $$->start=$3->start;
-    $$->index=$3->index;
     // $$->objOffset = $3->objOffset;
 
   }
