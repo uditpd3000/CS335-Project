@@ -3150,10 +3150,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1, 1,global_sym_table->current_scope);
 
-  int pp,pp1, ss, ee;
+  int pp,pp1,pp2, ss, ee;
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  pp2 = mycode->insertAss(mycode->getVar(pp),"0","+int");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
   $$->index = mycode->makeBlock(pp);
@@ -3161,7 +3162,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // conditional
   // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
+  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
@@ -3198,10 +3199,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1,1, global_sym_table->current_scope);
 
-  int pp,pp1, ss, ee;
+  int pp,pp1,pp2, ss, ee;
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  pp2 = mycode->insertAss(mycode->getVar(pp),"0","+int");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
   $$->index = mycode->makeBlock(pp);
@@ -3209,7 +3211,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
 
   // conditional
   // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
+  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
   ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
