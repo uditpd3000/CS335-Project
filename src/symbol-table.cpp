@@ -460,13 +460,15 @@ class GlobalSymbolTable {
         vector<string>int_conversion{"int","long","float","double","short","byte"};
         vector<string>long_conversion{"long","float","double"};
         vector<string>float_conversion{"float","double"};
-        vector<string>double_conversion{"double","float"};
+        vector<string>double_conversion{"double"};
+        vector<string>char_conversion{"char","int","long","float","double","short","byte"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
         check_map["long"]=long_conversion;
         check_map["float"]=float_conversion;
         check_map["double"]=double_conversion;
+        check_map["char"]=char_conversion;
         int flag=0;
         for(auto x:check_map[s1]){
             if(x==s2) flag++;
@@ -482,11 +484,15 @@ class GlobalSymbolTable {
         vector<string>int_conversion{"long","int","float","double"};
         vector<string>long_conversion{"float","long","double"};
         vector<string>float_conversion{"float","double"};
+        vector<string>double_conversion{"double"};
+        vector<string>char_conversion{"char","int","long","float","double","short","byte"};
         check_map["byte"]=byte_conversion;
         check_map["short"]=short_conversion;
         check_map["int"]=int_conversion;
         check_map["long"]=long_conversion;
         check_map["float"]=float_conversion;
+        check_map["double"]=double_conversion;
+        check_map["char"]=char_conversion;
         int flag=0;
         for(auto x:check_map[s1]){
             if(x==s2) flag++;

@@ -24,6 +24,7 @@ IR* mycode =new IR();
 int num=0;
 int indd=0;
 bool gotReturn=false;
+bool madeConstr;
 vector<string> arrayRowMajor;
 string someThing;
 
@@ -200,6 +201,7 @@ ClassDeclaration:
     global_sym_table->current_symbol_table->isClass=true;
     mycode->makeBlock(mycode->quadruple.size(),$3);
 
+    madeConstr=false;
    
   } 
   ClassDecTillTypeParameters {
@@ -282,7 +284,10 @@ ConstructorDeclaration:
     vector<string> mod;
     mod.push_back($1);
     Method* method = new Method($2->method->name,"",$2->method->parameters,mod,yylineno);
-    method->ifConstructor = true;
+    if(!madeConstr){
+      method->ifConstructor = true;
+      madeConstr=true;
+    }
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$2->method->name+".Constr");
@@ -320,7 +325,10 @@ ConstructorDeclaration:
 | ConstructorDeclarator {
 
     Method* method = new Method($1->method->name,"",$1->method->parameters,{},yylineno);
-    method->ifConstructor = true;
+    if(!madeConstr){
+      method->ifConstructor = true;
+      madeConstr=true;
+    }
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
     mycode->makeBlock(mycode->quadruple.size(),$1->method->name+".Constr");
@@ -452,7 +460,6 @@ ConstructorDeclaratorEnd:
     $$->method = $2->method;
     }
 | FormalParameterList brac_close {
-  // cout<<"ending\n";
     $$ = new Node(); 
     string t1=$2; 
     vector<Node*>v{$1,new Node(mymap[t1],t1)}; 
@@ -618,7 +625,6 @@ Modifiers UnannType {
 
 MethodDeclaration:
   MethodAndFieldStart MethodDeclarator {
-    // cout<<"==\n";
     Method* _method = new Method($2->method->name,$1->method->ret_type,$2->method->parameters,$1->method->modifiers,yylineno);
     _method->offset = global_sym_table->current_symbol_table->offset;
     global_sym_table->current_symbol_table->offset+=4;
@@ -671,7 +677,6 @@ MethodDeclaration:
     
 
 | Modifiers MethodHeader {
-  // cout<<"==\n";
     Method* _method = new Method($2->method->name,$2->method->ret_type,$2->method->parameters,$1->var->modifiers,yylineno);
     _method->offset = global_sym_table->current_symbol_table->offset;
     global_sym_table->current_symbol_table->offset+=4;
@@ -936,7 +941,7 @@ VariableDeclaratorId:
     vector<Node*>v{(new Node(mymap[t1],t1))}; 
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
-    // $$->var->value = $1; fixme
+    $$->var->value = $1; //fixme
   }
 ;
 
@@ -1370,8 +1375,8 @@ Assignment:
     global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
-    cout<<$3->var->name<<" ";
-    cout<<$3->var->isField<<$3->staticOk<<endl;
+    // cout<<$3->var->name<<" ";
+    // cout<<$3->var->isField<<$3->staticOk<<endl;
 
     }
 ;
@@ -1395,7 +1400,6 @@ Primary dot Identifier              {
     // cout<<$1->anyName<<endl;
     $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
     // $$->type = $$->var->type;
-    cout<<"ending\n";
     int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"",$$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
@@ -1658,7 +1662,6 @@ TypeName:
       $$->var = var;
       $$->type = var->type;
       $$->dims = var->dims;
-      // cout<<"ending\n";
       int t3 = mycode->insertGetFromSymTable($1->anyName,var->name,"", var->offset);
       int flag=0;
       for(auto x : $1->var->modifiers) {
@@ -1723,7 +1726,6 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        cout<<"ending\n";
         int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"",v1->offset);
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
@@ -1780,7 +1782,6 @@ ArrayAccess:
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
-        // cout<<"ending\n";
         int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"",v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
@@ -1830,7 +1831,6 @@ ArrayAccess:
       if($1->dims==1){
         string t1 = mycode->getVar($$->index);
         int t4 = mycode->insertAss(t1,to_string(typeToSize[$$->type]),"*int",t1);
-        // cout<<"ending\n";
         int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"",$1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
@@ -2382,12 +2382,14 @@ MethodInvocation:
     if(method->parameters.size()!=$3->variables.size()){
       throwError("Error: Expected number of arguments: "+to_string(method->parameters.size())+" Found: "+to_string($3->variables.size()),yylineno);
     }
+    int parasize=0;
     for(int i=0;i<method->parameters.size();i++){
       if(method->parameters[i]->type!=$3->variables[i]->type){
         throwError("TypeError: Expected type of argument["+to_string(i+1)+"] : "+method->parameters[i]->type + ", Found: " + $3->variables[i]->type,yylineno);
       }
+      parasize+=typeToSize[method->parameters[i]->type];
     }
-    cout<<"why1\n";
+    mysize = to_string(stoi(mysize)-parasize);
     $$->type= method->ret_type;
     $$->method=method;
 
@@ -2397,7 +2399,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
     
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
     bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
     if($1->diffClass!="")boo=true;
@@ -2435,7 +2437,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
      bool boo = false;
     for (auto it:method->modifiers)if(it=="static")boo=true;
     if($1->diffClass!="")boo=true;
@@ -2456,7 +2458,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($3,$5->resList);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
   }
 | MethodIncovationStart TypeArguments Identifier  brac_open brac_close                 {
   $$=new Node("MethodInvocation");
@@ -2470,7 +2472,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{});
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
   }
 | MethodIncovationStart Identifier  brac_open brac_close                               {
     $$=new Node("MethodInvocation");
@@ -2494,7 +2496,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($2,vector<pair<string,int>>{},0,false,mysize);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
      bool boo = false;
     // for (auto it:method->modifiers)if(it=="static")boo=true;
     // if($1->anyName!="")boo=false;
@@ -2513,12 +2515,16 @@ MethodInvocation:
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$4->variables.size()<<endl;
       exit(1);
     }
+    int parasize=0;
     for(int i=0;i<method->parameters.size();i++){
       if(method->parameters[i]->type!=$4->variables[i]->type){
         cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$4->variables[i]->type<<endl;
         exit(1);
       }
+      parasize+=typeToSize[method->parameters[i]->type];
     }
+    mysize = to_string(stoi(mysize)-parasize);
+
     $$->type= method->ret_type;
     $$->method=method;
 
@@ -2528,7 +2534,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($2,$4->resList,0,false,mysize);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
      bool boo = true;
     // for (auto it:method->modifiers)if(it=="static")boo=true;
     // if($1->anyName!="")boo=false;
@@ -2548,12 +2554,15 @@ MethodInvocation:
       cout<<"Error: Expected number of arguments: "<<method->parameters.size()<<" Found: "<<$5->variables.size()<<endl;
       exit(1);
     }
+    int parasize=0;
     for(int i=0;i<method->parameters.size();i++){
       if(method->parameters[i]->type!=$5->variables[i]->type){
         cout<<"TypeError: Expected type of argument[" <<i+1<<"] :"<< method->parameters[i]->type<<", Found: "<<$5->variables[i]->type<<endl;
         exit(1);
       }
+      parasize+=typeToSize[method->parameters[i]->type];
     }
+    mysize = to_string(stoi(mysize)-parasize);
     $$->type= method->ret_type;
     $$->method=method;
 
@@ -2563,7 +2572,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
      bool boo = true;
     global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
 
@@ -2589,7 +2598,7 @@ MethodInvocation:
     }
     else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
 
-    $$->result = mycode->getVar($$->index);
+    $$->result = mycode->getVar($$->index-1);
      bool boo = true;
     for (auto it:method->modifiers)if(it=="static")boo=true;
     global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
@@ -3179,11 +3188,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1, 1,global_sym_table->current_scope);
 
-  int pp,pp1, ss, ee;
+  int pp,pp1,pp2, ss, ee;
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
-  cout<<"ending\n";
   pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  pp2 = mycode->insertAss(mycode->getVar(pp),"0","+int");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
   $$->index = mycode->makeBlock(pp);
@@ -3191,10 +3200,10 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // conditional
   // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
+  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
-  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  ss = mycode->insertAss(mycode->getVar(pp2),to_string(typeToSize[$3->type]),"+",mycode->getVar(pp2));
   $$->index = mycode->makeBlock(ss);
 
 
@@ -3228,11 +3237,11 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
   string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   Variable* var = global_sym_table->lookup_var($5->result,1,1, global_sym_table->current_scope);
 
-  int pp,pp1, ss, ee;
-  cout<<"ending\n";
+  int pp,pp1,pp2, ss, ee;
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
+  pp2 = mycode->insertAss(mycode->getVar(pp),"0","+int");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
 
   $$->index = mycode->makeBlock(pp);
@@ -3240,10 +3249,10 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close StatementNoS
 
   // conditional
   // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss($3->var->name,to_string(var->size),"<");
+  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
 
   // for changeexp
-  ss = mycode->insertAss($3->var->name,to_string(typeToSize[$3->type]),"+",$3->var->name);
+  ss = mycode->insertAss(mycode->getVar(pp2),to_string(typeToSize[$3->type]),"+",mycode->getVar(pp2));
   $$->index = mycode->makeBlock(ss);
 
 
@@ -3378,6 +3387,7 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->dims = $2->dims;
   $$->type = $1->type;
   $$->var = $2->var;
+  
   int allocmem =typeToSize[$1->type];
         int a1 = mycode->insertAss(to_string(allocmem),"","","");
                       // cout<<"yaha\n";
