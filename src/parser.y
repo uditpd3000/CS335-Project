@@ -930,7 +930,7 @@ VariableDeclaratorId:
     vector<Node*>v{(new Node(mymap[t1],t1))}; 
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
-    // $$->var->value = $1; fixme
+    $$->var->value = $1; //fixme
   }
 ;
 
@@ -2177,7 +2177,7 @@ UnaryExpression:
           x = mycode->getVar(p);
         }
 
-        $$->index = mycode->insertAss(x,$2->result,"*int" + $2->var->type);
+        $$->index = mycode->insertAss(x,$2->result,"*" + $2->var->type);
         $$->start = $2->start;
         $$->result = mycode->getVar($$->index);
     }
@@ -3308,7 +3308,7 @@ newclasstype ArrayCreationExpressionAfterType  {
   $$->dims = $2->dims;
   $$->type = $1->type;
   $$->var = $2->var;
-
+  
   int allocmem =typeToSize[$1->type];
   for(auto i:$2->var->dimsSize){
     allocmem*=i;
@@ -3400,7 +3400,9 @@ box_open Expression box_close  {
      throwError("Array cannot be initialized using "+$2->type+"as index",yylineno);
   }
   vector<int> ss;
+  if(!isdigit($2->var->value[0])) cout<<$2->var->value<<endl;
   ss.push_back((int)stoi($2->var->value));
+  cout<<"jnjgnk"<<endl;
   $$->var = new Variable("","",{},yylineno,true,1,ss,$2->var->value);
   $$->dims=1;
 
