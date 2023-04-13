@@ -2644,7 +2644,7 @@ UnqualifiedClassInstanceCreationExpression:
     string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
     $$->objOffset = zz;
     mycode->InsertTwoWordInstr("\tparam",zz);
-    $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true,mysize);
+    mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true,mysize);
     $$->result = mycode->getVar($$->index);
 
 
