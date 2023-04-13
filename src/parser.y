@@ -20,6 +20,7 @@ map<string,int> typeToSize;
 
 GlobalSymbolTable* global_sym_table = new GlobalSymbolTable(); 
 IR* mycode =new IR();
+X86* target=new X86();
 
 int num=0;
 int indd=0;

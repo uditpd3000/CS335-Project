@@ -1,9 +1,11 @@
 #include <bits/stdc++.h>
+#include "registers.cpp"
 
 using namespace std;
 // extern ofstream fout;
 
 extern ofstream tacout;
+extern X86* target;
 
 class Instruction
 {
@@ -55,7 +57,7 @@ public:
     int index;
 
     string print()
-    {
+    {   
         if (arg2 == "")
             return ("\t" + arg1 + " " + to_string(index));
         else
