@@ -1,0 +1,51 @@
+Rectangle:
+Rectangle.Constr:
+	BeginConstr Rectangle
+	t0 := popparam
+
+	width :=  *(basePointer +int 8)
+	length :=  *(basePointer +int 12)
+	t1 := getFromSymTable( Rectangle , length)
+	*(t0+t1) := length
+	t2 := getFromSymTable( Rectangle , width)
+	*(t0+t2) := width
+	EndConstr Rectangle
+area:
+	BeginFunc 
+
+	t3 := getFromSymTable( Rectangle , length)
+	t4 := getFromSymTable( Rectangle , width)
+	t5 := *(t0+t3) *int *(t0+t4)
+	push t5
+	pop basePointer
+	return 
+	EndFunc area
+main:
+	BeginFunc main
+
+	args :=  *(basePointer +int 8)
+	t6 := 16
+	param t6
+	allocmem 1
+	t7 := popparam
+	param t7
+	param 5
+	param 10
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 8
+	call Rectangle.Constr 2
+	stackPointer := stackPointer +int 8
+	t8 := 	popparam
+	rectangle := t8
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 0
+	call area 
+	t9 := popReturnValue
+	stackPointer := stackPointer +int 0
+	myarea := t9
+	print myarea
+	pop basePointer
+	return 
+	EndFunc main
