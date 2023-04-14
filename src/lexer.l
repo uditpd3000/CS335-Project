@@ -1,7 +1,6 @@
 %{  
 #include <bits/stdc++.h>
 #include "nodes.cpp"
-#include "ThreeAC.cpp" 
 #include "parser.tab.h"
 
 #include <bits/stdc++.h>

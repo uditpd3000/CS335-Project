@@ -1,6 +1,9 @@
 #include <bits/stdc++.h>
+#include "symbol-table.cpp"
 
 using namespace std;
+
+extern GlobalSymbolTable* global_sym_table;
 
 class X86{
     public:
@@ -30,6 +33,15 @@ class X86{
             usedRegs.push(t);
             return t;
             
+        }
+
+        int getMemoryLocation(string var){
+            SymbolTable * curr = global_sym_table->current_symbol_table;
+            while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            for(auto v:curr->vars){
+                if(v->name==var)return v->offset;
+            }
+
         }
 
 };

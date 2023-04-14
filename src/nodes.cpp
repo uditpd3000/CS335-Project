@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include "symbol-table.cpp"
+#include "ThreeAC.cpp"
 
 using namespace std;
 extern ofstream fout;
