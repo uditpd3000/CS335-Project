@@ -1,7 +1,6 @@
 %{  
 #include <bits/stdc++.h>
 #include "nodes.cpp"
-#include "ThreeAC.cpp"
 using namespace std;
 
 extern int yyparse();
