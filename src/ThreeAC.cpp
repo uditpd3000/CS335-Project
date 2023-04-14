@@ -65,27 +65,27 @@ public:
         if (arg2 != "")
         {
             string instr = "";
-            if (op == "+")
+            if (op[0] == '+')
             {
                 instr = "add";
             }
-            else if (op == "-")
+            else if (op[0] == '-')
             {
                 instr = "sub";
             }
-            else if (op == "*")
+            else if (op[0] == '*')
             {
                 instr = "imul";
             }
-            else if (op == "|")
+            else if (op[0] == '|')
             {
                 instr = "or";
             }
-            else if (op == "^")
+            else if (op[0] == '^')
             {
                 instr = "xor";
             }
-            else if (op == "&")
+            else if (op[0] == '&')
             {
                 instr = "and";
             }
@@ -101,10 +101,8 @@ public:
             x86code.push_back(code[0]);
             reg3 = code[1];
 
-
-
-
-            // code = instr + arg1 + ", " + arg2 +"\n";
+            reg1 = instr + " " +reg2 + ", " + reg3;
+            x86code.push_back(reg1);
             // if(result[0]=='t' && result[1]=='_'){
 
             // }
@@ -410,8 +408,6 @@ public:
             myInstruction->result = getLocalVar();
         else
             myInstruction->result = res;
-
-        // myInstruction->codegen();
 
         return myInstruction;
     }
