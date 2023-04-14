@@ -34,7 +34,7 @@ class X86{
             return x;
         }
 
-        vector<string> getReg(string name, int mysize=-1){
+        vector<string> getReg(string name, string scope, int mysize=4){
             vector<string> v;
             string u,t;
             int offset;
@@ -49,7 +49,7 @@ class X86{
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
                     tVarsToMem.insert({name,x}); // allocated a temporary 
-                    offset = getTotalSize();
+                    offset = getTotalSize(scope);
                 }
                 else {
                     x=tVarsToMem[name];
@@ -57,7 +57,7 @@ class X86{
                 u = "mov "+t+",[ebp -" + to_string(offset + x) + "]";
             }
             else{
-                offset = getMemoryLocation(name);
+                offset = getMemoryLocation(name,scope);
                 u = "mov "+t+", [ebp -" + to_string(offset) + "]";
             }
 
@@ -71,8 +71,8 @@ class X86{
             
         }
 
-        int getMemoryLocation(string var){
-            SymbolTable * curr = global_sym_table->current_symbol_table;
+        int getMemoryLocation(string var, string scope){
+            SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
             for(auto v:curr->vars){
                 if(v->name==var)return v->offset;
@@ -80,8 +80,8 @@ class X86{
             return -1;
         }
 
-        int getTotalSize(){
-            SymbolTable * curr = global_sym_table->current_symbol_table;
+        int getTotalSize(string scope){
+            SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
             return curr->offset;
         }
