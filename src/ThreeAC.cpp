@@ -47,6 +47,50 @@ public:
             return s + arg1;
         }
     }
+
+    string codegen()
+    {   
+        string code="";
+        if (arg2 != "")
+        {
+            string instr = "";
+            if (op == "+")
+            {
+                instr = "add";
+            }
+            else if (op == "-")
+            {
+                instr = "sub";
+            }
+            else if (op == "*")
+            {
+                instr = "imul";
+            }
+            else if (op == "|")
+            {
+                instr = "or";
+            }
+            else if (op == "^")
+            {
+                instr = "xor";
+            }
+            else if (op == "&")
+            {
+                instr = "and";
+            }
+            // code = instr + arg1 + ", " + arg2 +"\n";
+            // if(result[0]=='t' && result[1]=='_'){
+
+            // }
+            // code += "mov ";
+        }
+        else {
+            // code = "mov";
+        }
+
+        return code;
+        
+    }
 };
 
 class UnconditionalJump : public Instruction
@@ -404,6 +448,17 @@ public:
         return quadruple.size() - 1;
     }
 
+    // void printtemprories(string x){
+    //     // to empty temprories
+    //     for(auto t : blocks[x]->codes){
+
+    //         if(t->isBlock) printtemprories(t->result);
+    //         else if(t->result[0]=='t'){
+    //             cout<<"--------"<<t->result<<endl;
+    //         }
+    //     }
+    // }
+
     int insertFor(int mystart, int startindex, int endindex, string changeExp, string arg2)
     {
         //  for (i=0;i<10;i++)
@@ -451,6 +506,8 @@ public:
             x = makeBlock(mystart);
 
         updateIncompleteJump(quadruple[x]->result, changeExp, next);
+
+        // printtemprories(quadruple[x]->result);
 
         return quadruple.size() - 1;
     }

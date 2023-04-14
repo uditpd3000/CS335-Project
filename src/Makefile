@@ -1,4 +1,4 @@
-TARGET = myASTgenerator
+TARGET = myCodeGenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
 output = ../output/ThreeAddressCode.3ac
