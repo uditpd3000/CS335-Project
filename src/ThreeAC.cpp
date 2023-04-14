@@ -2,7 +2,7 @@
 #include "registers.cpp"
 
 using namespace std;
-// extern ofstream fout;
+extern GlobalSymbolTable *global_sym_table;
 
 extern ofstream tacout;
 extern X86* target;
@@ -13,6 +13,7 @@ public:
     string result = "";
     bool isBlock = false;
     bool incomplete = false;
+    string scope;
 
     vector<string> x86code;
 
@@ -30,6 +31,9 @@ public:
 class Assignment : public Instruction
 {
 public:
+    Assignment(){
+        scope = global_sym_table->current_scope;
+    }
     string arg1;
     string arg2 = "";
     string op = "";
@@ -43,12 +47,13 @@ public:
             s += result + " := ";
 
         if (op != "")
-        {
-            if (arg2 != "")
-                return (s + arg1 + " " + op + " " + arg2);
-            else
-                return (s + arg1 + op);
-        }
+            // scope
+            {
+                if (arg2 != "")
+                    return (s + arg1 + " " + op + " " + arg2);
+                else
+                    return (s + arg1 + op);
+            }
         else
         {
             return s + arg1;
@@ -88,11 +93,11 @@ public:
             string reg1,reg2,reg3;
             vector<string> code;
 
-            code =  target->getReg(arg1);
+            code =  target->getReg(arg1,scope);
             x86code.push_back(code[0]);
             reg2 = code[1];
 
-            code =  target->getReg(arg2);
+            code = target->getReg(arg2, scope);
             x86code.push_back(code[0]);
             reg3 = code[1];
 
@@ -110,7 +115,7 @@ public:
             string reg1,reg2;
             vector<string> code;
 
-            code = target->getReg(arg1);
+            code = target->getReg(arg1, scope);
             x86code.push_back(code[0]);
             reg1 = code[1];
 
@@ -129,6 +134,10 @@ public:
 class UnconditionalJump : public Instruction
 {
 public:
+    UnconditionalJump()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string arg1 = "goto";
     string arg2 = "";
     int index;
@@ -149,6 +158,10 @@ public:
 class ConditionalJump : public Instruction
 {
 public:
+    ConditionalJump()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string arg1 = "if";
     string arg2;
     string arg3 = "goto";
@@ -172,6 +185,10 @@ class Block : public Instruction
 {
 public:
     vector<Instruction *> codes;
+    Block()
+    {
+        scope = global_sym_table->current_scope;
+    }
 
     string print()
     {
@@ -197,6 +214,10 @@ public:
 class TwoWordInstr : public Instruction
 {
 public:
+    TwoWordInstr()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string arg1;
     string arg2;
     string print()
@@ -212,6 +233,10 @@ public:
 class FunctnCall : public Instruction
 {
 public:
+    FunctnCall()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string name;
     vector<string> params;
     bool isCall = false;
@@ -249,6 +274,10 @@ public:
 class ArrayInsert : public Instruction
 {
 public:
+    ArrayInsert()
+    {
+        scope = global_sym_table->current_scope;
+    }
     vector<string> elements;
     string array;
     int typesize;
@@ -275,6 +304,10 @@ public:
 class SymbolTableOffset : public Instruction
 {
 public:
+    SymbolTableOffset()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string classname;
     string offset;
     int offValue;
@@ -293,6 +326,10 @@ public:
 class PointerAssignment : public Instruction
 {
 public:
+    PointerAssignment()
+    {
+        scope = global_sym_table->current_scope;
+    }
     string start;
     string offset;
 
@@ -352,7 +389,7 @@ public:
         else
             myInstruction->result = res;
 
-        myInstruction->codegen();
+        // myInstruction->codegen();
         quadruple.push_back(myInstruction);
         return quadruple.size() - 1;
     }
@@ -374,7 +411,7 @@ public:
         else
             myInstruction->result = res;
 
-        myInstruction->codegen();
+        // myInstruction->codegen();
 
         return myInstruction;
     }
