@@ -3600,6 +3600,7 @@ int main(int argc, char *argv[])
     /* printf("%d %d %d %d\n",titles,paras,words,sentences)); */
     /* fout<<titles<<" "<<paras<<" "<<words<<" "<<sentences<<endl; */
     mycode->print();
+    /* mycode->x86print(); */
 
     return 0;
 }

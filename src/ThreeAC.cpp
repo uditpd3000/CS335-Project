@@ -14,10 +14,17 @@ public:
     bool isBlock = false;
     bool incomplete = false;
 
+    vector<string> x86code;
+
     virtual string print()
     {
         return "";
     }
+
+    virtual string codegen(){
+        return "";
+    }
+
 };
 
 class Assignment : public Instruction
@@ -50,7 +57,6 @@ public:
 
     string codegen()
     {   
-        string code="";
         if (arg2 != "")
         {
             string instr = "";
@@ -78,6 +84,21 @@ public:
             {
                 instr = "and";
             }
+
+            string reg1,reg2,reg3;
+            vector<string> code;
+
+            code =  target->getReg(arg1);
+            x86code.push_back(code[0]);
+            reg2 = code[1];
+
+            code =  target->getReg(arg2);
+            x86code.push_back(code[0]);
+            reg3 = code[1];
+
+
+
+
             // code = instr + arg1 + ", " + arg2 +"\n";
             // if(result[0]=='t' && result[1]=='_'){
 
@@ -85,11 +106,23 @@ public:
             // code += "mov ";
         }
         else {
-            // code = "mov";
+            // x=1;
+            string reg1,reg2;
+            vector<string> code;
+
+            code = target->getReg(arg1);
+            x86code.push_back(code[0]);
+            reg1 = code[1];
+
+
+
         }
 
-        return code;
-        
+        string s="";
+        for (auto x : x86code){
+            s+=x+"\n";
+        }
+        return s;
     }
 };
 
@@ -106,6 +139,10 @@ public:
             return ("\t" + arg1 + " " + to_string(index));
         else
             return ("\t" + arg1 + " " + arg2);
+    }
+
+    string codegen(){
+        return "";
     }
 };
 
@@ -125,6 +162,10 @@ public:
         else
             return ("\t" + arg1 + " " + arg2 + " " + arg3 + " " + arg4);
     }
+
+    string codegen(){
+        return "";
+    }
 };
 
 class Block : public Instruction
@@ -141,6 +182,16 @@ public:
         }
         return s;
     }
+
+    string codegen(){
+        string s = "";
+        for (auto x : codes)
+        {
+            s += x->codegen();
+        }
+        return s;
+    }
+
 };
 
 class TwoWordInstr : public Instruction
@@ -151,6 +202,10 @@ public:
     string print()
     {
         return arg1 + " " + arg2;
+    }
+
+    string codegen(){
+        return "";
     }
 };
 
@@ -185,6 +240,10 @@ public:
 
         return s;
     }
+
+    string codegen(){
+        return "";
+    }
 };
 
 class ArrayInsert : public Instruction
@@ -207,6 +266,10 @@ public:
         }
         return s;
     }
+
+    string codegen(){
+        return "";
+    }
 };
 
 class SymbolTableOffset : public Instruction
@@ -221,6 +284,10 @@ public:
         string s = "\t" + result + " := getFromSymTable( " + classname + " , " + offset + ")";
         return s;
     }
+
+    string codegen(){
+        return "";
+    }
 };
 
 class PointerAssignment : public Instruction
@@ -233,6 +300,10 @@ public:
     {
         string s = "\t" + result + " :=  *(" + start + " +int " + offset + ")";
         return s;
+    }
+
+    string codegen(){
+        return "";
     }
 };
 
@@ -252,7 +323,7 @@ public:
 
     string getLocalVar()
     {
-        return "t" + to_string(local_var_count++);
+        return "t_" + to_string(local_var_count++);
     }
     string getLocalLabel()
     {
@@ -281,6 +352,7 @@ public:
         else
             myInstruction->result = res;
 
+        myInstruction->codegen();
         quadruple.push_back(myInstruction);
         return quadruple.size() - 1;
     }
@@ -301,6 +373,8 @@ public:
             myInstruction->result = getLocalVar();
         else
             myInstruction->result = res;
+
+        myInstruction->codegen();
 
         return myInstruction;
     }
@@ -686,5 +760,13 @@ public:
             tacout << endl;
         }
         tacout.close();
+    }
+
+    void x86print(){
+        for (int i = 0; i < quadruple.size(); i++)
+        {
+            cout << quadruple[i]->codegen();
+            // cout << endl;
+        }
     }
 };

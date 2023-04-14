@@ -34,20 +34,33 @@ class X86{
             return x;
         }
 
-        vector<string> getReg(string name, int offset=-1, int mysize=-1){
+        vector<string> getReg(string name, int mysize=-1){
             vector<string> v;
             string u,t;
-            if(mysize!=-1) {
-                int x = allocateIntoMem(mysize);
-                tVarsToMem.insert({name,x}); // allocated a temporary 
-                u = "mov [ebp -" + to_string(offset + x) + "], ";
-            }
-            else{
-                u = "mov [ebp -" + to_string(offset) + "], ";
-            }
+            int offset;
 
             t = usedRegs.front();
-            u+=t;
+
+            if(name[0]<='9' && name[0]>='0'){
+                u = "mov "+t+", $" +name;
+            }
+            else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
+                int x;
+                if(tVarsToMem.find(name)==tVarsToMem.end()){
+                    x = allocateIntoMem(mysize);
+                    tVarsToMem.insert({name,x}); // allocated a temporary 
+                    offset = getTotalSize();
+                }
+                else {
+                    x=tVarsToMem[name];
+                }
+                u = "mov "+t+",[ebp -" + to_string(offset + x) + "]";
+            }
+            else{
+                offset = getMemoryLocation(name);
+                u = "mov "+t+", [ebp -" + to_string(offset) + "]";
+            }
+
             regTovar[t] = name;
             usedRegs.pop(); usedRegs.push(t);
             
@@ -64,7 +77,13 @@ class X86{
             for(auto v:curr->vars){
                 if(v->name==var)return v->offset;
             }
+            return -1;
+        }
 
+        int getTotalSize(){
+            SymbolTable * curr = global_sym_table->current_symbol_table;
+            while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            return curr->offset;
         }
 
 };
