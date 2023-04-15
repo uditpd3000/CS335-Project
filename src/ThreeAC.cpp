@@ -65,50 +65,66 @@ public:
         if (arg2 != "")
         {
             string instr = "";
-            if (op == "+")
-            {
-                instr = "add";
-            }
-            else if (op == "-")
-            {
-                instr = "sub";
-            }
-            else if (op == "*")
-            {
-                instr = "imul";
-            }
-            else if (op == "|")
-            {
-                instr = "or";
-            }
-            else if (op == "^")
-            {
-                instr = "xor";
-            }
-            else if (op == "&")
-            {
-                instr = "and";
-            }
-
             string reg1,reg2,reg3;
             vector<string> code;
 
-            code =  target->getReg(arg1,scope);
-            x86code.push_back(code[0]);
-            reg2 = code[1];
+            if (op[0] == '+')
+            {
+                instr = "addq";
 
-            code = target->getReg(arg2, scope);
-            x86code.push_back(code[0]);
-            reg3 = code[1];
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
 
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
 
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
 
+            }
+            else if (op[0] == '-')
+            {
+                instr = "subq";
 
-            // code = instr + arg1 + ", " + arg2 +"\n";
-            // if(result[0]=='t' && result[1]=='_'){
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
 
-            // }
-            // code += "mov ";
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if (op[0] == '*')
+            {
+                instr = "mul";
+            }
+            else if (op[0] == '|')
+            {
+                instr = "or";
+            }
+            else if (op[0] == '^')
+            {
+                instr = "xor";
+            }
+            else if (op[0] == '&')
+            {
+                instr = "and";
+            }
         }
         else {
             // x=1;
@@ -117,9 +133,11 @@ public:
 
             code = target->getReg(arg1, scope);
             x86code.push_back(code[0]);
-            reg1 = code[1];
+            reg2 = code[1];
 
-
+            int x = target->getOffset(result,scope);
+            reg1 = "movq\t%"+reg2 + ", -" + to_string(x) + "(%rbp)";
+            x86code.push_back(reg1);
 
         }
 
@@ -410,8 +428,6 @@ public:
             myInstruction->result = getLocalVar();
         else
             myInstruction->result = res;
-
-        // myInstruction->codegen();
 
         return myInstruction;
     }
@@ -802,7 +818,7 @@ public:
     void x86print(){
         for (int i = 0; i < quadruple.size(); i++)
         {
-            cout << quadruple[i]->codegen();
+            cout << "\t"<<quadruple[i]->codegen();
             // cout << endl;
         }
     }
