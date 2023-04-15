@@ -499,12 +499,12 @@ public:
             tablemap[i]->print_table_CSV();
         }
     }
-    void finalCheck(string symbol, string scope, int myLineno)
+    void finalCheck(string symbol, bool ifOk, string scope, int myLineno)
     {
         Variable *var_ = lookup_var(symbol, 0, 1, scope);
         for (auto x : var_->modifiers)
         {
-            if (x == "final")
+            if (x == "final" && ifOk==false)
             {
                 throwError("Error : Changing value of final variable " + symbol, myLineno);
             }

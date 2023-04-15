@@ -37,6 +37,7 @@ class Node {
     vector<string> arrayRowMajor;
 
     bool staticOk = false;
+    bool finalOk = false;
     string diffClass = "";
 
 

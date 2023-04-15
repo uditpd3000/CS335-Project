@@ -1159,6 +1159,8 @@ VariableInitializer:
     $$->objOffset = $1->objOffset;
     $$->start=$1->start;
     $$->index=$1->index;
+    $$->staticOk=$1->staticOk;
+    $$->finalOk = $1->finalOk;
   } // $$->add($1);
 | ArrayInitializer {
     // $$ = new Node();
@@ -1371,13 +1373,11 @@ Assignment:
     if($1->start) $$->start = $1->start;
     else $$->start = $3->start;
     $$->result = $1->result;
-
     // cout<<"dukh\n"; mycode->print(); exit(1);
-    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
+    global_sym_table->finalCheck($1->var->name,$1->finalOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
     // cout<<$3->var->name<<" ";
-    // cout<<$3->var->isField<<$3->staticOk<<endl;
 
     }
 ;
@@ -1456,6 +1456,11 @@ PrimaryNoNewArray:
     $$->cls = $2->cls;
     $$->var = $2->var;
     $$->method = $2->method;
+    $$->result = $2->result;
+    $$->start = $2->start;
+    $$->index = $2->index;
+    $$->staticOk = $2->staticOk;
+    $$->finalOk = $2->finalOk;
     }
 | FieldAccess                       {$$=$1;} 
 | ArrayAccess                       {$$=$1;} 
@@ -1537,6 +1542,7 @@ literal:
 
 TypeName:
   Identifier {
+    cout<<$1<<endl;
     string t1=$1; 
     $$=new Node("TypeName"); 
     $$->add(new Node("Identifier",t1));
@@ -1679,6 +1685,7 @@ TypeName:
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
     } 
     $$->staticOk = true;
+    $$->finalOk = true;
     $$->diffClass = $1->anyName;
   }
 ;
@@ -1731,6 +1738,7 @@ ArrayAccess:
     }
     $$->dims=v1->dims-1;
     $$->type = v1->type;
+    $$->finalOk = true;
   }
 | TypeName dot Identifier box_open Expression box_close  {
     $$=new Node("ArrayAcc");
@@ -1784,6 +1792,7 @@ ArrayAccess:
     $$->dims=v1->dims-1;
     $$->type = v1->type;
     $$->which_scope=$1->anyName;
+    $$->finalOk = true;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -1843,6 +1852,7 @@ ArrayAccess:
     }
 
     $$->start = $1->start;
+    $$->finalOk = true;
 
     }
 
@@ -2024,7 +2034,7 @@ AndExpression:
     ;
 
 EqualityExpression:
-    RelationalExpression                                                             {$$=$1;}
+    RelationalExpression                                                             {$$=$1;cout<<"aa"<<$1->var->name<<endl;}
     | EqualityExpression EQUALNOTEQUAL RelationalExpression                          {
       string t2=$2;$$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};
@@ -2146,7 +2156,7 @@ AdditiveExpression:
       $$->result = mycode->getVar($$->index);
 
     }
-    | MultiplicativeExpression                                                       {$$=$1;}
+    | MultiplicativeExpression                                                       {$$=$1;cout<<"mul";}
     ;
 
 MultiplicativeExpression:
@@ -2225,7 +2235,7 @@ PreIncrDecrExpression:
       $$->add(v); 
       $$->var=new Variable("",$2->var->type,yylineno,{},"");
 
-      global_sym_table->finalCheck($2->var->name,global_sym_table->current_scope,yylineno);
+      global_sym_table->finalCheck($2->var->name,$2->finalOk,global_sym_table->current_scope,yylineno);
       global_sym_table->staticCheck($2->var->isField,$2->staticOk,global_sym_table->current_scope,yylineno);
 
       string x="1";
@@ -2265,7 +2275,7 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
   Primary                                   {$$=$1;}
-| TypeName                                  {$$=$1;}
+| TypeName                                  {$$=$1;cout<<"ty";}
 | PostIncrDecrExpression                    {$$=$1;}
 ;
 
@@ -2280,7 +2290,7 @@ PostIncrDecrExpression:
     zz+=$2[0];
     $$->start = $1->index;
 
-    global_sym_table->finalCheck($1->var->name,global_sym_table->current_scope,yylineno);
+    global_sym_table->finalCheck($1->var->name,$1->finalOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     string x="1";
     if(global_sym_table->typeCheckHelperLiteral("int", $1->var->type)){
@@ -2314,21 +2324,6 @@ CastExpression:
     }
     $$->var=new Variable("",t2,yylineno,{},$4->var->value);
     }
-| brac_open ClassType dot TypeName brac_close UnaryExpressionNotPlusMinus         {
-  $$=new Node("CastExp");
-  string t1=$1,t2=$3;
-  vector<Node*>v{new Node(mymap[t1],t1),$2,new Node(mymap[t2],t2),$4};
-  $$->add(v);
-  $$->var=new Variable("",t2,yylineno,{},$6->var->value);
-  }
-| brac_open ReferenceType AdditionalBound brac_close UnaryExpressionNotPlusMinus  {
-  $$=new Node("CastExp");
-  string t1=$1,t2=$4;
-  vector<Node*>v{new Node(mymap[t1],t1),$2,$3,new Node(mymap[t2],t2),$5};
-  $$->add(v); 
-  $$->var=new Variable("",$2->var->type,yylineno,{},"");
-  }
-;
 
 AssignmentOperator:
 assign                {$$=new Node("AssignmentOperator");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1)};$$->add(v);$$->lexeme = "=";}
