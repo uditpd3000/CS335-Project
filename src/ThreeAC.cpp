@@ -143,7 +143,7 @@ public:
 
         string s="";
         for (auto x : x86code){
-            s+=x+"\n";
+            s+="\t" + x+"\n";
         }
         return s;
     }
@@ -816,9 +816,10 @@ public:
     }
 
     void x86print(){
+        cout<<endl;
         for (int i = 0; i < quadruple.size(); i++)
         {
-            cout << "\t"<<quadruple[i]->codegen();
+            cout <<quadruple[i]->codegen();
             // cout << endl;
         }
     }
