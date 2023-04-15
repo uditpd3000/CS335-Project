@@ -95,6 +95,20 @@ void throwError(string s, int lineno){
   exit(1);
 }
 
+int getTemporarySize(string name){
+    // to empty temprories
+    int siz = 0;
+    for(auto t : mycode->blocks[name]->codes){
+
+        if(t->isBlock) siz+=getTemporarySize(t->result);
+        else if(t->result[0]=='t'){
+            // siz+=t->resSize;
+            // cout<<"--------"<<t->result<<endl;
+        }
+    }
+    return siz;
+}
+
 /* {} 0 or more
 [] 0 or 1*/
 

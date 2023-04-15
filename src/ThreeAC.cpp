@@ -7,6 +7,8 @@ extern GlobalSymbolTable *global_sym_table;
 extern ofstream tacout;
 extern X86* target;
 
+extern int getTemporarySize(string name);
+
 class Instruction
 {
 public:
@@ -239,7 +241,7 @@ public:
     string arg1;
     string arg2;
     string print()
-    {
+    {   
         return arg1 + " " + arg2;
     }
 
