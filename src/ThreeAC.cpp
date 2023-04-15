@@ -11,6 +11,7 @@ class Instruction
 {
 public:
     string result = "";
+    int resSize = 0;
     bool isBlock = false;
     bool incomplete = false;
     string scope;
@@ -41,6 +42,7 @@ public:
     string print()
     {
 
+        resSize = 4;
         string s = "\t";
 
         if (result != "")
@@ -143,7 +145,7 @@ public:
 
         string s="";
         for (auto x : x86code){
-            s+=x+"\n";
+            s+="\t"+x+"\n";
         }
         return s;
     }
@@ -244,7 +246,24 @@ public:
     }
 
     string codegen(){
-        return "";
+        if (arg1 == "\tBeginFunc"){
+            x86code.push_back("pushq\t%rbp");
+            x86code.push_back("movq\t%rsp, %rbp");
+
+            // space for locals
+            // cout<<scope<<"---------------------------------";
+            string parentName = global_sym_table->linkmap[scope]->parent->scope;
+            string methodName = scope.substr(parentName.length() + 1, scope.length() - (parentName.length()));
+            cout<<methodName<<"---";
+            int size = target->getTotalSize(scope) + mycode->getTemporarySize(methodName);
+            
+        }
+        string s = "";
+        for (auto x : x86code)
+        {
+            s += "\t" + x + "\n";
+        }
+        return s;
     }
 };
 
@@ -332,6 +351,7 @@ public:
 
     string print()
     {
+        resSize = 8;
         string s = "\t" + result + " := getFromSymTable( " + classname + " , " + offset + ")";
         return s;
     }
@@ -353,6 +373,7 @@ public:
 
     string print()
     {
+        resSize = 4;
         string s = "\t" + result + " :=  *(" + start + " +int " + offset + ")";
         return s;
     }
@@ -574,17 +595,6 @@ public:
 
         return quadruple.size() - 1;
     }
-
-    // void printtemprories(string x){
-    //     // to empty temprories
-    //     for(auto t : blocks[x]->codes){
-
-    //         if(t->isBlock) printtemprories(t->result);
-    //         else if(t->result[0]=='t'){
-    //             cout<<"--------"<<t->result<<endl;
-    //         }
-    //     }
-    // }
 
     int insertFor(int mystart, int startindex, int endindex, string changeExp, string arg2)
     {
@@ -818,8 +828,10 @@ public:
     void x86print(){
         for (int i = 0; i < quadruple.size(); i++)
         {
-            cout << "\t"<<quadruple[i]->codegen();
+            
+            cout <<quadruple[i]->codegen();
             // cout << endl;
         }
     }
 };
+extern IR *mycode;
