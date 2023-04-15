@@ -23,7 +23,7 @@ X86* target=new X86();
 
 int num=0;
 int indd=0;
-int methstart=0;
+int methstart=0,classstart=0;
 bool gotReturn=false;
 bool madeConstr;
 vector<string> arrayRowMajor;
@@ -214,7 +214,7 @@ ClassDeclaration:
     global_sym_table->insert(classs);
     global_sym_table->makeTable($3);
     global_sym_table->current_symbol_table->isClass=true;
-    mycode->makeBlock(mycode->quadruple.size(),$3);
+    // mycode->makeBlock(mycode->quadruple.size(),$3);
 
     madeConstr=false;
    
@@ -225,7 +225,8 @@ ClassDeclaration:
     string t1=$2,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
-    $$->add($5->objects); 
+    $$->add($5->objects);
+    classstart= mycode->makeBlock(classstart,$3);
     global_sym_table->end_scope();
 
 
@@ -239,7 +240,7 @@ ClassDeclaration:
     global_sym_table->insert(classs);
     global_sym_table->makeTable($2);
     global_sym_table->current_symbol_table->isClass=true;
-    mycode->makeBlock(mycode->quadruple.size(),$2);
+    // mycode->makeBlock(mycode->quadruple.size(),$2);
     madeConstr=false;
   } 
   ClassDecTillTypeParameters {
@@ -248,6 +249,7 @@ ClassDeclaration:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
     $$->add($4->objects);
+    classstart=mycode->makeBlock(classstart,$2);
     global_sym_table->end_scope();
 
     $$->cls = new Class($2,vector<string>{},yylineno);
