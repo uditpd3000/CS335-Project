@@ -7,6 +7,8 @@ extern GlobalSymbolTable *global_sym_table;
 extern ofstream tacout;
 extern X86* target;
 
+extern int getTemporarySize(string name);
+
 class Instruction
 {
 public:
@@ -145,7 +147,7 @@ public:
 
         string s="";
         for (auto x : x86code){
-            s+="\t"+x+"\n";
+            s+="\t" + x+"\n";
         }
         return s;
     }
@@ -241,27 +243,28 @@ public:
     string arg1;
     string arg2;
     string print()
-    {
+    {   
         return arg1 + " " + arg2;
     }
 
     string codegen(){
         if (arg1 == "\tBeginFunc"){
-            x86code.push_back("pushq\t%rbp");
-            x86code.push_back("movq\t%rsp, %rbp");
+            
 
             // space for locals
             // cout<<scope<<"---------------------------------";
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             string methodName = scope.substr(parentName.length() + 1, scope.length() - (parentName.length()));
-            cout<<methodName<<"---";
-            int size = target->getTotalSize(scope) + mycode->getTemporarySize(methodName);
-            
+            int size = target->getTotalSize(scope) + getTemporarySize(methodName);
+            x86code.push_back(methodName + ":");
+            x86code.push_back("\tpushq\t%rbp");
+            x86code.push_back("\tmovq\t%rsp, %rbp");
+            x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");
         }
         string s = "";
         for (auto x : x86code)
         {
-            s += "\t" + x + "\n";
+            s += x + "\n";
         }
         return s;
     }
@@ -826,12 +829,11 @@ public:
     }
 
     void x86print(){
+        cout<<endl;
         for (int i = 0; i < quadruple.size(); i++)
         {
-            
             cout <<quadruple[i]->codegen();
             // cout << endl;
         }
     }
 };
-extern IR *mycode;

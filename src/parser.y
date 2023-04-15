@@ -23,6 +23,7 @@ X86* target=new X86();
 
 int num=0;
 int indd=0;
+int methstart=0;
 bool gotReturn=false;
 bool madeConstr;
 vector<string> arrayRowMajor;
@@ -92,6 +93,20 @@ void generate_graph(Node *n){
 void throwError(string s, int lineno){
   cout<<"\nSemantic Error: "<<s<<" at lineno: "<<lineno<<endl;
   exit(1);
+}
+
+int getTemporarySize(string name){
+    // to empty temprories
+    int siz = 0;
+    for(auto t : mycode->blocks[name]->codes){
+
+        if(t->isBlock) siz+=getTemporarySize(t->result);
+        else if(t->result[0]=='t'){
+            siz+=t->resSize;
+            // cout<<"--------"<<t->result<<endl;
+        }
+    }
+    return siz;
 }
 
 /* {} 0 or more
@@ -632,13 +647,13 @@ MethodDeclaration:
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
     
-    mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+    // mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
 
     gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
-    mycode->insert(myIns);
+    methstart = mycode->insert(myIns);
     vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
@@ -671,7 +686,7 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
-
+    mycode->makeBlock(methstart,$2->method->name);
       gotReturn=false;
       
     }
@@ -683,13 +698,13 @@ MethodDeclaration:
     global_sym_table->current_symbol_table->offset+=4;
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $2->method->name);
-    mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
+    // mycode->makeBlock(mycode->quadruple.size(),$2->method->name);
 
     gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
-    mycode->insert(myIns);
+    methstart= mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
     vector<pair<string,int>>params;
@@ -722,6 +737,7 @@ MethodDeclaration:
     myIns->arg1="\tEndFunc";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns); 
+    mycode->makeBlock(methstart,$2->method->name);
     gotReturn=false;
      }
 
@@ -731,13 +747,13 @@ MethodDeclaration:
     global_sym_table->current_symbol_table->offset+=4;
     global_sym_table->insert(_method);
     global_sym_table->makeTable(global_sym_table->current_scope +"_"+ $1->method->name);
-    mycode->makeBlock(mycode->quadruple.size(),$1->method->name);
+    // mycode->makeBlock(mycode->quadruple.size(),$1->method->name);
 
     gotReturn=false;
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
-    mycode->insert(myIns);
+    methstart=mycode->insert(myIns);
     global_sym_table->current_symbol_table->isMethod=true;
 
      vector<pair<string,int>>params;
@@ -769,6 +785,8 @@ MethodDeclaration:
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
+
+    mycode->makeBlock(methstart,$1->method->name);
     gotReturn=false;
     
     }
