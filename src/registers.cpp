@@ -42,23 +42,24 @@ class X86{
             t = usedRegs.front();
 
             if(name[0]<='9' && name[0]>='0'){
-                u = "mov "+t+", $" +name;
+                u = "movq\t$" +name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
                 int x;
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
-                    tVarsToMem.insert({name,x}); // allocated a temporary 
                     offset = getTotalSize(scope);
+                    x+=offset;
+                    tVarsToMem.insert({name,x}); // allocated a temporary 
                 }
                 else {
                     x=tVarsToMem[name];
                 }
-                u = "mov "+t+",[ebp -" + to_string(offset + x) + "]";
+                u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
             }
             else{
                 offset = getMemoryLocation(name,scope);
-                u = "mov "+t+", [ebp -" + to_string(offset) + "]";
+                u = "movq\t-" + to_string(offset) + "(%rbp), %" + t;
             }
 
             regTovar[t] = name;
@@ -75,7 +76,7 @@ class X86{
             SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
             for(auto v:curr->vars){
-                if(v->name==var)return v->offset;
+                if(v->name==var)return v->offset+4;
             }
             return -1;
         }
@@ -83,7 +84,26 @@ class X86{
         int getTotalSize(string scope){
             SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
-            return curr->offset;
+            return (curr->offset + 4);
+        }
+
+        int getOffset(string name, string scope, int mysize=4){
+            int x;
+            if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
+                if(tVarsToMem.find(name)==tVarsToMem.end()){
+                    x = allocateIntoMem(mysize);
+                    offset = getTotalSize(scope);
+                    x+=offset;
+                    tVarsToMem.insert({name,x}); // allocated a temporary 
+                }
+                else {
+                    x=tVarsToMem[name];
+                }
+            }
+            else{
+                x = getMemoryLocation(name,scope);
+            }
+            return x;
         }
 
 };
