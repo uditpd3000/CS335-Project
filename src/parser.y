@@ -102,7 +102,7 @@ int getTemporarySize(string name){
 
         if(t->isBlock) siz+=getTemporarySize(t->result);
         else if(t->result[0]=='t'){
-            // siz+=t->resSize;
+            siz+=t->resSize;
             // cout<<"--------"<<t->result<<endl;
         }
     }
@@ -1562,7 +1562,6 @@ literal:
 
 TypeName:
   Identifier {
-    cout<<$1<<endl;
     string t1=$1; 
     $$=new Node("TypeName"); 
     $$->add(new Node("Identifier",t1));
@@ -2054,7 +2053,7 @@ AndExpression:
     ;
 
 EqualityExpression:
-    RelationalExpression                                                             {$$=$1;cout<<"aa"<<$1->var->name<<endl;}
+    RelationalExpression                                                             {$$=$1;}
     | EqualityExpression EQUALNOTEQUAL RelationalExpression                          {
       string t2=$2;$$=new Node("ConditionalExpression");
       vector<Node*>v{$1,new Node(mymap[t2],$2),$3};
@@ -2176,7 +2175,7 @@ AdditiveExpression:
       $$->result = mycode->getVar($$->index);
 
     }
-    | MultiplicativeExpression                                                       {$$=$1;cout<<"mul";}
+    | MultiplicativeExpression                                                       {$$=$1;}
     ;
 
 MultiplicativeExpression:
@@ -2295,7 +2294,7 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
   Primary                                   {$$=$1;}
-| TypeName                                  {$$=$1;cout<<"ty";}
+| TypeName                                  {$$=$1;}
 | PostIncrDecrExpression                    {$$=$1;}
 ;
 
