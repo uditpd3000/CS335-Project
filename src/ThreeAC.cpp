@@ -82,7 +82,7 @@ public:
 
             if (op[0] == '+')
             {
-                instr = "addq";
+                instr = "addl";
 
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
@@ -97,13 +97,13 @@ public:
                 
                 // move to destination(result)
                 int x = target->getOffset(result,scope);
-                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
                 x86code.push_back(reg1);
 
             }
             else if (op[0] == '-')
             {
-                instr = "subq";
+                instr = "subl";
 
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
@@ -118,7 +118,7 @@ public:
                 
                 // move to destination(result)
                 int x = target->getOffset(result,scope);
-                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
                 x86code.push_back(reg1);
             }
             else if (op[0] == '*')
@@ -127,7 +127,7 @@ public:
             }
             else if (op[0] == '|')
             {
-                instr = "or";
+                instr = "or"; // bitwise or
             }
             else if (op[0] == '^')
             {
@@ -136,6 +136,116 @@ public:
             else if (op[0] == '&')
             {
                 instr = "and";
+            }
+            else if (op == ">="){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "setge\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if (op == "<="){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "setle\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if(op=="=="){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "sete\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if(op=="<"){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "setl\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if(op==">"){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "setg\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
             }
         }
         else {
@@ -186,13 +296,20 @@ public:
     }
 
     string codegen(){
-        x86code.push_back("jmp ."+arg2);
+        string s="";
+        s="jmp ";
+        if (arg2 == "")
+            s+= to_string(index);
+        else
+            s+=arg2;
 
-        string s = "";
-        for (auto x : x86code)
-        {
-            s += "\t" + x + "\n";
+        x86code.push_back(s);
+
+        s="";
+        for (auto x : x86code){
+            s+="\t" + x+"\n";
         }
+
         return s;
     }
 
@@ -221,7 +338,22 @@ public:
     }
 
     string codegen(){
-        return "";
+
+        string s = "cmpb\t$0, ";
+
+        vector<string> code;
+        code = target->getReg(arg2, scope,1);
+        x86code.push_back(code[0]);
+        s += code[1];
+        x86code.push_back(s);
+
+        x86code.push_back("je "+arg4);
+
+        s="";
+        for (auto x : x86code){
+            s+="\t" + x+"\n";
+        }
+        return s;
     }
 };
 
@@ -245,7 +377,7 @@ public:
     }
 
     string codegen(){
-        string s = "";
+        string s = result + ":\n";
         for (auto x : codes)
         {
             s += x->codegen();
@@ -280,7 +412,7 @@ public:
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             string methodName = scope.substr(parentName.length() + 1, scope.length() - (parentName.length()));
             int size = target->getTotalSize(scope) + getTemporarySize(methodName);
-            x86code.push_back(methodName + ":");
+            // x86code.push_back(methodName + ":");
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
             x86code.push_back("\tsubq	$" + to_string(size) + ", %rsp");
@@ -311,7 +443,7 @@ public:
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             int size = target->getTotalSize(scope)+getTemporarySize(parentName);
             // cout<<size<<"-----";
-            x86code.push_back(parentName+".Constr" + ":");
+            // x86code.push_back(parentName+".Constr" + ":");
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
             x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");

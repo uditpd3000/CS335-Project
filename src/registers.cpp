@@ -11,14 +11,19 @@ class X86{
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
 
-        vector<string> regs{"rax","rbx","rcx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"};
+        vector<string> regs{"eax","ebx","ecx","edx"}; // 4-byte
+        vector<string> regs8bit{"al","bl","cl","dl"}; // 8-bit regs
         queue<string>usedRegs;
+        queue<string>usedRegs8bit;
 
         int offset;
 
         X86(){
             for (auto i:regs){
                 usedRegs.push(i);
+            }
+            for (auto i:regs8bit){
+                usedRegs8bit.push(i);
             }
         }
 
@@ -47,10 +52,11 @@ class X86{
             string u,t;
             int myoffset;
 
-            t = usedRegs.front();
+            if(mysize!=1) t = usedRegs.front();
+            else t=usedRegs8bit.front();
 
             if(name[0]<='9' && name[0]>='0'){
-                u = "movq\t$" +name + ", %"+t;
+                u = "movl\t$" +name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
                 int x;
@@ -63,15 +69,29 @@ class X86{
                 else {
                     x=tVarsToMem[name];
                 }
-                u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
+
+                if(mysize==4) u = "movl\t-" + to_string(x) + "(%rbp), %"+t;
+                else if(mysize==1) u = "movb\t-" + to_string(x) + "(%rbp), %"+t;
+                else u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
+
             }
             else{
                 myoffset = getMemoryLocation(name,scope);
-                u = "movq\t-" + to_string(myoffset) + "(%rbp), %" + t;
+
+                if(mysize==4) u = "movl\t-";
+                else if(mysize==1) u = "movb\t-";
+                else u = "movq\t-";
+
+                u += to_string(myoffset) + "(%rbp), %" + t;
             }
 
             regTovar[t] = name;
-            usedRegs.pop(); usedRegs.push(t);
+            if(mysize!=1) {
+                usedRegs.pop(); usedRegs.push(t);
+            }
+            else {
+                usedRegs8bit.pop(); usedRegs8bit.push(t);
+            }
             
             v.push_back(u);
             v.push_back(t);
