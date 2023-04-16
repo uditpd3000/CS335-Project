@@ -67,11 +67,35 @@ public:
 
     string codegen()
     {   
-        // if(fieldDec==true){
-        //     if(arg2!=""){
+        string loc ="";
+        string arg1_loc = "";
+        string arg2_loc = "";
 
-        //     }
-        // }
+        if(fieldDec==true){
+            int off = target->getOffset(result,scope,true);
+            loc = to_string(off)+"(%rdi)";
+        }
+        if(result[0]=='*'){
+            string a1 = "";
+            string a2 = "";
+            int ind = 2;
+            while(result[ind]!='+')a1+=result[ind++];
+            ind++;
+            while (result[ind] != ')')a2+=result[ind++];
+            int off1 = target->getOffset(a1,scope);
+            int off2 = target->getOffset(a2,scope);
+            string reg11 = target->getReg();
+            string reg12 = target->getReg();
+
+            x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %"+reg11);
+            x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+            x86code.push_back("addq\t%" + reg11 + ", %" + reg12);
+            loc = "(%"+reg12+")";
+        }
+        if(arg1[0]=='*'){
+
+        }
+
 
         if (arg2 != "")
         {
@@ -97,7 +121,8 @@ public:
                 
                 // move to destination(result)
                 int x = target->getOffset(result,scope);
-                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movl\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
 
             }
@@ -118,7 +143,8 @@ public:
                 
                 // move to destination(result)
                 int x = target->getOffset(result,scope);
-                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movl\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
             else if (op[0] == '*')
@@ -156,7 +182,8 @@ public:
 
                 // move to destination(result)
                 int x = target->getOffset(result,scope,1);
-                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movb\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movb\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
             else if (op == "<="){
@@ -178,7 +205,8 @@ public:
 
                 // move to destination(result)
                 int x = target->getOffset(result,scope,1);
-                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movb\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movb\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
             else if(op=="=="){
@@ -200,7 +228,8 @@ public:
 
                 // move to destination(result)
                 int x = target->getOffset(result,scope,1);
-                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movb\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movb\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
             else if(op=="<"){
@@ -222,7 +251,8 @@ public:
 
                 // move to destination(result)
                 int x = target->getOffset(result,scope,1);
-                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movb\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movb\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
             else if(op==">"){
@@ -244,7 +274,8 @@ public:
 
                 // move to destination(result)
                 int x = target->getOffset(result,scope,1);
-                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movb\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movb\t%"+reg3+", " + loc;
                 x86code.push_back(reg1);
             }
         }
@@ -263,7 +294,8 @@ public:
                 reg2 = code[1];
 
                 int x = target->getOffset(result, scope);
-                reg1 = "movq\t%" + reg2 + ", -" + to_string(x) + "(%rbp)";
+                if(loc=="")reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                else reg1 = "movl\t%"+reg2+", " + loc;
                 x86code.push_back(reg1);
             }
         }
@@ -605,7 +637,23 @@ public:
     }
 
     string codegen(){
-        return "";
+        int off1 = target->getOffset(start, scope);
+        int off2 = target->getOffset(offset, scope);
+        string reg11 = target->getReg();
+        string reg12 = target->getReg();
+
+        x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
+        x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+        int off = target->getOffset(result, scope);
+        x86code.push_back("addq\t%" + reg11 + ", %" + reg12);
+        x86code.push_back("movl\t%" + string("(%")+ reg12+ ")" + to_string(off) + "(%rbp)");
+
+        string s = "";
+        for (auto yy : x86code)
+        {
+            s += "\t" + yy + "\n";
+        }
+        return s;
     }
 };
 
@@ -666,7 +714,41 @@ public:
 
         // if(myArg1[0]>='0' && myArg1[0]<='9') myArg1 = getVar(stoi(myArg1));
         // if(myArg2[0]>='0' && myArg2[0]<='9') myArg2 = getVar(stoi(myArg2));
-
+        if(myArg1[0]=='*'){
+            string a1 = "";
+            string a2 = "";
+            int ind = 2;
+            while (myArg1[ind] != '+')
+                a1 += myArg1[ind++];
+            ind++;
+            while (myArg1[ind] != ')')
+                a2 += myArg1[ind++];
+            PointerAssignment* pointer = new PointerAssignment();
+            pointer->start = a1;
+            pointer->offset = a2;
+            string temp = getLocalVar();
+            pointer->result = temp;
+            quadruple.push_back(pointer);
+            myArg1 = temp;
+        }
+        if (myArg2[0] == '*')
+        {
+            string a1 = "";
+            string a2 = "";
+            int ind = 2;
+            while (myArg2[ind] != '+')
+                a1 += myArg2[ind++];
+            ind++;
+            while (myArg2[ind] != ')')
+                a2 += myArg2[ind++];
+            PointerAssignment *pointer = new PointerAssignment();
+            pointer->start = a1;
+            pointer->offset = a2;
+            string temp = getLocalVar();
+            pointer->result = temp;
+            quadruple.push_back(pointer);
+            myArg2 = temp;
+        }
         myInstruction->arg1 = myArg1;
         myInstruction->arg2 = myArg2;
         myInstruction->op = op;
@@ -1007,7 +1089,9 @@ public:
 
         for(auto x: blocks[className]->codes){
             if(!x->isBlock){
-                
+                x->fieldDec = true;
+                // int off = target->getOffset(x->result,className);
+
                 blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+2,x);
             }
             else{
