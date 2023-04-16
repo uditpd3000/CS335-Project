@@ -112,18 +112,82 @@ public:
             else if (op[0] == '*')
             {
                 instr = "mul";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
             }
             else if (op[0] == '|')
             {
                 instr = "or";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
             }
             else if (op[0] == '^')
             {
                 instr = "xor";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
             }
             else if (op[0] == '&')
             {
                 instr = "and";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movq\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
             }
         }
         else {
