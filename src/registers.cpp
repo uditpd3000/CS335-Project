@@ -54,7 +54,7 @@ class X86{
             if(mysize!=1) t = usedRegs.front();
             else t=usedRegs8bit.front();
 
-            if(name[0]<='9' && name[0]>='0'){
+            if((name[0]<='9' && name[0]>='0') || (name[0]=='-')){
                 u = "movl\t$" +name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {

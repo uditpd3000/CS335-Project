@@ -589,7 +589,40 @@ public:
     }
 
     string codegen(){
-        return "";
+        if(isCall){
+            for (auto x : params)
+            {
+                // s += "\tparam " + x + "\n";
+                if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) x86code.push_back("pushl\t$"+x);
+                else{
+                    int y;
+                    y = target->offsetToSize[target->getOffset(x,scope)];
+                    vector<string> code;
+                    code = target->getReg(x,scope,y);
+                    x86code.push_back(code[0]);
+
+                    if(y==1){
+                        x86code.push_back("pushb\t%"+code[1]);
+                    }
+                    else if(y==4){
+                        x86code.push_back("pushl\t%"+code[1]);
+                    }
+                    else {
+                        x86code.push_back("pushq\t%"+code[1]);
+                    }
+                }
+            }
+
+            // mov objec refer to reg
+            // call object.func
+            x86code.push_back("=====");
+        }
+
+        string s="";
+        for (auto x : x86code){
+            s+="\t" + x+"\n";
+        }
+        return s;
     }
 };
 
@@ -601,7 +634,7 @@ public:
         scope = global_sym_table->current_scope;
     }
     vector<string> elements;
-    string array;
+    string array; //pointer
     int typesize;
 
     string print()
@@ -612,14 +645,33 @@ public:
         {
             if (elem == "")
                 continue;
-            s += "\tpushArr " + array + " " + elem + " " + to_string(off) + "\n";
+            s += "\tpushArr " + array + " " + elem + " " + to_string(off) + "\n"; // elem = $3 offset
             off += typesize;
         }
         return s;
     }
 
     string codegen(){
-        return "";
+
+        
+        // x86code.push_back("=====");
+        
+        x86code.push_back("movq\t-"+to_string(target->getOffset(array,scope,8))+"(%rbp), %rax");
+
+        int off = 0;
+        for (auto elem : elements)
+        {
+            if (elem == "")
+                continue;
+            x86code.push_back("movl\t$" + elem + ", "+to_string(off)+"(%rax)");
+            off += typesize;
+        }
+
+        string s="";
+        for (auto x : x86code){
+            s+="\t" + x+"\n";
+        }
+        return s;
     }
 };
 
