@@ -261,6 +261,25 @@ public:
             x86code.push_back("\tmovq\t%rsp, %rbp");
             x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");
         }
+        if (arg1 == "\tEndFunc")
+        {
+            x86code.push_back("\tpopq\t%rbp");
+            x86code.push_back("\tret");
+        }
+        if(arg1 == "\tcall"){
+            x86code.push_back("\tcall\t" + arg2);
+
+        }
+        if(arg1=="\tpush"){
+            vector<string> code;
+
+            code = target->getReg(arg1, scope);
+            x86code.push_back(code[0]);
+            string reg = code[1];
+
+            x86code.push_back("\tmovl\t%"+reg+", %rax");
+
+        }
         string s = "";
         for (auto x : x86code)
         {
@@ -307,7 +326,20 @@ public:
     }
 
     string codegen(){
-        return "";
+        for(auto x:params){
+            vector<string> code;
+
+            code = target->getReg(x, scope);
+            x86code.push_back(code[0]);
+            string reg = code[1];
+            x86code.push_back("pushq\t%" + reg);
+        }
+        string s = "";
+        for (auto x : x86code)
+        {
+            s += "\t"+x + "\n";
+        }
+        return s;
     }
 };
 
@@ -680,10 +712,7 @@ public:
 
         if (!isdec)
         {
-            if (argList.size())
-                InsertTwoWordInstr("\tcall " + funcName, to_string(argList.size()));
-            else
-                InsertTwoWordInstr("\tcall " + funcName, "");
+            InsertTwoWordInstr("\tcall" , funcName);
 
             if (!isVoid)
                 insertAss("popReturnValue", "", "");
