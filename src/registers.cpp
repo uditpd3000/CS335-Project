@@ -11,7 +11,7 @@ class X86{
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
 
-        vector<string> regs{"rax","rbx","rcx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"};
+        vector<string> regs{"rax", "rcx", "rdx", "rbx", "rsi", "rdi", "rsp", "rbp", "eax", "ecx", "edx", "ebx", "esi", "edi", "esp", "ebp"};
         queue<string>usedRegs;
 
         int offset;
@@ -42,7 +42,7 @@ class X86{
             t = usedRegs.front();
 
             if(name[0]<='9' && name[0]>='0'){
-                u = "movq\t$" +name + ", %"+t;
+                u = "movl\t$" +name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
                 int x;
@@ -55,11 +55,11 @@ class X86{
                 else {
                     x=tVarsToMem[name];
                 }
-                u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
+                u = "movl\t-" + to_string(x) + "(%ebp), %"+t;
             }
             else{
                 offset = getMemoryLocation(name,scope);
-                u = "movq\t-" + to_string(offset) + "(%rbp), %" + t;
+                u = "movl\t-" + to_string(offset) + "(%ebp), %" + t;
             }
 
             regTovar[t] = name;

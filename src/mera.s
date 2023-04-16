@@ -10,10 +10,19 @@ main:
 	endbr64
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$16, %rsp
-	movl	$3, -12(%rbp)
-	movl	$4, -8(%rbp)
-	movl	-12(%rbp), %edx
+	subq	$32, %rsp
+	movl	$3, -24(%rbp)
+	movl	$4, -20(%rbp)
+	movl	$5, -16(%rbp)
+	movl	$10, -12(%rbp)
+	movl	$15, -8(%rbp)
+	movl	-24(%rbp), %edx
+	movl	-20(%rbp), %eax
+	addl	%eax, %edx
+	movl	-16(%rbp), %eax
+	addl	%eax, %edx
+	movl	-12(%rbp), %eax
+	addl	%eax, %edx
 	movl	-8(%rbp), %eax
 	addl	%edx, %eax
 	movl	%eax, -4(%rbp)
