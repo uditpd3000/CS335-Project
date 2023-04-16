@@ -23,7 +23,7 @@ X86* target=new X86();
 
 int num=0;
 int indd=0;
-int methstart=0;
+int methstart=0,classstart=0, consstart=0;
 bool gotReturn=false;
 bool madeConstr;
 vector<string> arrayRowMajor;
@@ -214,7 +214,7 @@ ClassDeclaration:
     global_sym_table->insert(classs);
     global_sym_table->makeTable($3);
     global_sym_table->current_symbol_table->isClass=true;
-    mycode->makeBlock(mycode->quadruple.size(),$3);
+    // mycode->makeBlock(mycode->quadruple.size(),$3);
 
     madeConstr=false;
    
@@ -225,8 +225,10 @@ ClassDeclaration:
     string t1=$2,t2=$3; 
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
-    $$->add($5->objects); 
+    $$->add($5->objects);
+    classstart= mycode->makeBlock(classstart,$3);
     global_sym_table->end_scope();
+    mycode->updateConstructor($3);
 
 
     $$->cls = new Class($3,$1->var->modifiers,$1->var->lineNo);
@@ -239,7 +241,7 @@ ClassDeclaration:
     global_sym_table->insert(classs);
     global_sym_table->makeTable($2);
     global_sym_table->current_symbol_table->isClass=true;
-    mycode->makeBlock(mycode->quadruple.size(),$2);
+    // mycode->makeBlock(mycode->quadruple.size(),$2);
     madeConstr=false;
   } 
   ClassDecTillTypeParameters {
@@ -248,7 +250,9 @@ ClassDeclaration:
     vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)}; 
     $$->add(v); 
     $$->add($4->objects);
+    classstart=mycode->makeBlock(classstart,$2);
     global_sym_table->end_scope();
+    mycode->updateConstructor($2);
 
     $$->cls = new Class($2,vector<string>{},yylineno);
 
@@ -306,11 +310,11 @@ ConstructorDeclaration:
     }
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $2->method->name);
-    mycode->makeBlock(mycode->quadruple.size(),$2->method->name+".Constr");
+    // mycode->makeBlock(mycode->quadruple.size(),$2->method->name+".Constr");
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $2->method->name;
-    mycode->insert(myIns);
+    consstart = mycode->insert(myIns);
 
     vector<pair<string,int>>params;
     for(auto i:method->parameters){
@@ -337,6 +341,7 @@ ConstructorDeclaration:
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $2->method->name;
     mycode->insert(myIns);
+    mycode->makeBlock(consstart,$2->method->name+".Constr");
   }
 | ConstructorDeclarator {
 
@@ -347,11 +352,11 @@ ConstructorDeclaration:
     }
     global_sym_table->insert(method);
     global_sym_table->makeTable("cons_"+ $1->method->name);
-    mycode->makeBlock(mycode->quadruple.size(),$1->method->name+".Constr");
+    // mycode->makeBlock(mycode->quadruple.size(),$1->method->name+".Constr");
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
-    mycode->insert(myIns);
+    consstart = mycode->insert(myIns);
 
     vector<pair<string,int>>params;
     for(auto i:method->parameters){
@@ -377,6 +382,7 @@ ConstructorDeclaration:
     myIns->arg1="\tEndConstr";
     myIns->arg2 = $1->method->name;
     mycode->insert(myIns);
+    mycode->makeBlock(consstart,$1->method->name+".Constr");
     
   }
 ;

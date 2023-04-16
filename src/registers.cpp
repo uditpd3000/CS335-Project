@@ -27,6 +27,7 @@ class X86{
             offset=0;
             regTovar.clear();
             tVarsToMem.clear();
+            // cout<<"done";
         }
         int allocateIntoMem(int mysize){
             int x = offset;
@@ -37,7 +38,7 @@ class X86{
         vector<string> getReg(string name, string scope, int mysize=4){
             vector<string> v;
             string u,t;
-            int offset;
+            int myoffset;
 
             t = usedRegs.front();
 
@@ -48,8 +49,8 @@ class X86{
                 int x;
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
-                    offset = getTotalSize(scope);
-                    x+=offset;
+                    myoffset = getTotalSize(scope);
+                    x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
                 }
                 else {
@@ -58,8 +59,8 @@ class X86{
                 u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
             }
             else{
-                offset = getMemoryLocation(name,scope);
-                u = "movq\t-" + to_string(offset) + "(%rbp), %" + t;
+                myoffset = getMemoryLocation(name,scope);
+                u = "movq\t-" + to_string(myoffset) + "(%rbp), %" + t;
             }
 
             regTovar[t] = name;
@@ -88,12 +89,12 @@ class X86{
         }
 
         int getOffset(string name, string scope, int mysize=4){
-            int x;
+            int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
-                    offset = getTotalSize(scope);
-                    x+=offset;
+                    myoffset = getTotalSize(scope);
+                    x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
                 }
                 else {

@@ -250,6 +250,8 @@ public:
     string codegen(){
         if (arg1 == "\tBeginFunc"){
             
+            // reset locals
+            target->initFuncLocal();
 
             // space for locals
             // cout<<scope<<"---------------------------------";
@@ -278,7 +280,18 @@ public:
             string reg = code[1];
 
             x86code.push_back("\tmovl\t%"+reg+", %rax");
+        }
 
+        else if(arg1=="\tBeginConstr"){
+            // reset locals
+            target->initFuncLocal();
+            string parentName = global_sym_table->linkmap[scope]->parent->scope;
+            int size = target->getTotalSize(scope)+getTemporarySize(parentName);
+            // cout<<size<<"-----";
+            x86code.push_back(parentName+".Constr" + ":");
+            x86code.push_back("\tpushq\t%rbp");
+            x86code.push_back("\tmovq\t%rsp, %rbp");
+            x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");
         }
         string s = "";
         for (auto x : x86code)
@@ -805,6 +818,24 @@ public:
             }
             i++;
         }
+    }
+
+    void updateConstructor(string className){
+
+        string blockName = className + ".Constr";
+        if(blocks.find(blockName)==blocks.end()) return;
+
+        vector<Instruction*> vi;
+
+        for(auto x: blocks[className]->codes){
+            if(!x->isBlock){
+                blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+1,x);
+            }
+            else{
+                vi.push_back(x);
+            }
+        }
+        blocks[className]->codes = vi;
     }
 
     string insertTernary(int index, string cond, string first, string sec)
