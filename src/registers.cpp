@@ -11,7 +11,7 @@ class X86{
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
 
-        vector<string> regs{"rax", "rcx", "rdx", "rbx", "rsi", "rdi", "rsp", "rbp", "eax", "ecx", "edx", "ebx", "esi", "edi", "esp", "ebp"};
+        vector<string> regs{"eax","ebx","ecx","edx"}; //"r8","r9","r10","r11","r12","r13","r14","r15"
         queue<string>usedRegs;
 
         int offset;
@@ -27,6 +27,7 @@ class X86{
             offset=0;
             regTovar.clear();
             tVarsToMem.clear();
+            // cout<<"done";
         }
         int allocateIntoMem(int mysize){
             int x = offset;
@@ -37,7 +38,7 @@ class X86{
         vector<string> getReg(string name, string scope, int mysize=4){
             vector<string> v;
             string u,t;
-            int offset;
+            int myoffset;
 
             t = usedRegs.front();
 
@@ -48,18 +49,18 @@ class X86{
                 int x;
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
-                    offset = getTotalSize(scope);
-                    x+=offset;
+                    myoffset = getTotalSize(scope);
+                    x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
                 }
                 else {
                     x=tVarsToMem[name];
                 }
-                u = "movl\t-" + to_string(x) + "(%ebp), %"+t;
+                u = "movl\t-" + to_string(x) + "(%rbp), %"+t;
             }
             else{
-                offset = getMemoryLocation(name,scope);
-                u = "movl\t-" + to_string(offset) + "(%ebp), %" + t;
+                myoffset = getMemoryLocation(name,scope);
+                u = "movl\t-" + to_string(myoffset) + "(%rbp), %" + t;
             }
 
             regTovar[t] = name;
@@ -71,6 +72,8 @@ class X86{
             return v;
             
         }
+
+        
 
         int getMemoryLocation(string var, string scope){
             SymbolTable * curr = global_sym_table->linkmap[scope];
@@ -88,12 +91,12 @@ class X86{
         }
 
         int getOffset(string name, string scope, int mysize=4){
-            int x;
+            int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
-                    offset = getTotalSize(scope);
-                    x+=offset;
+                    myoffset = getTotalSize(scope);
+                    x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
                 }
                 else {

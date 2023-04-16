@@ -8,25 +8,29 @@
 	.type	main, @function
 main:
 	endbr64
-	pushq	%rbp
-	movq	%rsp, %rbp
-	subq	$32, %rsp
-	movl	$3, -24(%rbp)
-	movl	$4, -20(%rbp)
-	movl	$5, -16(%rbp)
-	movl	$10, -12(%rbp)
-	movl	$15, -8(%rbp)
-	movl	-24(%rbp), %edx
-	movl	-20(%rbp), %eax
-	addl	%eax, %edx
-	movl	-16(%rbp), %eax
-	addl	%eax, %edx
+	# pushq	%rbp
+	# movq	%rsp, %rbp
+	# subq	$16, %rsp
+	# movl	$3, -12(%rbp)
+	# movl	$5, -8(%rbp)
+	# movl	-12(%rbp), %eax
+	# cltd
+	# idivl	-8(%rbp)
+	# movl	%edx, -4(%rbp)
+	pushq   %rbp
+        movq    %rsp, %rbp
+        subq    $20, %rsp
+        movl    $19, %eax
+        movl    %eax, -4(%rbp)
+        movl    $5, %ebx
+        movl    %ebx, -8(%rbp)
+        movl    -4(%rbp), %ecx
+        cltd
+        idivl   -8(%rbp)
+        movl    %edx, -16(%rbp)
+        movl    -16(%rbp), %edx
+        movl    %edx, -12(%rbp)
 	movl	-12(%rbp), %eax
-	addl	%eax, %edx
-	movl	-8(%rbp), %eax
-	addl	%edx, %eax
-	movl	%eax, -4(%rbp)
-	movl	-4(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
