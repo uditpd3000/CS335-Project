@@ -10,6 +10,7 @@ class X86{
         map<string,string>regTovar;
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
+        map<int,int> offsetToSize;
 
         vector<string> regs{"eax","ebx","ecx","edx"}; // 4-byte
         vector<string> regs8bit{"al","bl","cl","dl"}; // 8-bit regs
@@ -17,6 +18,7 @@ class X86{
         queue<string>usedRegs8bit;
 
         int offset;
+        int labelcnt=0;
 
         X86(){
             for (auto i:regs){
@@ -32,7 +34,11 @@ class X86{
             offset=0;
             regTovar.clear();
             tVarsToMem.clear();
+            offsetToSize.clear();
             // cout<<"done";
+        }
+        string localLabel(){
+            return "L_OP" + to_string(labelcnt++);
         }
         int allocateIntoMem(int mysize){
             int x = offset;
@@ -58,6 +64,7 @@ class X86{
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
+                    offsetToSize.insert({x,mysize});
                 }
                 else {
                     x=tVarsToMem[name];
@@ -70,6 +77,7 @@ class X86{
             }
             else{
                 myoffset = getMemoryLocation(name,scope);
+                offsetToSize[myoffset] = mysize;
 
                 if(mysize==4) u = "movl\t-";
                 else if(mysize==1) u = "movb\t-";
@@ -115,7 +123,8 @@ class X86{
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
-                    tVarsToMem.insert({name,x}); // allocated a temporary 
+                    tVarsToMem.insert({name,x}); // allocated a temporary
+                    offsetToSize.insert({x,mysize}); 
                 }
                 else {
                     x=tVarsToMem[name];

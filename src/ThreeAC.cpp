@@ -117,15 +117,15 @@ public:
             {
                 instr = "mul";
             }
-            else if (op[0] == '|')
+            else if (op == "|")
             {
                 instr = "or"; // bitwise or
             }
-            else if (op[0] == '^')
+            else if (op == "^")
             {
                 instr = "xor";
             }
-            else if (op[0] == '&')
+            else if (op == "&")
             {
                 instr = "and";
             }
@@ -195,6 +195,28 @@ public:
                 reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
                 x86code.push_back(reg1);
             }
+            else if(op=="!="){
+                instr = "cmpl";
+
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                x86code.push_back(reg1);
+
+                reg1 = "setne\t%al";
+                x86code.push_back(reg1);
+
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
             else if(op=="<"){
                 instr = "cmpl";
 
@@ -239,25 +261,133 @@ public:
                 reg1 = "movb\t%al , -" + to_string(x) + "(%rbp)";
                 x86code.push_back(reg1);
             }
+            else if(op=="||"){
+                //     cmpb	$0, -10(%rbp)
+                //     jne	.L2
+                //     cmpb	$0, -9(%rbp)
+                //     je	.L3
+                // .L2:
+                //     movl	$1, %eax
+                //     jmp	.L4
+                // .L3:
+                //     movl	$0, %eax
+                // .L4:
+                //     movb	%al, -9(%rbp)
+                string label1,label2,label3;
+                label1 = target->localLabel();
+                label2 = target->localLabel();
+                label3 = target->localLabel();
+
+                code =  target->getReg(arg1,scope,1);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                x86code.push_back("cmpb\t$0, %"+ reg2);
+                x86code.push_back("jne\t"+label1);
+
+                code = target->getReg(arg2, scope,1);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                x86code.push_back("cmpb\t$0, %"+ reg3);
+                x86code.push_back("je\t" + label2);
+
+                // getting result
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+                
+                //L2
+                x86code.push_back(label1+":");// add L2 label here
+                x86code.push_back("movb\t$1, -"+to_string(x) + "(%rbp)");
+                x86code.push_back("jmp\t" + label3); // l3
+
+                //L3
+                x86code.push_back(label2+":");// add L3 label here
+                x86code.push_back("movb\t$0, -"+to_string(x) + "(%rbp)");
+
+                x86code.push_back(label3+":");// add L2 label here
+
+            }
+            else if(op=="&&"){
+                //     cmpb	$0, -10(%rbp)
+                //     je	.L2
+                //     cmpb	$0, -9(%rbp)
+                //     je	.L2
+                //     movl	$1, %eax
+                //     jmp	.L3
+                // .L2:
+                //     movl	$0, %eax
+                // .L3:
+                //     movb	%al, -9(%rbp)
+
+                string label1,label2;
+                label1 = target->localLabel();
+                label2 = target->localLabel();
+
+                code =  target->getReg(arg1,scope,1);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                x86code.push_back("cmpb\t$0, %"+ reg2);
+                x86code.push_back("je\t"+label1);
+
+                code = target->getReg(arg2, scope,1);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                x86code.push_back("cmpb\t$0, %"+ reg3);
+                x86code.push_back("je\t" + label1);
+
+                // getting result
+                // move to destination(result)
+                int x = target->getOffset(result,scope,1);
+
+                x86code.push_back("movb\t$1, -"+to_string(x) + "(%rbp)");
+                x86code.push_back("jmp\t" + label2); // l3
+
+                // in L2
+                x86code.push_back(label1+":");// add L2 label here
+                x86code.push_back("movb\t$0, -"+to_string(x) + "(%rbp)");
+                x86code.push_back(label2+":");// add L3 label here
+            }
         }
         else {
             // x=1;
             string reg1,reg2;
             vector<string> code;
 
-            code = target->getReg(arg1, scope);
+            if(arg1=="true"){
+                resSize=1;
+                code = target->getReg("1", scope,1);
+            }
+            else if(arg1=="false"){
+                resSize=1;
+                code = target->getReg("0", scope,1);
+            }
+            else if(target->offsetToSize[target->getOffset(arg1,scope)]==1){
+                resSize=1;
+                code = target->getReg(arg1, scope,1);
+            }
+            else {
+                code = target->getReg(arg1, scope);
+            }
+
             x86code.push_back(code[0]);
             reg2 = code[1];
 
             int x = target->getOffset(result,scope);
-            reg1 = "movl\t%"+reg2 + ", -" + to_string(x) + "(%rbp)";
+            if(resSize==1) reg1 = "movb \t%"+reg2 + ", -" + to_string(x) + "(%rbp)";
+            else if(resSize==4) reg1 = "movl\t%"+reg2 + ", -" + to_string(x) + "(%rbp)";
+            else reg1 = "movq\t%"+reg2 + ", -" + to_string(x) + "(%rbp)"; // fixme -> for pointer  reg2 will be diff
+
             x86code.push_back(reg1);
 
         }
 
         string s="";
         for (auto x : x86code){
-            s+="\t" + x+"\n";
+            if(x[0]!='L') s+="\t" + x+"\n";
+            else s+= x+"\n";
         }
         return s;
     }
