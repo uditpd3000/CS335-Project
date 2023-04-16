@@ -35,6 +35,13 @@ class X86{
             return x;
         }
 
+        string getReg(){
+            string t = usedRegs.front();
+            usedRegs.pop();
+            usedRegs.push(t);
+            return t;
+        }
+
         vector<string> getReg(string name, string scope, int mysize=4){
             vector<string> v;
             string u,t;
@@ -73,11 +80,13 @@ class X86{
             
         }
 
-        int getMemoryLocation(string var, string scope){
+        int getMemoryLocation(string var, string scope, bool isClass=false){
+            // cout<<var<<endl;
             SymbolTable * curr = global_sym_table->linkmap[scope];
-            while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            if(isClass==false)while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            else while(curr->scope!="Global" && curr->isClass==false)curr=curr->parent;
             for(auto v:curr->vars){
-                if(v->name==var)return v->offset+4;
+                if(v->name==var)return v->offset+12;
             }
             return -1;
         }
@@ -85,10 +94,10 @@ class X86{
         int getTotalSize(string scope){
             SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
-            return (curr->offset + 4);
+            return (curr->offset + 12);
         }
 
-        int getOffset(string name, string scope, int mysize=4){
+        int getOffset(string name, string scope, bool isClass=false,int mysize=4 ){
             int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
@@ -102,9 +111,13 @@ class X86{
                 }
             }
             else{
-                x = getMemoryLocation(name,scope);
+                x = getMemoryLocation(name,scope,isClass);
             }
             return x;
+        }
+
+        void mapToMemory(string var, int offset){
+            tVarsToMem.insert({var, offset});
         }
 
 };

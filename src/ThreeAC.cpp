@@ -16,6 +16,7 @@ public:
     int resSize = 0;
     bool isBlock = false;
     bool incomplete = false;
+    bool fieldDec = false;
     string scope;
 
     vector<string> x86code;
@@ -43,7 +44,7 @@ public:
 
     string print()
     {
-
+        if(arg1 == "popparam")resSize = 8;
         resSize = 4;
         string s = "\t";
 
@@ -66,8 +67,15 @@ public:
 
     string codegen()
     {   
+        // if(fieldDec==true){
+        //     if(arg2!=""){
+
+        //     }
+        // }
+
         if (arg2 != "")
         {
+
             string instr = "";
             string reg1,reg2,reg3;
             vector<string> code;
@@ -134,15 +142,20 @@ public:
             // x=1;
             string reg1,reg2;
             vector<string> code;
+            if (arg1 == "popparam") // array ka alag kaam fixme
+            {
+                x86code.push_back("movq\t%rdi, -8(%rbp)");
+                target->mapToMemory(result, 8);
+            }
+            else{
+                code = target->getReg(arg1, scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
 
-            code = target->getReg(arg1, scope);
-            x86code.push_back(code[0]);
-            reg2 = code[1];
-
-            int x = target->getOffset(result,scope);
-            reg1 = "movq\t%"+reg2 + ", -" + to_string(x) + "(%rbp)";
-            x86code.push_back(reg1);
-
+                int x = target->getOffset(result, scope);
+                reg1 = "movq\t%" + reg2 + ", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
         }
 
         string s="";
@@ -173,8 +186,17 @@ public:
     }
 
     string codegen(){
-        return "";
+        x86code.push_back("jmp ."+arg2);
+
+        string s = "";
+        for (auto x : x86code)
+        {
+            s += "\t" + x + "\n";
+        }
+        return s;
     }
+
+
 };
 
 class ConditionalJump : public Instruction
@@ -261,10 +283,11 @@ public:
             x86code.push_back(methodName + ":");
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
-            x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");
+            x86code.push_back("\tsubq	$" + to_string(size) + ", %rsp");
         }
         if (arg1 == "\tEndFunc")
         {
+            x86code.push_back("\tmovq % rbp, % rsp");
             x86code.push_back("\tpopq\t%rbp");
             x86code.push_back("\tret");
         }
@@ -276,7 +299,7 @@ public:
             vector<string> code;
 
             code = target->getReg(arg1, scope);
-            x86code.push_back(code[0]);
+            x86code.push_back("\t"+code[0]);
             string reg = code[1];
 
             x86code.push_back("\tmovl\t%"+reg+", %rax");
@@ -396,16 +419,39 @@ public:
     string classname;
     string offset;
     int offValue;
+    bool array = false;
 
     string print()
     {
-        resSize = 8;
+        resSize = 4;
         string s = "\t" + result + " := getFromSymTable( " + classname + " , " + offset + ")";
         return s;
     }
 
     string codegen(){
-        return "";
+        if(array==true){
+
+        }
+        else{
+            int x = target->getOffset(offset, classname, true);
+            vector<string> code;
+            code = target->getReg(to_string(x), scope);
+
+            x86code.push_back(code[0]);
+            string reg = code[1];
+            int y = target->getOffset(result, scope);
+            string xx = "movq\t%" + reg + ", -" + to_string(y) + "(%rbp)";
+            x86code.push_back(xx);
+            
+        }
+        
+
+        string s = "";
+        for (auto yy : x86code)
+        {
+            s += "\t" + yy + "\n";
+        }
+        return s;
     }
 };
 
@@ -829,7 +875,8 @@ public:
 
         for(auto x: blocks[className]->codes){
             if(!x->isBlock){
-                blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+1,x);
+                
+                blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+2,x);
             }
             else{
                 vi.push_back(x);

@@ -357,6 +357,9 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
     consstart = mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
+    
+    someThing = mycode -> getVar(tp);
 
     vector<pair<string,int>>params;
     for(auto i:method->parameters){
@@ -368,9 +371,6 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    int tp = mycode->insertAss("popparam","","","");
-    
-    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($1->method->name,params,1,true);
   } 
   ConstructorDeclarationEnd {
@@ -660,6 +660,7 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     methstart = mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
     vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
@@ -711,6 +712,7 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
     methstart= mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
     global_sym_table->current_symbol_table->isMethod=true;
 
     vector<pair<string,int>>params;
@@ -760,6 +762,7 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
     methstart=mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
     global_sym_table->current_symbol_table->isMethod=true;
 
      vector<pair<string,int>>params;
