@@ -544,11 +544,12 @@ public:
                 x86code.push_back("movq\t%rdi, -8(%rbp)");
                 target->mapToMemory(result, 8);
             }
+            else if(arg1 == "popObject"){
+                resSize = 8;
+                int off = target->getOffset(result,scope,8);
+                x86code.push_back("movq\t%rdi, -"+ to_string(off)+"(%rbp)");
+            }
             else{
-            //     code = target->getReg(arg1, scope);
-            //     x86code.push_back(code[0]);
-            //     reg2 = code[1];
-            // }
                 if(arg1=="true"){
                     resSize=1;
                     code = target->getReg("1", scope,1);
@@ -557,12 +558,21 @@ public:
                     resSize=1;
                     code = target->getReg("0", scope,1);
                 }
-                else if(target->offsetToSize[target->getOffset(arg1,scope)]==1){
-                    resSize=1;
-                    code = target->getReg(arg1, scope,1);
-                }
                 else {
-                    code = target->getReg(arg1, scope);
+                    int c;
+                    c = target->offsetToSize[target->getOffset(arg1,scope)];
+                    if(c==1){
+                        resSize=1;
+                        code = target->getReg(arg1, scope,1);
+                    }
+                    else if (c== 8)
+                    {
+                        resSize = 8;
+                        code = target->getReg(arg1, scope, 8);
+                    }
+                    else {
+                        code = target->getReg(arg1, scope);
+                    }
                 }
 
                 x86code.push_back(code[0]);
@@ -761,6 +771,10 @@ public:
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
             x86code.push_back("\tsubq	$"+to_string(size)+", %rsp");
+        }
+        else if (arg1 == "\tsetObjectRef"){
+            int off = target->getOffset(arg2,scope,8,false);
+            x86code.push_back("\tmovq\t-"+to_string(off)+"(%rbp), %rdi");
         }
         string s = "";
         for (auto x : x86code)

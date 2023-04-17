@@ -1152,8 +1152,8 @@ VariableDeclarator:
         int ind = mycode->insertAss(to_string(allocmem),"","","");
         string z = mycode->getVar(ind);
         mycode->InsertTwoWordInstr("\tparam",z);
-        mycode->InsertTwoWordInstr("\tallocmem","1");
-        string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+        // mycode->InsertTwoWordInstr("\tallocmem","1");
+        string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
         $4->result = zz;
         mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
         arrayRowMajor.clear();
@@ -2642,14 +2642,14 @@ UnqualifiedClassInstanceCreationExpression:
     int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
     string z = mycode->getVar(ind);
     mycode->InsertTwoWordInstr("\tparam",z);
-    mycode->InsertTwoWordInstr("\tallocmem","1");
+    // mycode->InsertTwoWordInstr("\tallocmem","1");
         // cout<<$2->result<<"\n";
     string mysize = global_sym_table->getSize($2->result,global_sym_table->current_scope);
-    string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+    string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
     $$->objOffset = zz;
-    mycode->InsertTwoWordInstr("\tparam",zz);
+    mycode->InsertTwoWordInstr("\tsetObjectRef",zz);
     $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true,mysize);
-    $$->index = mycode->insertAss("\tpopparam","","","");
+    $$->index = mycode->insertAss("popObject","","","");
     $$->result = mycode->getVar($$->index);
     // cout<<"!\n";
 
@@ -2668,7 +2668,7 @@ ClassOrInterfaceTypeToInstantiate:
  Identifier                                                 {
     string t1=$1; 
     $$=(new Node(mymap[t1],t1));
-     
+    global_sym_table->lookup_method($1,1,global_sym_table->current_scope);
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     string curr_cls = global_sym_table->get_current_class();
     if(curr_cls!=$$->cls->name){
@@ -3402,8 +3402,8 @@ newclasstype ArrayCreationExpressionAfterType  {
           // cout<<"yaha\n";
   string z = mycode->getVar(ind);
   mycode->InsertTwoWordInstr("\tparam",z);
-  mycode->InsertTwoWordInstr("\tallocmem","1");
-  string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+  // mycode->InsertTwoWordInstr("\tallocmem","1");
+  string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
   $$->result = zz;
 
   $$->start=$2->start;
