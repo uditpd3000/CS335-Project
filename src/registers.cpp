@@ -46,9 +46,10 @@ class X86{
             return "L_OP" + to_string(labelcnt++);
         }
         int allocateIntoMem(int mysize){
+            cout<<mysize<<"]]]]"<<endl;
             int x = offset;
             offset+=mysize;
-            return x;
+            return offset;
         }
 
         string getReg(){
@@ -131,16 +132,19 @@ class X86{
         int getTotalSize(string scope){
             SymbolTable * curr = global_sym_table->linkmap[scope];
             while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
-            return (curr->offset + 12);
+            return (curr->offset + 8);
         }
 
-        int getOffset(string name, string scope, bool isClass=false,int mysize=4 ){
+        int getOffset(string name, string scope, int mysize = 4, bool isClass = false)
+        {
             int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
+                    cout<<x<<"x"<<endl;
+                    cout<<myoffset<<"myoff";
                     tVarsToMem.insert({name,x}); // allocated a temporary
                     offsetToSize.insert({x,mysize}); 
                 }
