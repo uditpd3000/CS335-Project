@@ -70,7 +70,7 @@ public:
         string loc ="";
 
         if(fieldDec==true){
-            int off = target->getOffset(result,scope,true);
+            int off = target->getOffset(result,scope,4,true);
             loc = to_string(off)+"(%rdi)";
         }
         if(result[0]=='*'){
@@ -296,7 +296,7 @@ public:
                 x86code.push_back(code[0]);
                 reg3 = code[1];
 
-                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                reg1 = instr + "\t%" +reg3 + ", %" + reg2;
                 x86code.push_back(reg1);
 
                 reg1 = "setge\t%al";
@@ -321,7 +321,7 @@ public:
                 x86code.push_back(code[0]);
                 reg3 = code[1];
 
-                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                reg1 = instr + "\t%" +reg3 + ", %" + reg2;
                 x86code.push_back(reg1);
 
                 reg1 = "setle\t%al";
@@ -354,8 +354,8 @@ public:
 
                 // move to destination(result)
                 if(loc==""){
-                    int x = target->getOffset(result,scope,1);
-                    reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                    int x = target->getOffset(result, scope, 1);
+                        reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
                 }
                 else reg1 = "movb\t%al, " + loc;
                 x86code.push_back(reg1);
@@ -397,7 +397,7 @@ public:
                 x86code.push_back(code[0]);
                 reg3 = code[1];
 
-                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                reg1 = instr + "\t%" +reg3 + ", %" + reg2;
                 x86code.push_back(reg1);
 
                 reg1 = "setl\t%al";
@@ -422,7 +422,7 @@ public:
                 x86code.push_back(code[0]);
                 reg3 = code[1];
 
-                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
+                reg1 = instr + "\t%" +reg3 + ", %" + reg2;
                 x86code.push_back(reg1);
 
                 reg1 = "setg\t%al";
@@ -653,7 +653,7 @@ public:
 
     string codegen(){
 
-        string s = "cmpb\t$0, ";
+        string s = "cmpb\t$1, %";
 
         vector<string> code;
         code = target->getReg(arg2, scope,1);
@@ -918,7 +918,7 @@ public:
 
         }
         else{
-            int x = target->getOffset(offset, classname, true);
+            int x = target->getOffset(offset, classname,4 ,true);
             vector<string> code;
             code = target->getReg(to_string(x), scope);
 
