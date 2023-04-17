@@ -63,12 +63,26 @@ class X86{
             string u,t;
             int myoffset;
 
+            if(name=="basePointer"){
+                t="rbp";
+
+                v.push_back(u);
+                v.push_back(t);
+
+                return v;
+            }
+
             if(mysize==4) t = usedRegs.front();
             else if(mysize==1) t=usedRegs8bit.front();
             else t = usedBigRegs.front();
 
             if((name[0]<='9' && name[0]>='0') || (name[0]=='-')){
-                u = "movl\t$" +name + ", %"+t;
+
+                if(mysize==4) u = "movl\t$";
+                else if(mysize==1) u = "movb\t$";
+                else u = "movq\t$";
+
+                u += name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
                 int x;

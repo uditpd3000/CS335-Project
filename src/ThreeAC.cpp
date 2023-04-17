@@ -837,16 +837,24 @@ public:
     }
 
     string codegen(){
-        int off1 = target->getOffset(start, scope);
-        int off2 = target->getOffset(offset, scope);
-        string reg11 = target->getReg();
-        string reg12 = target->getReg();
+        // int off1 = target->getOffset(start, scope);
+        // int off2 = target->getOffset(offset, scope);
+        vector<string> code;
 
-        x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
-        x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+        code = target->getReg(start, scope, 8);
+        if(code[0]!="") x86code.push_back(code[0]);
+        string reg11 = code[1];
+
+        code = target->getReg(offset, scope, 8);
+        if(code[0]!="")  x86code.push_back(code[0]);
+        string reg12 = code[1];
+
+        // x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
+        // x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
         int off = target->getOffset(result, scope);
         x86code.push_back("addq\t%" + reg11 + ", %" + reg12); // total offset saved in reg12
-        x86code.push_back("addq\t%rbp, %" + reg12); 
+        
+        if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12); 
         x86code.push_back("movl\t(%"+ reg12+ "), -" + to_string(off) + "(%rbp)"); // fixme
 
         string s = "";
