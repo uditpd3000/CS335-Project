@@ -10,13 +10,17 @@ class X86{
         map<string,string>regTovar;
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
+        map<int,int> offsetToSize;
 
         vector<string> regs{"eax","ebx","ecx","edx"}; // 4-byte
         vector<string> regs8bit{"al","bl","cl","dl"}; // 8-bit regs
+        vector<string> regsBig{"rbx","rcx","rdx","r12","r13","r14"}; // 8-byte regs
         queue<string>usedRegs;
         queue<string>usedRegs8bit;
+        queue<string>usedBigRegs;
 
         int offset;
+        int labelcnt=0;
 
         X86(){
             for (auto i:regs){
@@ -25,6 +29,9 @@ class X86{
             for (auto i:regs8bit){
                 usedRegs8bit.push(i);
             }
+            for (auto i:regsBig){
+                usedBigRegs.push(i);
+            }
         }
 
         void initFuncLocal(){
@@ -32,7 +39,11 @@ class X86{
             offset=0;
             regTovar.clear();
             tVarsToMem.clear();
+            offsetToSize.clear();
             // cout<<"done";
+        }
+        string localLabel(){
+            return "L_OP" + to_string(labelcnt++);
         }
         int allocateIntoMem(int mysize){
             int x = offset;
@@ -52,10 +63,11 @@ class X86{
             string u,t;
             int myoffset;
 
-            if(mysize!=1) t = usedRegs.front();
-            else t=usedRegs8bit.front();
+            if(mysize==4) t = usedRegs.front();
+            else if(mysize==1) t=usedRegs8bit.front();
+            else t = usedBigRegs.front();
 
-            if(name[0]<='9' && name[0]>='0'){
+            if((name[0]<='9' && name[0]>='0') || (name[0]=='-')){
                 u = "movl\t$" +name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
@@ -65,6 +77,7 @@ class X86{
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
                     tVarsToMem.insert({name,x}); // allocated a temporary 
+                    offsetToSize.insert({x,mysize});
                 }
                 else {
                     x=tVarsToMem[name];
@@ -77,6 +90,7 @@ class X86{
             }
             else{
                 myoffset = getMemoryLocation(name,scope);
+                offsetToSize[myoffset] = mysize;
 
                 if(mysize==4) u = "movl\t-";
                 else if(mysize==1) u = "movb\t-";
@@ -86,11 +100,14 @@ class X86{
             }
 
             regTovar[t] = name;
-            if(mysize!=1) {
+            if(mysize==4) {
                 usedRegs.pop(); usedRegs.push(t);
             }
-            else {
+            else if(mysize==1){
                 usedRegs8bit.pop(); usedRegs8bit.push(t);
+            }
+            else{
+                usedBigRegs.pop(); usedBigRegs.push(t);
             }
             
             v.push_back(u);
@@ -124,7 +141,8 @@ class X86{
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
-                    tVarsToMem.insert({name,x}); // allocated a temporary 
+                    tVarsToMem.insert({name,x}); // allocated a temporary
+                    offsetToSize.insert({x,mysize}); 
                 }
                 else {
                     x=tVarsToMem[name];
