@@ -46,7 +46,6 @@ class X86{
             return "L_OP" + to_string(labelcnt++);
         }
         int allocateIntoMem(int mysize){
-            cout<<mysize<<"]]]]"<<endl;
             int x = offset;
             offset+=mysize;
             return offset;
@@ -64,12 +63,26 @@ class X86{
             string u,t;
             int myoffset;
 
+            if(name=="basePointer"){
+                t="rbp";
+
+                v.push_back(u);
+                v.push_back(t);
+
+                return v;
+            }
+
             if(mysize==4) t = usedRegs.front();
             else if(mysize==1) t=usedRegs8bit.front();
             else t = usedBigRegs.front();
 
             if((name[0]<='9' && name[0]>='0') || (name[0]=='-')){
-                u = "movl\t$" +name + ", %"+t;
+
+                if(mysize==4) u = "movl\t$";
+                else if(mysize==1) u = "movb\t$";
+                else u = "movq\t$";
+
+                u += name + ", %"+t;
             }
             else if(name.length()>1 && (name[0]=='t' && name[1]=='_')) {
                 int x;
@@ -124,7 +137,12 @@ class X86{
             if(isClass==false)while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
             else while(curr->scope!="Global" && curr->isClass==false)curr=curr->parent;
             for(auto v:curr->vars){
-                if(v->name==var)return v->offset+12;
+                if(v->name==var){
+                    if(!isClass)
+                        return v->offset+12;
+                    else
+                        return v->offset;
+                }
             }
             return -1;
         }
@@ -143,8 +161,6 @@ class X86{
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
-                    cout<<x<<"x"<<endl;
-                    cout<<myoffset<<"myoff";
                     tVarsToMem.insert({name,x}); // allocated a temporary
                     offsetToSize.insert({x,mysize}); 
                 }
@@ -154,6 +170,10 @@ class X86{
             }
             else{
                 x = getMemoryLocation(name,scope,isClass);
+            }
+            if(x==-1){
+                x=getMemoryLocation(name,scope,true);
+                return -x;
             }
             return x;
         }
