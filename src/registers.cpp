@@ -46,7 +46,6 @@ class X86{
             return "L_OP" + to_string(labelcnt++);
         }
         int allocateIntoMem(int mysize){
-            cout<<mysize<<"]]]]"<<endl;
             int x = offset;
             offset+=mysize;
             return offset;
@@ -157,8 +156,6 @@ class X86{
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
-                    cout<<x<<"x"<<endl;
-                    cout<<myoffset<<"myoff";
                     tVarsToMem.insert({name,x}); // allocated a temporary
                     offsetToSize.insert({x,mysize}); 
                 }

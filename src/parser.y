@@ -1576,6 +1576,7 @@ TypeName:
     Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
     Variable *var = global_sym_table->lookup_var($1,0,1,global_sym_table->current_scope);
     $$->result = $1;
+    $$->objectName = $1;
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
       if(cls->inherited==true){
@@ -2369,6 +2370,7 @@ MethodInvocation:
     $$->add(v);
     string mysize;
     Method* method;
+    // cout<< $1->anyName<<endl;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
     } 
@@ -2397,9 +2399,9 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,$3->resList,0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
+    else $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,$3->resList,0,false,mysize);
     
     $$->result = mycode->getVar($$->index-1);
     bool boo = false;
@@ -2436,9 +2438,9 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,vector<pair<string,int>>{},0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
+    else $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,vector<pair<string,int>>{},0,false,mysize);
 
     $$->result = mycode->getVar($$->index-1);
      bool boo = false;
@@ -2610,7 +2612,7 @@ MethodInvocation:
 ; 
 
 MethodIncovationStart:
-  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start;}
+  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start; $$->objectName = $1->objectName; }
 | super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); $$->start = mycode->quadruple.size(); }
 | TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); $$->start = $1->start;}
 ;

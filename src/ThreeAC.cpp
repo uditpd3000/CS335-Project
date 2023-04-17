@@ -779,6 +779,7 @@ public:
         scope = global_sym_table->current_scope;
     }
     string name;
+    string objectName;
     vector<string> params;
     bool isCall = false;
     bool isConstr = false;
@@ -833,8 +834,10 @@ public:
             }
 
             // mov objec refer to reg
+            int off1 = target->getOffset(objectName,scope,8);
+            x86code.push_back("movq\t-"+to_string(off1)+"(rbp), %rdi");
             // call object.func
-            x86code.push_back("=====");
+            // x86code.push_back("call " +name);
         }
 
         string s="";
@@ -1299,6 +1302,21 @@ public:
     int insertFunctnCall(string funcName, vector<pair<string, int>> argList, int isdec = 0, bool isConstr = false, string mysize = "", bool isVoid = true)
     {
         FunctnCall *myCall = new FunctnCall();
+        
+        if(!isdec && !isConstr){
+            string a1 = "";
+            int ind = 0;
+            while (funcName[ind] != '#')
+                a1 += funcName[ind++];
+            ind++;
+            myCall->objectName=a1;
+
+            a1="";
+            while (ind<funcName.length())
+                a1 += funcName[ind++];
+            funcName=a1;
+        }
+
         myCall->name = funcName;
         for (auto x : argList)
         {
