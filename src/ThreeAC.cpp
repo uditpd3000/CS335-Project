@@ -113,7 +113,7 @@ public:
                 x86code.push_back(code[0]);
                 reg3 = code[1];
 
-                reg1 = instr + "\t%" +reg3 + ", %" + reg2;
+                reg1 = instr + "\t%" +reg2 + ", %" + reg3;
                 x86code.push_back(reg1);
                 
                 // move to destination(result)  
@@ -143,9 +143,9 @@ public:
                 // move to destination(result)
                 if(loc==""){
                     int x = target->getOffset(result,scope);
-                    reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                    reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
                 }
-                else reg1 = "movl\t%"+reg3+", " + loc;
+                else reg1 = "movl\t%"+reg2+", " + loc;
                 x86code.push_back(reg1);
             }
             else if (op[0] == '*')
