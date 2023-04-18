@@ -23,14 +23,14 @@ build : # generate files for the executable
 	@rm error.txt
 
 .PHONY: run
-run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
+run: # run the executable using input like `make run input=filepath output=x86-filepath` or else run with terminal input
 	@echo "compiling up...\n"
 	@./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
 	@echo "find your results in output folder :p"
 
 .PHONY: verbose
-verbose: # run the executable in verbose like `make run input=filepath output=tacfilepath`
+verbose: # run the executable in verbose like `make run input=filepath output=x86-filepath`
 	@ ./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
@@ -41,12 +41,12 @@ graph: # to show dot file
 	@dot -Tps $(dot_output) -o $(ps_output)
 	@cat $(dot_output)
 
-.PHONY: ThreeAC
-ThreeAC: # to show Three Address Code
+.PHONY: threeAC
+threeAC: # to show Three Address Code
 	@cat $(acoutput)
 
 .PHONY: asm
-asm: # to show Three Address Code
+asm: # to show x86 Code
 	@cat $(output)
 
 .PHONY: clean
