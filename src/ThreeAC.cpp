@@ -648,7 +648,7 @@ public:
             else if(arg1 == "allocmem"){
                 int off = target->getOffset(op,scope);
                 x86code.push_back("movl\t-" + to_string(off) + "(%rbp), %rdi");
-                x86code.push_back("call malloc");
+                x86code.push_back("call\tmalloc");
                 int x  = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rax, -"+to_string(x)+"(%rbp)");
             }
@@ -882,6 +882,22 @@ public:
         else if (arg1 == "\tsetObjectRef"){
             int off = target->getOffset(arg2,scope,8,false);
             x86code.push_back("\tmovq\t-"+to_string(off)+"(%rbp), %rdi");
+        }
+        else if(arg1 == "\tprint"){
+        x86code.push_back("\tmov\t$printLabel, %rdi");
+        int off = target->getOffset(arg2,scope,4);
+        string xx = "";
+        if(off>0){
+            xx= "\tmovslq\t-"+to_string(off)+"(%rbp), %rsi";
+        }
+        if(off<0){
+            off*=-1;
+            // to_string(x) + "(%rdi)
+                xx = "\tmovslq\t" + to_string(off) + "%(%rdi), %rsi";
+        }
+        x86code.push_back(xx);
+        x86code.push_back("\txor\t%rax, %rax");
+        x86code.push_back("\tcall\tprintf");
         }
         string s = "";
         for (auto x : x86code)
@@ -1662,5 +1678,8 @@ public:
             cout <<quadruple[i]->codegen();
             // cout << endl;
         }
+        cout<<"printLabel:\n";
+        cout << "\t.asciz\t\"%d\\n\" ";
+        cout<<endl;
     }
 };
