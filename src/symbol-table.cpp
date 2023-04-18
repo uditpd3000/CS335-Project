@@ -124,6 +124,7 @@ public:
     string sourcefile = sourceFile;
 
     bool isMethod = false, isClass = false;
+    bool isMethodOrConst = false;
 
     SymbolTable(SymbolTable *myparent, string myscope, int mynum)
     {

@@ -648,7 +648,7 @@ public:
             }
             else if(arg1 == "allocmem"){
                 int off = target->getOffset(op,scope);
-                x86code.push_back("movl\t-" + to_string(off) + "(%rbp), %rdi");
+                x86code.push_back("movq\t-" + to_string(off) + "(%rbp), %rdi");
                 x86code.push_back("call\tmalloc");
                 int x  = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rax, -"+to_string(x)+"(%rbp)");
@@ -849,7 +849,10 @@ public:
             x86code.push_back("\tmovq\t%rsp, %rbp");
             x86code.push_back("\tsubq	$" + to_string(size) + ", %rsp");
         }
-        if (arg1 == "\tEndFunc")
+        if(arg1=="\tEndConstr"){
+            x86code.push_back("\tmovq\t-8(%rbp), %rdi");
+        }
+        if (arg1 == "\tEndFunc" || arg1 == "\tEndConstr")
         {
             x86code.push_back("\tmovq\t%rbp, %rsp");
             x86code.push_back("\tpopq\t%rbp");
