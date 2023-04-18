@@ -645,6 +645,13 @@ public:
                 int off = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rdi, -"+ to_string(off)+"(%rbp)");
             }
+            else if(arg1 == "allocmem"){
+                int off = target->getOffset(op,scope);
+                x86code.push_back("movl\t-" + to_string(off) + "(%rbp), %rdi");
+                x86code.push_back("call malloc");
+                int x  = target->getOffset(result,scope,8);
+                x86code.push_back("movq\t%rax, -"+to_string(x)+"(%rbp)");
+            }
             else{
                 if(arg1=="true"){
                     resSize=1;

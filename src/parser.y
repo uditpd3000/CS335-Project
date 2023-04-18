@@ -1156,7 +1156,7 @@ VariableDeclarator:
         string z = mycode->getVar(ind);
         mycode->InsertTwoWordInstr("\tparam",z);
         // mycode->InsertTwoWordInstr("\tallocmem","1");
-        string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
+        string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
         $4->result = zz;
         mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
         arrayRowMajor.clear();
@@ -2651,7 +2651,7 @@ UnqualifiedClassInstanceCreationExpression:
     // mycode->InsertTwoWordInstr("\tallocmem","1");
         // cout<<$2->result<<"\n";
     string mysize = global_sym_table->getSize($2->result,global_sym_table->current_scope);
-    string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
+    string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
     $$->objOffset = zz;
     mycode->InsertTwoWordInstr("\tsetObjectRef",zz);
     $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true,mysize);
@@ -3409,7 +3409,7 @@ newclasstype ArrayCreationExpressionAfterType  {
   string z = mycode->getVar(ind);
   mycode->InsertTwoWordInstr("\tparam",z);
   // mycode->InsertTwoWordInstr("\tallocmem","1");
-  string zz = mycode->getVar(mycode->insertAss("allocmem","","",""));
+  string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
   $$->result = zz;
 
   $$->start=$2->start;
