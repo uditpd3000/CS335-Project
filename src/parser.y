@@ -33,9 +33,13 @@ string sourceFile;
 ofstream fout;
 ofstream vout;
 
-ofstream tacout;
+ofstream tacout,sout;
 void set_tac_file(const char* filename){
   tacout.open(filename);
+}
+
+void set_x86_file(const char* filename){
+  sout.open(filename);
 }
 
 void generatetree(Node* n){
@@ -357,6 +361,9 @@ ConstructorDeclaration:
     myIns->arg1="\tBeginConstr";
     myIns->arg2 = $1->method->name;
     consstart = mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
+    
+    someThing = mycode -> getVar(tp);
 
     vector<pair<string,int>>params;
     for(auto i:method->parameters){
@@ -368,9 +375,6 @@ ConstructorDeclaration:
     }
 
     reverse(params.begin(),params.end());
-    int tp = mycode->insertAss("popparam","","","");
-    
-    someThing = mycode -> getVar(tp);
     mycode->insertFunctnCall($1->method->name,params,1,true);
   } 
   ConstructorDeclarationEnd {
@@ -660,6 +664,8 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = "";
     methstart = mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
+    someThing = mycode->getVar(tp);
     vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
@@ -711,6 +717,8 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $2->method->name;
     methstart= mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
+    someThing = mycode->getVar(tp);
     global_sym_table->current_symbol_table->isMethod=true;
 
     vector<pair<string,int>>params;
@@ -760,6 +768,8 @@ MethodDeclaration:
     myIns->arg1="\tBeginFunc";
     myIns->arg2 = $1->method->name;
     methstart=mycode->insert(myIns);
+    int tp = mycode->insertAss("popparam","","","");
+    someThing = mycode->getVar(tp);
     global_sym_table->current_symbol_table->isMethod=true;
 
      vector<pair<string,int>>params;
@@ -1026,6 +1036,23 @@ FieldDeclaration:
       }
 
     }
+
+    bool isStatic=false;
+    for(auto x : $1->method->modifiers){
+      if(x=="static"){
+        isStatic=true;
+      }
+    }
+
+    if(isStatic){
+      // cout<<$2->start<<"=="<<mycode->quadruple.size()<<endl;
+      // cout<<mycode->quadruple[0]->print()<<endl;
+      for(int i=$2->start;i<mycode->quadruple.size();i++){
+        mycode->globals.push_back(mycode->quadruple[i]);
+      }
+      mycode->quadruple.erase(mycode->quadruple.begin() + $2->start, mycode->quadruple.end());
+    }
+    
   }
 ;
 
@@ -1100,7 +1127,8 @@ VariableDeclarator:
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
 
-    $$->start=mycode->quadruple.size()-1;
+    $$->index = mycode->insertAss("0","","",$1);
+    $$->result = $1;
     $$->index=$$->start;
     }
 | Identifier Dims {
@@ -1149,8 +1177,8 @@ VariableDeclarator:
         int ind = mycode->insertAss(to_string(allocmem),"","","");
         string z = mycode->getVar(ind);
         mycode->InsertTwoWordInstr("\tparam",z);
-        mycode->InsertTwoWordInstr("\tallocmem","1");
-        string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+        // mycode->InsertTwoWordInstr("\tallocmem","1");
+        string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
         $4->result = zz;
         mycode->insertArray(zz,arrayRowMajor,typeToSize[$4->type]);
         arrayRowMajor.clear();
@@ -1425,13 +1453,22 @@ Primary dot Identifier              {
     // cout<<$1->anyName<<endl;
     $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
     // $$->type = $$->var->type;
+    bool isStatic=false;
+    for(auto f:$$->var->modifiers){
+      if(f=="static") isStatic=true;
+    }
     int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"",$$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
-    $$->result = "*("+mycode->getVar(t3)+")";
-    // cout<<$1->lexeme<<endl;
-    if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
-    // someThing = "";
+    if(!isStatic){
+      $$->result = "*("+mycode->getVar(t3)+")";
+      // cout<<$1->lexeme<<endl;
+      if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+      // someThing = "";
+    }
+    else{
+      $$->result = mycode->getVar(t3);
+    }
     $$->dims = $$->var->dims;
     $$->type = $$->var->type;
   }
@@ -1573,6 +1610,7 @@ TypeName:
     Method* met = global_sym_table->lookup_method($1,0,global_sym_table->current_scope);
     Variable *var = global_sym_table->lookup_var($1,0,1,global_sym_table->current_scope);
     $$->result = $1;
+    $$->objectName = $1;
     // Class* cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     if(cls!=NULL){
       if(cls->inherited==true){
@@ -1622,10 +1660,12 @@ TypeName:
         $$->anyName=$$->var->name;
       }
       if(var->isField){
-      SymbolTable* curr = global_sym_table->current_symbol_table;
-      while(curr->parent!=NULL && curr->isClass==false)curr=curr->parent;
-      int t3 = mycode->insertGetFromSymTable(curr->scope,t1,"",var->offset);
-        $$->result = "*( "+ mycode->getVar(t3)+" )";
+        SymbolTable* curr = global_sym_table->current_symbol_table;
+        while(curr->parent!=NULL && curr->isClass==false)curr=curr->parent;
+        int t3 = mycode->insertGetFromSymTable(curr->scope,t1,"",var->offset);
+        if(!$$->staticOk)  $$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+        else $$->result = mycode->getVar(t3);
+        // $$->result = "xxx";
     }
       
     }
@@ -1701,7 +1741,7 @@ TypeName:
          int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
       }
-      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),to_string(0),"");
+      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
       $$->result = mycode->getVar($$->index);
     }
     else {
@@ -2366,6 +2406,7 @@ MethodInvocation:
     $$->add(v);
     string mysize;
     Method* method;
+    // cout<< $1->anyName<<endl;
     if($1->method->name==""){
       method = global_sym_table->lookup_method($1->method->name,1,global_sym_table->current_scope);
     } 
@@ -2394,9 +2435,9 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,$3->resList,0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($1->result,$3->resList,0,false,mysize);
+    else $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,$3->resList,0,false,mysize);
     
     $$->result = mycode->getVar($$->index-1);
     bool boo = false;
@@ -2433,9 +2474,9 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,vector<pair<string,int>>{},0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($1->result,vector<pair<string,int>>{},0,false,mysize);
+    else $$->index = mycode->insertFunctnCall($1->objectName+"#"+$1->result,vector<pair<string,int>>{},0,false,mysize);
 
     $$->result = mycode->getVar($$->index-1);
      bool boo = false;
@@ -2607,7 +2648,7 @@ MethodInvocation:
 ; 
 
 MethodIncovationStart:
-  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start;}
+  TypeName dot                   {$$=new Node("MethodIncovationStart");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v); $$->start = $1->start; $$->objectName = $1->objectName; }
 | super dot                      {$$=new Node("MethodIncovationStart");string t1=$1,t2=$2;vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2)};$$->add(v); $$->start = mycode->quadruple.size(); }
 | TypeName dot super dot         {$$=new Node("MethodIncovationStart");string t1=$2,t2=$3,t3=$4;vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3)};$$->add(v); $$->start = $1->start;}
 ;
@@ -2639,14 +2680,14 @@ UnqualifiedClassInstanceCreationExpression:
     int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
     string z = mycode->getVar(ind);
     mycode->InsertTwoWordInstr("\tparam",z);
-    mycode->InsertTwoWordInstr("\tallocmem","1");
+    // mycode->InsertTwoWordInstr("\tallocmem","1");
         // cout<<$2->result<<"\n";
     string mysize = global_sym_table->getSize($2->result,global_sym_table->current_scope);
-    string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+    string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
     $$->objOffset = zz;
-    mycode->InsertTwoWordInstr("\tparam",zz);
+    mycode->InsertTwoWordInstr("\tsetObjectRef",zz);
     $$->index = mycode->insertFunctnCall($2->result+".Constr",$4->resList,0,true,mysize);
-    $$->index = mycode->insertAss("\tpopparam","","","");
+    $$->index = mycode->insertAss("popObject","","","");
     $$->result = mycode->getVar($$->index);
     // cout<<"!\n";
 
@@ -2665,7 +2706,7 @@ ClassOrInterfaceTypeToInstantiate:
  Identifier                                                 {
     string t1=$1; 
     $$=(new Node(mymap[t1],t1));
-     
+    global_sym_table->lookup_method($1,1,global_sym_table->current_scope);
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     string curr_cls = global_sym_table->get_current_class();
     if(curr_cls!=$$->cls->name){
@@ -3399,8 +3440,8 @@ newclasstype ArrayCreationExpressionAfterType  {
           // cout<<"yaha\n";
   string z = mycode->getVar(ind);
   mycode->InsertTwoWordInstr("\tparam",z);
-  mycode->InsertTwoWordInstr("\tallocmem","1");
-  string zz = mycode->getVar(mycode->insertAss("popparam","","",""));
+  // mycode->InsertTwoWordInstr("\tallocmem","1");
+  string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
   $$->result = zz;
 
   $$->start=$2->start;
@@ -3611,6 +3652,7 @@ int main(int argc, char *argv[])
     fout.open(argv[2]);
     sourceFile = argv[1];
     set_tac_file(argv[3]);
+    set_x86_file(argv[4]);
 
 	
 	yyparse();

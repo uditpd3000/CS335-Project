@@ -15,6 +15,7 @@ class Node {
     string label; //seperator
     string lexeme; //}
     string anyName;
+    string objectName;
     bool isObj;
     string which_scope;
     int arrSize = 0;
