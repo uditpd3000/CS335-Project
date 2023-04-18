@@ -1,9 +1,10 @@
 TARGET = myCodeGenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
-output = ../output/ThreeAddressCode.3ac
+acoutput = ../output/ThreeAddressCode.3ac
 dot_output=../output/graph.dot
 ps_output=../output/graph.ps
+output = ../output/x86-output.s
 
 default: help
 
@@ -22,27 +23,30 @@ build : # generate files for the executable
 	@rm error.txt
 
 .PHONY: run
-run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
+run: # run the executable using input like `make run input=filepath output=x86-filepath` or else run with terminal input
 	@echo "compiling up...\n"
-	@./$(TARGET) $(input) $(dot_output) $(output)
+	@./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
-	@dot -Tps $(dot_output) -o $(ps_output)
 	@echo "find your results in output folder :p"
 
 .PHONY: verbose
-verbose: # run the executable in verbose like `make run input=filepath output=tacfilepath`
-	@ ./$(TARGET) $(input) $(dot_output) $(output)
+verbose: # run the executable in verbose like `make run input=filepath output=x86-filepath`
+	@ ./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
 	@ rm $(VERBOSE)
-	@dot -Tps $(dot_output) -o $(ps_output)
 
 .PHONY: graph
 graph: # to show dot file
+	@dot -Tps $(dot_output) -o $(ps_output)
 	@cat $(dot_output)
 
-.PHONY: ThreeAC
-ThreeAC: # to show Three Address Code
+.PHONY: threeAC
+threeAC: # to show Three Address Code
+	@cat $(acoutput)
+
+.PHONY: asm
+asm: # to show x86 Code
 	@cat $(output)
 
 .PHONY: clean
@@ -50,5 +54,6 @@ clean : # clean up the generated files
 	@echo "cleaning up...\n"
 	@rm $(TARGET) $(SRCS)
 	@rm ../output/symTables/*.csv
-	@rm $(output)
-	@rm $(dot_output) $(ps_output)
+	@rm $(acoutput) $(output)
+	@rm $(dot_output) 
+	@rm $(ps_output)

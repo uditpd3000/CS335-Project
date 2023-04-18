@@ -33,9 +33,13 @@ string sourceFile;
 ofstream fout;
 ofstream vout;
 
-ofstream tacout;
+ofstream tacout,sout;
 void set_tac_file(const char* filename){
   tacout.open(filename);
+}
+
+void set_x86_file(const char* filename){
+  sout.open(filename);
 }
 
 void generatetree(Node* n){
@@ -1449,13 +1453,22 @@ Primary dot Identifier              {
     // cout<<$1->anyName<<endl;
     $$->var=global_sym_table->lookup_var($3,1,1,$1->anyName);
     // $$->type = $$->var->type;
+    bool isStatic=false;
+    for(auto f:$$->var->modifiers){
+      if(f=="static") isStatic=true;
+    }
     int t3 = mycode->insertGetFromSymTable($1->anyName,$$->var->name,"",$$->var->offset);
     // int t4 = mycode->insertPointerAssignment($1->result,mycode->getVar(t3),"");
     // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"0","");
-    $$->result = "*("+mycode->getVar(t3)+")";
-    // cout<<$1->lexeme<<endl;
-    if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
-    // someThing = "";
+    if(!isStatic){
+      $$->result = "*("+mycode->getVar(t3)+")";
+      // cout<<$1->lexeme<<endl;
+      if($1->lexeme == "this")$$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+      // someThing = "";
+    }
+    else{
+      $$->result = mycode->getVar(t3);
+    }
     $$->dims = $$->var->dims;
     $$->type = $$->var->type;
   }
@@ -1650,7 +1663,8 @@ TypeName:
         SymbolTable* curr = global_sym_table->current_symbol_table;
         while(curr->parent!=NULL && curr->isClass==false)curr=curr->parent;
         int t3 = mycode->insertGetFromSymTable(curr->scope,t1,"",var->offset);
-          $$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+        if(!$$->staticOk)  $$->result = "*("+someThing+"+"+mycode->getVar(t3)+")";
+        else $$->result = mycode->getVar(t3);
         // $$->result = "xxx";
     }
       
@@ -1727,7 +1741,7 @@ TypeName:
          int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
       }
-      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),to_string(0),"");
+      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
       $$->result = mycode->getVar($$->index);
     }
     else {
@@ -3638,6 +3652,7 @@ int main(int argc, char *argv[])
     fout.open(argv[2]);
     sourceFile = argv[1];
     set_tac_file(argv[3]);
+    set_x86_file(argv[4]);
 
 	
 	yyparse();

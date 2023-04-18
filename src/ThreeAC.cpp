@@ -5,6 +5,7 @@ using namespace std;
 extern GlobalSymbolTable *global_sym_table;
 
 extern ofstream tacout;
+extern ofstream sout;
 extern X86* target;
 
 extern int getTemporarySize(string name);
@@ -1069,15 +1070,30 @@ public:
 
         }
         else{
-            int x = target->getOffset(offset, classname,8 ,true);
-            vector<string> code;
-            code = target->getReg(to_string(x), scope,8);
+            Variable* varr =  global_sym_table->lookup_var(offset,0,1,classname);
+            bool flag=false;
+            for(auto modifs : varr->modifiers){
+                if(modifs=="static"){
+                    flag=true;
+                }
+            }
 
-            x86code.push_back(code[0]);
-            string reg = code[1];
-            int y = target->getOffset(result, scope,8);
-            string xx = "movq\t%" + reg + ", -" + to_string(y) + "(%rbp)";
-            x86code.push_back(xx);
+            if(flag){
+                int y = target->getOffset(result, scope,4);
+                string xx = "movl\t" + offset + "(%rip), -" + to_string(y) + "(%rbp)";
+                x86code.push_back(xx);
+            }
+            else{
+                int x = target->getOffset(offset, classname,8 ,true);
+                vector<string> code;
+                code = target->getReg(to_string(x), scope,8);
+
+                x86code.push_back(code[0]);
+                string reg = code[1];
+                int y = target->getOffset(result, scope,8);
+                string xx = "movq\t%" + reg + ", -" + to_string(y) + "(%rbp)";
+                x86code.push_back(xx);
+            }
             
         }
         
@@ -1649,7 +1665,7 @@ public:
     }
 
     void x86print(){
-        cout<<endl;
+        // cout<<endl;
 
         for(int i=0; i < globals.size() ;i++){
 
@@ -1664,22 +1680,23 @@ public:
                 arg1+=t[j++];
             }
 
-            if(i==0) cout<<"\t.text\n";
-            cout<<"\t.global\t"<<globals[i]->result <<"\n";
-            if(i==0) cout<<"\t.data\n";
-            cout<<"\talign\t4\n\t.type\tgb, @object\n\t.size\tgb, 4\n";
-            cout<<globals[i]->result<<":\n\t.long\t"<<arg1<<"\n";
+            if(i==0) sout<<"\t.text\n";
+            sout<<"\t.global\t"<<globals[i]->result <<"\n";
+            if(i==0) sout<<"\t.data\n";
+            sout<<"\talign\t4\n\t.type\tgb, @object\n\t.size\tgb, 4\n";
+            sout<<globals[i]->result<<":\n\t.long\t"<<arg1<<"\n";
 
         }
-        cout<<"\t.text\n\t.globl\tmain\n\t.type\tmain, @function\n";
+        sout<<"\t.text\n\t.globl\tmain\n\t.type\tmain, @function\n";
 
         for (int i = 0; i < quadruple.size(); i++)
         {
-            cout <<quadruple[i]->codegen();
-            // cout << endl;
+            sout <<quadruple[i]->codegen();
+            // sout << endl;
         }
-        cout<<"printLabel:\n";
-        cout << "\t.asciz\t\"%d\\n\" ";
-        cout<<endl;
+        sout<<"printLabel:\n";
+        sout << "\t.asciz\t\"%d\\n\" ";
+        sout<<endl;
+        sout.close();
     }
 };
