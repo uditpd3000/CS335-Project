@@ -250,6 +250,85 @@ public:
                 reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
                 x86code.push_back(reg1);
             }
+            else if (op ==">>")
+            {
+                instr = "sarl";
+
+                string dummy_reg=target->usedRegs.front();
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                if(target->usedRegs.front() == "ecx"){
+                    string dummy = target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                if(dummy_reg != "ecx"){
+                    string reg4 = "movl\t%"+dummy_reg+", %ecx";
+                    x86code.push_back(reg4);
+                }
+                
+                reg1 = instr + "\t%cl" + ", %" + reg2;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if (op =="<<")
+            {
+                instr = "sall";
+
+                string dummy_reg=target->usedRegs.front();
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                if(target->usedRegs.front() == "ecx"){
+                    string dummy = target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                if(dummy_reg != "ecx"){
+                    string reg4 = "movl\t%"+dummy_reg+", %ecx";
+                    x86code.push_back(reg4);
+                }
+                
+                reg1 = instr + "\t%cl" + ", %" + reg2;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
+            else if (op[0] =='~')
+            {
+                instr = "notl";
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+
+                reg1 = instr + "\t" + "%" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                int x = target->getOffset(result,scope);
+                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                x86code.push_back(reg1);
+            }
         }
         else {
             // x=1;

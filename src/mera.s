@@ -11,25 +11,27 @@ main:
 	# pushq	%rbp
 	# movq	%rsp, %rbp
 	# subq	$16, %rsp
-	# movl	$3, -12(%rbp)
-	# movl	$5, -8(%rbp)
-	# movl	-12(%rbp), %eax
-	# cltd
-	# idivl	-8(%rbp)
-	# movl	%edx, -4(%rbp)
+	# movl	$5, -12(%rbp)
+	# movl	$1, -8(%rbp)
+	# movl	-8(%rbp), %eax
+	# movl	-12(%rbp), %edx
+	# movl	%eax, %ecx
+	# sall	%cl, %edx
+	# movl	%edx, %eax
+	# movl	%eax, -4(%rbp)
 	pushq   %rbp
         movq    %rsp, %rbp
         subq    $20, %rsp
-        movl    $19, %eax
+        movl    $5, %eax
         movl    %eax, -4(%rbp)
-        movl    $5, %ebx
+        movl    $1, %ebx
         movl    %ebx, -8(%rbp)
-        movl    -4(%rbp), %ecx
-        cltd
-        idivl   -8(%rbp)
+        movl    -8(%rbp), %ecx
+        movl    -4(%rbp), %edx
+        sall    %cl, %edx
         movl    %edx, -16(%rbp)
-        movl    -16(%rbp), %edx
-        movl    %edx, -12(%rbp)
+        movl    -16(%rbp), %eax
+        movl    %eax, -12(%rbp)
 	movl	-12(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC0(%rip), %rdi

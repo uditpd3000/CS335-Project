@@ -1,8 +1,8 @@
 #include<stdio.h>
 
 int main(){
-    int a=3,b=5;
-    int res=a%b;
+    int a=5,b=1;
+    int res=a<<b;
     printf("%d \n",res);
     return 0;
 }
