@@ -1029,6 +1029,23 @@ FieldDeclaration:
       }
 
     }
+
+    bool isStatic=false;
+    for(auto x : $1->method->modifiers){
+      if(x=="static"){
+        isStatic=true;
+      }
+    }
+
+    if(isStatic){
+      // cout<<$2->start<<"=="<<mycode->quadruple.size()<<endl;
+      // cout<<mycode->quadruple[0]->print()<<endl;
+      for(int i=$2->start;i<mycode->quadruple.size();i++){
+        mycode->globals.push_back(mycode->quadruple[i]);
+      }
+      mycode->quadruple.erase(mycode->quadruple.begin() + $2->start, mycode->quadruple.end());
+    }
+    
   }
 ;
 
@@ -1103,7 +1120,8 @@ VariableDeclarator:
     $$->add(v);
     $$->var = new Variable($1,"",yylineno,{},"");
 
-    $$->start=mycode->quadruple.size()-1;
+    $$->index = mycode->insertAss("0","","",$1);
+    $$->result = $1;
     $$->index=$$->start;
     }
 | Identifier Dims {
