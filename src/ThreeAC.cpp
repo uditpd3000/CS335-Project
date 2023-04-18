@@ -1126,6 +1126,7 @@ class IR
 {
 public:
     vector<Instruction *> quadruple;
+    vector<Instruction *> globals;
     map<string, Block *> blocks;
 
     int local_var_count = 0;
@@ -1633,6 +1634,29 @@ public:
 
     void x86print(){
         cout<<endl;
+
+        for(int i=0; i < globals.size() ;i++){
+
+            string t = globals[i]->print();
+
+            string result="", arg1="";
+            int j=0;
+            while(result!="\t"+globals[i]->result+" := "){
+                result+=t[j++];
+            }
+            while(j<t.length()){
+                arg1+=t[j++];
+            }
+
+            if(i==0) cout<<"\t.text\n";
+            cout<<"\t.global\t"<<globals[i]->result <<"\n";
+            if(i==0) cout<<"\t.data\n";
+            cout<<"\talign\t4\n\t.type\tgb, @object\n\t.size\tgb, 4\n";
+            cout<<globals[i]->result<<":\n\t.long\t"<<arg1<<"\n";
+
+        }
+        cout<<"\t.text\n\t.globl\tmain\n\t.type\tmain, @function\n";
+
         for (int i = 0; i < quadruple.size(); i++)
         {
             cout <<quadruple[i]->codegen();

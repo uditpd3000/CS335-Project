@@ -104,13 +104,19 @@ class X86{
             }
             else{
                 myoffset = getMemoryLocation(name,scope);
-                offsetToSize[myoffset] = mysize;
+                if(myoffset!=-1){
+                    offsetToSize[myoffset] = mysize;
 
-                if(mysize==4) u = "movl\t-";
-                else if(mysize==1) u = "movb\t-";
-                else u = "movq\t-";
+                    if(mysize==4) u = "movl\t-";
+                    else if(mysize==1) u = "movb\t-";
+                    else u = "movq\t-";
 
-                u += to_string(myoffset) + "(%rbp), %" + t;
+                    u += to_string(myoffset) + "(%rbp), %" + t;
+                }
+                else{
+                    myoffset = getMemoryLocation(name,scope,true);
+                    u = "movq\t"+ to_string(myoffset) + "(rdi), "+t;
+                }
             }
 
             regTovar[t] = name;
