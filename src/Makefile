@@ -17,7 +17,7 @@ help: # Show help for each of the Makefile recipes.
 
 .PHONY: build
 build : # generate files for the executable
-	@echo "building your Three Address Code cum AST Generator...\n"
+	@echo "building your Java-x86-Compiler...\n"
 	@flex lexer.l
 	@bison -d -t parser.y 2> error.txt
 	@g++ lex.yy.c parser.tab.c -o $(TARGET)
