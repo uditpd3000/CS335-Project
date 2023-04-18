@@ -1083,7 +1083,9 @@ public:
 
             if(flag){
                 int y = target->getOffset(result, scope,4);
-                string xx = "movl\t" + offset + "(%rip), -" + to_string(y) + "(%rbp)";
+                string xx = "movl\t" + offset + "(%rip), %eax";
+                x86code.push_back(xx);
+                xx= "movl\t%eax, -" + to_string(y) + "(%rbp)";
                 x86code.push_back(xx);
             }
             else{
