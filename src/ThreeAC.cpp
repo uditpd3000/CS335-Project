@@ -95,7 +95,10 @@ public:
 
         }
 
-        if (arg2 != "")
+        if(result=="stackPointer" && op=="+int"){
+            x86code.push_back("addq\t$"+arg2+", %rsp");
+        }
+        else if (arg2 != "")
         {
 
             string instr = "";
@@ -1199,7 +1202,9 @@ public:
 
             if(flag){
                 int y = target->getOffset(result, scope,4);
-                string xx = "movl\t" + offset + "(%rip), -" + to_string(y) + "(%rbp)";
+                string xx = "movl\t" + offset + "(%rip), %eax";
+                x86code.push_back(xx);
+                xx= "movl\t%eax, -" + to_string(y) + "(%rbp)";
                 x86code.push_back(xx);
             }
             else{
@@ -1802,7 +1807,7 @@ public:
             if(i==0) sout<<"\t.text\n";
             sout<<"\t.global\t"<<globals[i]->result <<"\n";
             if(i==0) sout<<"\t.data\n";
-            sout<<"\talign\t4\n\t.type\tgb, @object\n\t.size\tgb, 4\n";
+            sout<<"\t.type\tgb, @object\n\t.size\tgb, 4\n";
             sout<<globals[i]->result<<":\n\t.long\t"<<arg1<<"\n";
 
         }
