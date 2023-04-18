@@ -5,6 +5,7 @@ acoutput = ../output/ThreeAddressCode.3ac
 dot_output=../output/graph.dot
 ps_output=../output/graph.ps
 output = ../output/x86-output.s
+executable = ../output/a.out
 
 default: help
 
@@ -48,6 +49,12 @@ threeAC: # to show Three Address Code
 .PHONY: asm
 asm: # to show x86 Code
 	@cat $(output)
+
+.PHONY: runasm
+runasm: # to show x86 Code
+	@	gcc -no-pie $(output) -o $(executable)
+	@	$(executable)
+	@rm $(executable)
 
 .PHONY: clean
 clean : # clean up the generated files
