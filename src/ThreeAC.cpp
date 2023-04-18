@@ -87,12 +87,11 @@ public:
 
             string reg11 = target->getReg();
             string reg12 = target->getReg();
-
+            // x86code.push_back("====");
             x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %"+reg11);
             x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
             x86code.push_back("addq\t%" + reg11 + ", %" + reg12);
-            loc = "-%eax(%"+reg11+")";
-
+            loc = "(%"+reg12+")";
         }
 
         if(result=="stackPointer" && op=="+int"){
@@ -649,9 +648,14 @@ public:
                 int off = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rdi, -"+ to_string(off)+"(%rbp)");
             }
+            else if (arg1 == "popReturnValue"){
+                resSize = 4;
+                int off = target->getOffset(result,scope,4);
+                x86code.push_back("movl\t%rax, -" + to_string(off) + "(%rbp)");
+            }
             else if(arg1 == "allocmem"){
                 int off = target->getOffset(op,scope);
-                x86code.push_back("movq\t-" + to_string(off) + "(%rbp), %rdi");
+                x86code.push_back("movslq\t-" + to_string(off) + "(%rbp), %rdi");
                 x86code.push_back("call\tmalloc");
                 int x  = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rax, -"+to_string(x)+"(%rbp)");
@@ -867,8 +871,9 @@ public:
         }
         if(arg1=="\tpush"){
             vector<string> code;
+            // cout<<"pushme\n";
 
-            code = target->getReg(arg1, scope);
+            code = target->getReg(arg2, scope);
             x86code.push_back("\t"+code[0]);
             string reg = code[1];
 
@@ -957,7 +962,7 @@ public:
             for (auto x : params)
             {
                 // s += "\tparam " + x + "\n";
-                if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) x86code.push_back("pushl\t$"+x);
+                if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) x86code.push_back("push\t$"+x);
                 else{
                     int y;
                     vector<string> code;
@@ -989,7 +994,7 @@ public:
             // mov objec refer to reg
             if(isConstr==false){
                 int off1 = target->getOffset(objectName,scope,8);
-                x86code.push_back("movq\t-"+to_string(off1)+"(rbp), %rdi");
+                x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %rdi");
             }
             // call object.func
             // x86code.push_back("call " +name);
@@ -1150,8 +1155,9 @@ public:
         int off = target->getOffset(result, scope);
         x86code.push_back("addq\t%" + reg11 + ", %" + reg12); // total offset saved in reg12
         
-        // if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12); 
-        x86code.push_back("movl\t(%"+ reg12+ "), -" + to_string(off) + "(%rbp)"); // fixme
+        // if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12);
+        x86code.push_back("movl\t(%" + reg12 + "), %eax");
+        x86code.push_back("movl\t%eax, -" + to_string(off) + "(%rbp)");
 
         string s = "";
         for (auto yy : x86code)

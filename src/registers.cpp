@@ -52,9 +52,9 @@ class X86{
         }
 
         string getReg(){
-            string t = usedRegs.front();
-            usedRegs.pop();
-            usedRegs.push(t);
+            string t = usedBigRegs.front();
+            usedBigRegs.pop();
+            usedBigRegs.push(t);
             return t;
         }
 

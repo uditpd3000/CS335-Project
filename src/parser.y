@@ -1743,11 +1743,12 @@ TypeName:
         if(x=="static") flag=1;
       }
       if(!flag){
-         int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
+          $$->result = "*("+$1->objectName+"+"+mycode->getVar(t3)+")";
       }
-      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
-      $$->result = mycode->getVar($$->index);
+      else {
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
+        $$->result = mycode->getVar($$->index);
+      }
     }
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);
