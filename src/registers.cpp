@@ -202,6 +202,7 @@ class X86{
                 x=getMemoryLocation(name,scope,true);
                 if(x!=1) return -x;
             }
+            offsetToSize.insert({x,mysize});
             return x;
         }
 

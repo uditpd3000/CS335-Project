@@ -674,7 +674,9 @@ public:
                 }
                 else {
                     int c;
-                    c = target->offsetToSize[target->getOffset(arg1,scope)];
+                    if((arg1[0]<='9' && arg1[0]>='0') || (arg1[0]=='-')) c=4;
+                    else c = target->offsetToSize[target->getOffset(arg1,scope)];
+                    // cout<<c<<"---"<<arg1<<endl;
                     // cout<<arg1<<target->getOffset(arg1,scope)<<endl;
                     if(c==1){
                         resSize=1;
@@ -686,6 +688,7 @@ public:
                         code = target->getReg(arg1, scope, 8);
                     }
                     else {
+                        resSize=4;
                         code = target->getReg(arg1, scope);
                     }
                 }
@@ -695,8 +698,8 @@ public:
                 
                 if(loc!="")reg1 = "movl\t%"+reg2+", " + loc;
                 else {
-                    int x = target->getOffset(result, scope);
-                    // cout<<result<<" "<<x<<endl;
+                    int x = target->getOffset(result, scope,resSize);
+                    // cout<<result<<" "<<x<<"----"<<target->offsetToSize[x]<<endl;
                     string suff =  ", -" + to_string(x) + "(%rbp)";
                     if(x<0){
                         x*=-1;
@@ -1006,8 +1009,9 @@ public:
 
             // mov objec refer to reg
             if(isConstr==false){
-                if(objectName!=""){
+                if(objectName!="" && objectName!=name){
                     int off1 = target->getOffset(objectName,scope,8);
+                    // cout<<objectName<<endl;
                     x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %rdi");
                 }
                 else{
@@ -1504,6 +1508,7 @@ public:
                 a1 += funcName[ind++];
             ind++;
             myCall->objectName=a1;
+            // cout<<"here--"<<a1<<endl;
 
             a1="";
             while (ind<funcName.length())
