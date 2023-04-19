@@ -802,7 +802,7 @@ MethodDeclaration:
       if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
     }
     TwoWordInstr* myIns = new TwoWordInstr();
-    myIns->arg1="EndFunc";
+    myIns->arg1="\tEndFunc";
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
