@@ -651,7 +651,7 @@ public:
             else if (arg1 == "popReturnValue"){
                 resSize = 4;
                 int off = target->getOffset(result,scope,4);
-                x86code.push_back("movl\t%rax, -" + to_string(off) + "(%rbp)");
+                x86code.push_back("movq\t%rax, -" + to_string(off) + "(%rbp)");
             }
             else if(arg1 == "allocmem"){
                 int off = target->getOffset(op,scope);
@@ -877,7 +877,7 @@ public:
             x86code.push_back("\t"+code[0]);
             string reg = code[1];
 
-            x86code.push_back("\tmovl\t%"+reg+", %rax");
+            x86code.push_back("\tmovslq\t%"+reg+", %rax");
         }
 
         else if(arg1=="\tBeginConstr"){
@@ -962,7 +962,11 @@ public:
             for (auto x : params)
             {
                 // s += "\tparam " + x + "\n";
-                if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) x86code.push_back("push\t$"+x);
+                if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) {
+                    // x86code.push_back("push\t$"+x);
+                    x86code.push_back("subq\t$4,%rsp");
+                    x86code.push_back("movl\t$" + x + ", (%rsp)");
+                }
                 else{
                     int y;
                     vector<string> code;
@@ -983,7 +987,8 @@ public:
                         x86code.push_back("pushb\t%"+code[1]);
                     }
                     else if(y==4){
-                        x86code.push_back("pushl\t%"+code[1]);
+                        x86code.push_back("subq\t$4,%rsp");
+                        x86code.push_back("movl\t%"+code[1]+", (%rsp)");
                     }
                     else {
                         x86code.push_back("pushq\t%"+code[1]);
@@ -1527,7 +1532,7 @@ public:
         }
         else
         {
-            int t = 8;
+            int t = 16;
             for (auto x : argList)
             {
 
