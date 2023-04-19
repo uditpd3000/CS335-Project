@@ -1006,8 +1006,13 @@ public:
 
             // mov objec refer to reg
             if(isConstr==false){
-                int off1 = target->getOffset(objectName,scope,8);
-                x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %rdi");
+                if(objectName!=""){
+                    int off1 = target->getOffset(objectName,scope,8);
+                    x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %rdi");
+                }
+                else{
+                    x86code.push_back("movq\t-8(%rbp), %rdi");
+                }
             }
             // call object.func
             // x86code.push_back("call " +name);
