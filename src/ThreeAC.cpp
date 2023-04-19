@@ -675,6 +675,7 @@ public:
                 else {
                     int c;
                     c = target->offsetToSize[target->getOffset(arg1,scope)];
+                    // cout<<arg1<<target->getOffset(arg1,scope)<<endl;
                     if(c==1){
                         resSize=1;
                         code = target->getReg(arg1, scope,1);
@@ -695,6 +696,7 @@ public:
                 if(loc!="")reg1 = "movl\t%"+reg2+", " + loc;
                 else {
                     int x = target->getOffset(result, scope);
+                    // cout<<result<<" "<<x<<endl;
                     string suff =  ", -" + to_string(x) + "(%rbp)";
                     if(x<0){
                         x*=-1;
