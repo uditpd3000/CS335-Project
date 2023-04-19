@@ -94,6 +94,9 @@ public:
             loc = "-%eax(%"+reg11+")";
 
         }
+        else if(target->tVarsToGlobals.find(result)!=target->tVarsToGlobals.end()){
+            loc = target->tVarsToGlobals[result]+"(%rip)";
+        }
 
         if(result=="stackPointer" && op=="+int"){
             x86code.push_back("addq\t$"+arg2+", %rsp");
@@ -892,7 +895,10 @@ public:
         int off = target->getOffset(arg2,scope,4);
         string xx = "";
         if(off>0){
-            xx= "\tmovslq\t-"+to_string(off)+"(%rbp), %rsi";
+            if(target->tVarsToGlobals.find(arg2)!=target->tVarsToGlobals.end()){
+                xx = "\tmovslq\t" + target->tVarsToGlobals[arg2] + "(%rip), %rsi";
+            }
+            else xx= "\tmovslq\t-"+to_string(off)+"(%rbp), %rsi";
         }
         if(off<0){
             off*=-1;
@@ -1083,10 +1089,7 @@ public:
 
             if(flag){
                 int y = target->getOffset(result, scope,4);
-                string xx = "movl\t" + offset + "(%rip), %eax";
-                x86code.push_back(xx);
-                xx= "movl\t%eax, -" + to_string(y) + "(%rbp)";
-                x86code.push_back(xx);
+                target->tVarsToGlobals[result]=offset;
             }
             else{
                 int x = target->getOffset(offset, classname,8 ,true);
@@ -1148,7 +1151,8 @@ public:
         x86code.push_back("addq\t%" + reg11 + ", %" + reg12); // total offset saved in reg12
         
         // if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12); 
-        x86code.push_back("movl\t(%"+ reg12+ "), -" + to_string(off) + "(%rbp)"); // fixme
+        x86code.push_back("movl\t(%"+ reg12+ "), %eax");
+        x86code.push_back("movl\t%eax, -" + to_string(off) + "(%rbp)");
 
         string s = "";
         for (auto yy : x86code)
