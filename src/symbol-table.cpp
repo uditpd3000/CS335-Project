@@ -41,6 +41,9 @@ public:
         {
             size = typeToSize[mytype];
         }
+        else {
+            // cout<<mytype<<endl;
+        }
     }
     Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize, string myvalue)
     {
@@ -249,6 +252,7 @@ public:
         typeToSize["byte"] = 1;
         typeToSize["short"] = 2;
         typeToSize["boolean"] = 1;
+        typeToSize["Class"] = 8;
     }
 
     // lookups
