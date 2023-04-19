@@ -11,6 +11,7 @@ class X86{
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
         map<int,int> offsetToSize;
+        map<string,string>tVarsToGlobals;
 
         vector<string> regs{"eax","ebx","ecx","edx"}; // 4-byte
         vector<string> regs8bit{"al","bl","cl","dl"}; // 8-bit regs
@@ -66,6 +67,15 @@ class X86{
             if(name=="basePointer"){
                 t="rbp";
 
+                v.push_back(u);
+                v.push_back(t);
+
+                return v;
+            }
+            else if(tVarsToGlobals.find(name)!=tVarsToGlobals.end()){
+                t = usedRegs.front();
+                u = "movl\t" + tVarsToGlobals[name] + "(%rip), "+t;
+                usedRegs.pop(); usedRegs.push(t);
                 v.push_back(u);
                 v.push_back(t);
 
@@ -148,8 +158,16 @@ class X86{
                 if(v->name==var){
                     if(!isClass)
                         return v->offset+12;
-                    else
-                        return v->offset;
+                    else{
+                        bool flag=false;
+                        for(auto modifs : v->modifiers){
+                            if(modifs=="static"){
+                                flag=true;
+                            }
+                        }
+                        if(flag) return 1;
+                        else return v->offset;
+                    }
                 }
             }
             return -1;
@@ -182,7 +200,7 @@ class X86{
             }
             if(x==-1){
                 x=getMemoryLocation(name,scope,true);
-                return -x;
+                if(x!=1) return -x;
             }
             return x;
         }
