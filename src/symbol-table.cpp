@@ -23,6 +23,7 @@ public:
     vector<int> dimsSize;
     string classs_name;
     int size;
+    int arrSize;
     int offset;
     bool inherited;
     bool isField = false;
@@ -55,6 +56,7 @@ public:
         dimsSize = mysize;
         lineNo = mylineNo;
         value = myvalue;
+        size = 8;
         if (typeToSize.find(mytype) != typeToSize.end())
         {
             int size1 = typeToSize[mytype];
@@ -65,7 +67,7 @@ public:
                     size1 *= dimsSize[dimsSize.size() - 1 - i];
                 }
             }
-            size = size1;
+            arrSize = size1;
         }
     }
 };

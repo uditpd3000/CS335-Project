@@ -1795,10 +1795,11 @@ ArrayAccess:
       $$->index = mycode->insertAss($3->result,to_string(ll),"*int","");
       if(v1->dims==1){
         string t1 = mycode->getVar($$->index);
-        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
+        int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int","");
         int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"",v1->offset);
+        int t5 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
-        $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
+        $$->result = "*("+mycode->getVar(t5)+"+"+mycode->getVar(t4)+")";
       }
       
     }
@@ -1848,8 +1849,9 @@ ArrayAccess:
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int",t1);
         int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"",v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
+        int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
-        $$->result = "*( "+mycode->getVar(t4)+" + "+mycode->getVar(t5)+" )";
+        $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
         // $$->result = mycode->getVar($$->index);
       }
       $$->start=$1->start;
@@ -1893,12 +1895,14 @@ ArrayAccess:
         int t3 = mycode->insertGetFromSymTable($$->which_scope,$1->var->name,"",$1->var->offset);
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-          $$->result = "*( "+mycode->getVar(t5)+" + "+mycode->getVar(t4)+" )";
+          int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
+          $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
           // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         }
         else {
+          int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
           
-          $$->result = "*( "+mycode->getVar(t3)+" + "+mycode->getVar(t4)+" )";
+          $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
         }
         // $$->result = mycode->getVar($$->index);
       }
@@ -2796,7 +2800,8 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      if(!($3->type=="int" || $3->type=="float"||$3->type=="long" || $3->type=="short"||$3->type=="byte" || $3->type=="String"||$3->type=="boolean" || $3->type=="char"||$3->type=="double")){
       throwError("Invalid type to print",yylineno);
      }
-     $$->index = mycode->InsertTwoWordInstr("\tprint",$3->result);
+     $$->index = mycode->insertAss($3->result,"","","");
+     $$->index = mycode->InsertTwoWordInstr("\tprint",mycode->getVar($$->index));
      $$->start = $$->index;
 
      }

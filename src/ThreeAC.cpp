@@ -88,8 +88,14 @@ public:
             string reg11 = target->getReg();
             string reg12 = target->getReg();
             // x86code.push_back("====");
+            
             x86code.push_back("movq\t-"+to_string(off1)+"(%rbp), %"+reg11);
-            x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+            if(target->offsetToSize[off2]==4){
+                x86code.push_back("movslq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+            }
+            else {
+                x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+            }
             x86code.push_back("addq\t%" + reg11 + ", %" + reg12);
             loc = "(%"+reg12+")";
         }
@@ -663,6 +669,17 @@ public:
                 int x  = target->getOffset(result,scope,8);
                 x86code.push_back("movq\t%rax, -"+to_string(x)+"(%rbp)");
             }
+            else if (arg1 == "getAddress"){
+                vector<string>code;
+                code= target->getReg(op,scope,8);
+                x86code.push_back(code[0]);
+                string reg = code[1];
+                string reg1 = target->getReg();
+                x86code.push_back("movq\t%rbp, %"+reg1);
+                x86code.push_back("subq\t%" + reg + ", %"+reg1);
+                int x = target->getOffset(result, scope, 8);
+                x86code.push_back("movq\t%"+reg1 +", -"+ to_string(x) + "(%rbp)");
+            }
             else{
                 if(arg1=="true"){
                     resSize=1;
@@ -1108,6 +1125,7 @@ public:
             }
             else{
                 int x = target->getOffset(offset, classname,8 ,true);
+                if(x==1){x=target->getOffset(offset,scope,8);}
                 vector<string> code;
                 code = target->getReg(to_string(x), scope,8);
 
@@ -1116,6 +1134,7 @@ public:
                 int y = target->getOffset(result, scope,8);
                 string xx = "movq\t%" + reg + ", -" + to_string(y) + "(%rbp)";
                 x86code.push_back(xx);
+                // x86code.push_back("----");
             }
             
         }
@@ -1156,10 +1175,14 @@ public:
         if(code[0]!="") x86code.push_back(code[0]);
         string reg11 = code[1];
 
-        code = target->getReg(offset, scope, 8);
+        if(target->offsetToSize[target->getOffset(offset,scope)] == 4){
+            code = target->getReg(offset, scope, 8, true);
+        }
+        else code = target->getReg(offset, scope, 8);
         if(code[0]!="")  x86code.push_back(code[0]);
         string reg12 = code[1];
 
+        // x86code.push_back("---");
         // x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
         // x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
         int off = target->getOffset(result, scope);
