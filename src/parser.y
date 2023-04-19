@@ -2682,6 +2682,16 @@ UnqualifiedClassInstanceCreationExpression:
     $$->cls = $2->cls;
     $$->type = "Class";
     $$->anyName=$2->cls->name;
+    if($2->method->parameters.size()!=$4->variables.size()){
+      throwError("Error: Expected number of arguments: "+to_string($2->method->parameters.size())+" Found: "+to_string($4->resList.size()),yylineno);
+    }
+    int parasize=0;
+    for(int i=0;i<$2->method->parameters.size();i++){
+      if($2->method->parameters[i]->type!=$4->variables[i]->type){
+        throwError("TypeError: Expected type of argument["+to_string(i+1)+"] : "+$2->method->parameters[i]->type + ", Found: " +$4->variables[i]->type,yylineno);
+      }
+      parasize+=typeToSize[$2->method->parameters[i]->type];
+    }
 
     int ind = mycode->insertAss(to_string(global_sym_table->linkmap[$$->cls->name]->offset),"","","");
     string z = mycode->getVar(ind);
@@ -2689,6 +2699,7 @@ UnqualifiedClassInstanceCreationExpression:
     // mycode->InsertTwoWordInstr("\tallocmem","1");
         // cout<<$2->result<<"\n";
     string mysize = global_sym_table->getSize($2->result,global_sym_table->current_scope);
+    mysize = to_string(stoi(mysize)-parasize);
     string zz = mycode->getVar(mycode->insertAss("allocmem","",z,""));
     $$->objOffset = zz;
     mycode->InsertTwoWordInstr("\tsetObjectRef",zz);
@@ -2702,17 +2713,40 @@ UnqualifiedClassInstanceCreationExpression:
 ;
 
 UnqualifiedClassInstanceCreationExpressionAfter_bracopen:
-  ArgumentList brac_close ClassBody      {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};$$->add(v);$$->resList= $1->resList;}
-| brac_close ClassBody                   {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); cout<<"UnqualifiedClassInstanceCreationExpressionAfter_bracopen\n";}
-| brac_close                             {string t1=$1; $$=new Node(mymap[t1],t1);}
-| ArgumentList brac_close                {$$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1)};$$->add(v);$$->resList= $1->resList;}
+  ArgumentList brac_close ClassBody      {
+    $$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");
+    string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};
+    $$->add(v);
+    $$->resList= $1->resList;
+    $$->variables = $1->variables;
+    }
+| brac_close ClassBody                   {
+    $$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");
+    string t1=$1;vector<Node*>v{new Node(mymap[t1],t1),$2};$$->add(v); 
+    vector<Variable*> v1;
+    $$->variables=v1;
+    }
+| brac_close                             {
+    string t1=$1; 
+    $$=new Node(mymap[t1],t1);
+    vector<Variable*> v1;
+    $$->variables=v1;
+    }
+| ArgumentList brac_close                {
+    $$=new Node("UnqualifiedClassInstanceCreationExpressionAfter_bracopen");
+    string t1=$2;
+    vector<Node*>v{$1,new Node(mymap[t1],t1)};
+    $$->add(v);
+    $$->resList= $1->resList;
+    $$->variables= $1->variables;
+  }
 ;
 
 ClassOrInterfaceTypeToInstantiate:
  Identifier                                                 {
     string t1=$1; 
     $$=(new Node(mymap[t1],t1));
-    global_sym_table->lookup_method($1,1,global_sym_table->current_scope);
+    $$->method = global_sym_table->lookup_method($1,1,global_sym_table->current_scope);
     $$->cls = global_sym_table->lookup_class($1,1,global_sym_table->current_scope);
     string curr_cls = global_sym_table->get_current_class();
     if(curr_cls!=$$->cls->name){
