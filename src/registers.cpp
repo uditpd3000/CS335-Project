@@ -53,9 +53,9 @@ class X86{
         }
 
         string getReg(){
-            string t = usedRegs.front();
-            usedRegs.pop();
-            usedRegs.push(t);
+            string t = usedBigRegs.front();
+            usedBigRegs.pop();
+            usedBigRegs.push(t);
             return t;
         }
 
@@ -149,9 +149,11 @@ class X86{
 
         int getMemoryLocation(string var, string scope, bool isClass=false){
             // cout<<var<<endl;
+            // cout<<scope<<endl;
             SymbolTable * curr = global_sym_table->linkmap[scope];
-            if(isClass==false)while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            if(isClass==false)while(curr->scope!="Global" && curr->isMethodOrConst==false)curr=curr->parent;
             else while(curr->scope!="Global" && curr->isClass==false)curr=curr->parent;
+            // cout<<curr->scope<<endl;
             for(auto v:curr->vars){
                 if(v->name==var){
                     if(!isClass)
@@ -172,8 +174,9 @@ class X86{
         }
 
         int getTotalSize(string scope){
+            // cout<<scope<<endl;
             SymbolTable * curr = global_sym_table->linkmap[scope];
-            while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            while(curr->scope!="Global" && (curr->isMethodOrConst==false))curr=curr->parent;
             return (curr->offset + 8);
         }
 

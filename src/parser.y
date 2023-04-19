@@ -317,6 +317,7 @@ ConstructorDeclaration:
     // mycode->makeBlock(mycode->quadruple.size(),$2->method->name+".Constr");
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
+    global_sym_table->current_symbol_table->isMethodOrConst=true;
     myIns->arg2 = $2->method->name;
     consstart = mycode->insert(myIns);
 
@@ -359,6 +360,7 @@ ConstructorDeclaration:
     // mycode->makeBlock(mycode->quadruple.size(),$1->method->name+".Constr");
     TwoWordInstr* myIns = new TwoWordInstr();
     myIns->arg1="\tBeginConstr";
+    global_sym_table->current_symbol_table->isMethodOrConst=true;
     myIns->arg2 = $1->method->name;
     consstart = mycode->insert(myIns);
     int tp = mycode->insertAss("popparam","","","");
@@ -669,6 +671,7 @@ MethodDeclaration:
     vector<pair<string,int>>params;
 
     global_sym_table->current_symbol_table->isMethod=true;
+    global_sym_table->current_symbol_table->isMethodOrConst=true;
     for(auto i:_method->parameters){
         i->offset = global_sym_table->current_symbol_table->offset;
         global_sym_table->insert(i);
@@ -720,6 +723,7 @@ MethodDeclaration:
     int tp = mycode->insertAss("popparam","","","");
     someThing = mycode->getVar(tp);
     global_sym_table->current_symbol_table->isMethod=true;
+    global_sym_table->current_symbol_table->isMethodOrConst=true;
 
     vector<pair<string,int>>params;
     for(auto i:_method->parameters){
@@ -771,6 +775,7 @@ MethodDeclaration:
     int tp = mycode->insertAss("popparam","","","");
     someThing = mycode->getVar(tp);
     global_sym_table->current_symbol_table->isMethod=true;
+    global_sym_table->current_symbol_table->isMethodOrConst=true;
 
      vector<pair<string,int>>params;
     for(auto i:_method->parameters){
@@ -1738,11 +1743,12 @@ TypeName:
         if(x=="static") flag=1;
       }
       if(!flag){
-         int t4 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
-          $$->index = mycode->insertPointerAssignment(mycode->getVar(t4),to_string(0),"");
+          $$->result = "*("+$1->objectName+"+"+mycode->getVar(t3)+")";
       }
-      else $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
-      $$->result = mycode->getVar($$->index);
+      else {
+        $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),"","");
+        $$->result = mycode->getVar($$->index);
+      }
     }
     else {
       throwError("Variable "+t2+" not declared in appropriate scope",yylineno);

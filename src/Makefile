@@ -63,4 +63,3 @@ clean : # clean up the generated files
 	@rm ../output/symTables/*.csv
 	@rm $(acoutput) $(output)
 	@rm $(dot_output) 
-	@rm $(ps_output)
