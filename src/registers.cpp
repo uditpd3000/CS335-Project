@@ -11,10 +11,11 @@ class X86{
         // map<string,string>varToreg;
         map<string,int>tVarsToMem;
         map<int,int> offsetToSize;
+        map<string,string>tVarsToGlobals;
 
-        vector<string> regs{"eax","ebx","ecx","edx"}; // 4-byte
-        vector<string> regs8bit{"al","bl","cl","dl"}; // 8-bit regs
-        vector<string> regsBig{"rbx","rcx","rdx","r12","r13","r14"}; // 8-byte regs
+        vector<string> regs{"ecx", "edx", "r14d", "r15d"}; // 4-byte
+        vector<string> regs8bit{"al","bl"}; // 8-bit regs
+        vector<string> regsBig{"r8","r9","r10","r11","r12","r13"}; // 8-byte regs
         queue<string>usedRegs;
         queue<string>usedRegs8bit;
         queue<string>usedBigRegs;
@@ -52,13 +53,13 @@ class X86{
         }
 
         string getReg(){
-            string t = usedRegs.front();
-            usedRegs.pop();
-            usedRegs.push(t);
+            string t = usedBigRegs.front();
+            usedBigRegs.pop();
+            usedBigRegs.push(t);
             return t;
         }
 
-        vector<string> getReg(string name, string scope, int mysize=4){
+        vector<string> getReg(string name, string scope,  int mysize=4, bool slq = false){
             vector<string> v;
             string u,t;
             int myoffset;
@@ -66,6 +67,15 @@ class X86{
             if(name=="basePointer"){
                 t="rbp";
 
+                v.push_back(u);
+                v.push_back(t);
+
+                return v;
+            }
+            else if(tVarsToGlobals.find(name)!=tVarsToGlobals.end()){
+                t = usedRegs.front();
+                u = "movl\t" + tVarsToGlobals[name] + "(%rip), %"+t;
+                usedRegs.pop(); usedRegs.push(t);
                 v.push_back(u);
                 v.push_back(t);
 
@@ -80,7 +90,8 @@ class X86{
 
                 if(mysize==4) u = "movl\t$";
                 else if(mysize==1) u = "movb\t$";
-                else u = "movq\t$";
+                else if(slq==false) u = "movq\t$";
+                else u = "movslq\t$";
 
                 u += name + ", %"+t;
             }
@@ -99,8 +110,8 @@ class X86{
 
                 if(mysize==4) u = "movl\t-" + to_string(x) + "(%rbp), %"+t;
                 else if(mysize==1) u = "movb\t-" + to_string(x) + "(%rbp), %"+t;
-                else u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
-
+                else if(slq==false) u = "movq\t-" + to_string(x) + "(%rbp), %"+t;
+                else u = "movslq\t-" + to_string(x) + "(%rbp), %" + t;
             }
             else{
                 myoffset = getMemoryLocation(name,scope);
@@ -109,13 +120,14 @@ class X86{
 
                     if(mysize==4) u = "movl\t-";
                     else if(mysize==1) u = "movb\t-";
-                    else u = "movq\t-";
+                    else if(slq==false) u = "movq\t-";
+                    else u = "movslq\t-";
 
                     u += to_string(myoffset) + "(%rbp), %" + t;
                 }
                 else{
                     myoffset = getMemoryLocation(name,scope,true);
-                    u = "movq\t"+ to_string(myoffset) + "(rdi), "+t;
+                    u = "movq\t"+ to_string(myoffset) + "(%rdi), "+t;
                 }
             }
 
@@ -139,23 +151,36 @@ class X86{
 
         int getMemoryLocation(string var, string scope, bool isClass=false){
             // cout<<var<<endl;
+            // cout<<scope<<endl;
+            // cout
             SymbolTable * curr = global_sym_table->linkmap[scope];
-            if(isClass==false)while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            if(isClass==false)while(curr->scope!="Global" && curr->isMethodOrConst==false)curr=curr->parent;
             else while(curr->scope!="Global" && curr->isClass==false)curr=curr->parent;
+            // cout<<curr->scope<<endl;
             for(auto v:curr->vars){
                 if(v->name==var){
+                    // cout<<v->name<<"--"<<v->offset<<endl;
                     if(!isClass)
                         return v->offset+12;
-                    else
-                        return v->offset;
+                    else{
+                        bool flag=false;
+                        for(auto modifs : v->modifiers){
+                            if(modifs=="static"){
+                                flag=true;
+                            }
+                        }
+                        if(flag) return 1;
+                        else return v->offset;
+                    }
                 }
             }
             return -1;
         }
 
         int getTotalSize(string scope){
+            // cout<<scope<<endl;
             SymbolTable * curr = global_sym_table->linkmap[scope];
-            while(curr->scope!="Global" && curr->isMethod==false)curr=curr->parent;
+            while(curr->scope!="Global" && (curr->isMethodOrConst==false))curr=curr->parent;
             return (curr->offset + 8);
         }
 
@@ -164,6 +189,7 @@ class X86{
             int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
+                    // cout<<name<<"-"<<mysize<<endl;
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
@@ -179,8 +205,13 @@ class X86{
             }
             if(x==-1){
                 x=getMemoryLocation(name,scope,true);
-                return -x;
+                if(x!=1) {
+                    // cout << name << ":----:" <<scope<<"---" <<x << "...."<<isClass<<endl;
+                    return -x;
+                }
+
             }
+            offsetToSize.insert({x,mysize});
             return x;
         }
 

@@ -52,9 +52,7 @@ asm: # to show x86 Code
 
 .PHONY: runasm
 runasm: # to show x86 Code
-	@	gcc -no-pie $(output) -o $(executable)
-	@	$(executable)
-	@rm $(executable)
+	@	gcc -no-pie $(output)
 
 .PHONY: clean
 clean : # clean up the generated files
@@ -63,4 +61,3 @@ clean : # clean up the generated files
 	@rm ../output/symTables/*.csv
 	@rm $(acoutput) $(output)
 	@rm $(dot_output) 
-	@rm $(ps_output)

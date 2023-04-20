@@ -23,10 +23,12 @@ public:
     vector<int> dimsSize;
     string classs_name;
     int size;
+    int arrSize;
     int offset;
     bool inherited;
     bool isField = false;
     string objName;
+    bool otherScope = false;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue)
     {
@@ -41,6 +43,9 @@ public:
         {
             size = typeToSize[mytype];
         }
+        else {
+            // cout<<mytype<<endl;
+        }
     }
     Variable(string myname, string mytype, vector<string> myModifiers, int mylineNo, bool myisArray, int mydims, vector<int> mysize, string myvalue)
     {
@@ -52,6 +57,7 @@ public:
         dimsSize = mysize;
         lineNo = mylineNo;
         value = myvalue;
+        size = 8;
         if (typeToSize.find(mytype) != typeToSize.end())
         {
             int size1 = typeToSize[mytype];
@@ -62,7 +68,7 @@ public:
                     size1 *= dimsSize[dimsSize.size() - 1 - i];
                 }
             }
-            size = size1;
+            arrSize = size1;
         }
     }
 };
@@ -124,6 +130,7 @@ public:
     string sourcefile = sourceFile;
 
     bool isMethod = false, isClass = false;
+    bool isMethodOrConst = false;
 
     SymbolTable(SymbolTable *myparent, string myscope, int mynum)
     {
@@ -248,6 +255,7 @@ public:
         typeToSize["byte"] = 1;
         typeToSize["short"] = 2;
         typeToSize["boolean"] = 1;
+        typeToSize["Class"] = 8;
     }
 
     // lookups
@@ -465,6 +473,8 @@ public:
                 }
             }
         }
+        Variable *vaar = lookup_var(symbol, 0, 0, current_scope);
+        if(vaar->otherScope==true)return true;
         throwError("Error: Redeclaration of symbol :" + symbol, yylineno);
         return false;
     }

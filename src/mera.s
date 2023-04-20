@@ -11,23 +11,24 @@ main:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$16, %rsp
-	movl	$12, -12(%rbp)
-	movl	$5, -8(%rbp)
-	movl	-12(%rbp), %edx
-	movl	-8(%rbp), %eax
-	addl	%edx, %eax
-	imull	-8(%rbp), %eax
-	movl	%eax, %ecx
-	movl	-12(%rbp), %eax
-	subl	-8(%rbp), %eax
-	cltd
-	idivl	-8(%rbp)
-	movl	%eax, %esi
-	movl	%ecx, %eax
-	cltd
-	idivl	%esi
-	movl	%eax, -4(%rbp)
+	movl	$0, -8(%rbp)
+	movl	$1834, -4(%rbp)
+	jmp	.L2
+.L3:
 	movl	-4(%rbp), %eax
+	movslq	%eax, %rdx
+	imulq	$1717986919, %rdx, %rdx
+	shrq	$32, %rdx
+	sarl	$2, %edx
+	sarl	$31, %eax
+	subl	%eax, %edx
+	movl	%edx, %eax
+	movl	%eax, -4(%rbp)
+	addl	$1, -8(%rbp)
+.L2:
+	cmpl	$0, -4(%rbp)
+	jne	.L3
+	movl	-8(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
@@ -54,42 +55,3 @@ main:
 3:
 	.align 8
 4:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pushq	%rbp
-	movq	%rsp, %rbp
-	subq	$32, %rsp
-	movq	%rdi, -8(%rbp)
-	movl	$12, %eax
-	movl	%eax, -12(%rbp)
-	movl	$5, %ebx
-	movl	%ebx, -16(%rbp)
-	movl	$6, %ecx
-	movl	%ecx, -20(%rbp)
-	movl	-12(%rbp), %ecx
-	cltd
-	idivl	-16(%rbp)
-	movl	%eax, -28(%rbp)
-	movl	-28(%rbp), %edx
-	movl	%edx, -24(%rbp)
-	mov	$printLabel, %rdi
