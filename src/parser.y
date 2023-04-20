@@ -1399,7 +1399,7 @@ Expression:
 
 AssignmentExpression: 
 Assignment                {$$=$1;  }
-| ConditionalExpression   {$$=$1; if($$->var!=NULL&& $$->var->type!=""){$$->type=$1->var->type;} }
+| ConditionalExpression   {$$=$1; if($$->var!=NULL&& $$->var->type!=""){$$->type=$1->var->type;}global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno); }
 ;
 
 Assignment:
@@ -3290,6 +3290,8 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
   int pp,pp1,pp2, ss, ee;
   // string myscope = global_sym_table->getScope($5->result, global_sym_table->current_scope,1);
   pp = mycode->insertGetFromSymTable(myscope,$5->result,"",var->offset);
+  // int t5 = mycode->insertAss("getAddress","",mycode->getVar(pp),"");
+  // pp1 = mycode->insertAss()
   pp1 = mycode->insertPointerAssignment(mycode->getVar(pp),"0","");
   pp2 = mycode->insertAss(mycode->getVar(pp),"0","+int");
   mycode->insertAss(mycode->getVar(pp1),"","",$3->var->name);
@@ -3299,7 +3301,7 @@ forr brac_open LocalVariableDeclaration colon Expression brac_close Statement {
 
   // conditional
   // Variable* vp = global_sym_table->lookup_var($5->result,0,myscope);
-  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->size),"<");
+  ee = mycode->insertAss(mycode->getVar(pp2),to_string(var->arrSize),"<");
 
   // for changeexp
   ss = mycode->insertAss(mycode->getVar(pp2),to_string(typeToSize[$3->type]),"+",mycode->getVar(pp2));
