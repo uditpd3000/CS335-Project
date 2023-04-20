@@ -1994,20 +1994,21 @@ ConditionalExpression:
       if($1->type!="boolean") throwError("type mismatch for conditional",yylineno);
       $$->var->type = $3->type;
       $$->type = $3->type;
-
+      // cout<<"2008"<<endl;
       if($3->index+1 < mycode->quadruple.size()){
         if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) 
           $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
       }
-      if($3->start != $3->index || $3->index<=mycode->quadruple.size()-1){
+      if($3->start <= $3->index && $3->index<=mycode->quadruple.size()-1 ){
         if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index)
           $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
       }
       // if(!mycode->quadruple[$3->index+1]->isBlock || $3->index+1!=mycode->quadruple.size()-1) $5->result = mycode->getVar(mycode->makeBlock($3->index+1));
       // if(!mycode->quadruple[$3->start]->isBlock || $3->start!=$3->index) $3->result = mycode->getVar(mycode->makeBlock($3->start,"",$3->index+1));
-
+      // cout<<"2008"<<endl;
       $$->result=mycode->insertTernary($3->start-1,$1->result,$3->result,$5->result);
       $$->index = mycode->quadruple.size()-1;
+      // cout<<"2011"<<endl;
 
       
       }
@@ -2810,7 +2811,7 @@ StatementWithoutTrailingSubstatement     {$$= new Node("Statement");$$->add($1);
      }
      $$->index = mycode->insertAss($3->result,"","","");
      $$->index = mycode->InsertTwoWordInstr("\tprint",mycode->getVar($$->index));
-     $$->start = $$->index;
+     $$->start = $3->start;
 
      }
 ;
