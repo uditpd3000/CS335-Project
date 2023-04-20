@@ -1428,7 +1428,7 @@ Assignment:
     string x = "";
     x+=($2->lexeme)[0];
     if($2->lexeme=="=")$$->index = mycode->insertAss($3->result,"","",$1->result);
-    else $$->index = mycode->insertAss($3->result,$1->result,x+$1->type,$1->result);
+    else $$->index = mycode->insertAss($1->result,$3->result,x+$1->type,$1->result);
     if($1->start) $$->start = $1->start;
     else $$->start = $3->start;
     $$->result = $1->result;
@@ -3184,7 +3184,7 @@ forr brac_open semi_colon semi_colon brac_close                         {
 
   $$->prestart= $4->start;
   $$->start =$4->start;
-  $$->index = mycode->quadruple.size()-1;
+  $$->index = $4->index;
   if(!mycode->quadruple[$6->start]->isBlock || $6->start!=$6->index) $6->result = mycode->getVar(mycode->makeBlock($6->start));
   $$->result=$6->result;
 

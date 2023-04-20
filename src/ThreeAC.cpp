@@ -213,8 +213,9 @@ public:
 
                 code = target->getReg(arg2, scope);
                 x86code.push_back(code[0]);
+                x86code.push_back("movl\t%"+code[1]+", %ecx");
                 x86code.push_back("cltd");
-                x86code.push_back(instr+"\t%"+code[1]);
+                x86code.push_back(instr+"\t%ecx");
                 
                 // move to destination(result)
                 reg1 = "movl\t%eax, ";
@@ -242,8 +243,9 @@ public:
 
                 code = target->getReg(arg2, scope);
                 x86code.push_back(code[0]);
+                x86code.push_back("movl\t%"+code[1]+", %ecx");
                 x86code.push_back("cltd");
-                x86code.push_back(instr+"\t%"+code[1]);
+                x86code.push_back(instr+"\t%ecx");
                 
                 // move to destination(result)
                 reg1 = "movl\t%edx, ";
