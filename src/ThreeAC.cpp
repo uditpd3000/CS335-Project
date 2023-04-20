@@ -876,6 +876,9 @@ public:
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             string methodName = scope.substr(parentName.length() + 1, scope.length() - (parentName.length()));
             int size = target->getTotalSize(scope) + getTemporarySize(methodName);
+            int a=16;
+            while(a<size) a+=16;
+            size=a;
             // x86code.push_back(methodName + ":");
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
@@ -910,6 +913,9 @@ public:
             target->initFuncLocal();
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             int size = target->getTotalSize(scope)+getTemporarySize(parentName);
+            int a=16;
+            while(a<size) a+=16;
+            size=a;
             // cout<<size<<"-----";
             // x86code.push_back(parentName+".Constr" + ":");
             x86code.push_back("\tpushq\t%rbp");
