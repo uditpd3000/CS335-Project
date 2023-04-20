@@ -454,22 +454,22 @@ public:
                 x86code.push_back(reg1);
                 
                 // move to destination(result)
-                int x = target->getOffset(result,scope);
-                reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
-                x86code.push_back(reg1);
-
-                // if(loc==""){
-                //     int x = target->getOffset(result,scope,1);
-                //     if (x < 0)
-                //     {
-                //         x *= -1;
-                //         reg1 = "movl\t%"+reg3+", " + to_string(x) + "(%rdi)";
-                //     }
-                //     else reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
-                // }
-                // else 
-                //     reg1 = "movl\t%" + reg3 + ", " + loc;
+                // int x = target->getOffset(result,scope);
+                // reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
                 // x86code.push_back(reg1);
+
+                if(loc==""){
+                    int x = target->getOffset(result,scope,1);
+                    if (x < 0)
+                    {
+                        x *= -1;
+                        reg1 = "movl\t%"+reg3+", " + to_string(x) + "(%rdi)";
+                    }
+                    else reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                }
+                else 
+                    reg1 = "movl\t%" + reg3 + ", " + loc;
+                x86code.push_back(reg1);
             }
             else if (op == ">="){
                 instr = "cmpl";
