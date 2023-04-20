@@ -213,8 +213,9 @@ public:
 
                 code = target->getReg(arg2, scope);
                 x86code.push_back(code[0]);
+                x86code.push_back("movl\t%"+code[1]+", %ecx");
                 x86code.push_back("cltd");
-                x86code.push_back(instr+"\t%"+code[1]);
+                x86code.push_back(instr+"\t%ecx");
                 
                 // move to destination(result)
                 reg1 = "movl\t%eax, ";
@@ -226,7 +227,7 @@ public:
                         x *= -1;
                         loc = to_string(x) + "(%rdi)";
                         }
-                        else loc +="-"+ to_string(x) + "(%rbp)";
+                        else loc ="-"+ to_string(x) + "(%rbp)";
                 }
                 reg1 +=loc;
                 x86code.push_back(reg1);
@@ -242,8 +243,9 @@ public:
 
                 code = target->getReg(arg2, scope);
                 x86code.push_back(code[0]);
+                x86code.push_back("movl\t%"+code[1]+", %ecx");
                 x86code.push_back("cltd");
-                x86code.push_back(instr+"\t%"+code[1]);
+                x86code.push_back(instr+"\t%ecx");
                 
                 // move to destination(result)
                 reg1 = "movl\t%edx, ";
@@ -349,6 +351,126 @@ public:
                 }
                 else
                     reg1 = "movl\t%" + reg2 + ", " + loc;
+                x86code.push_back(reg1);
+            }
+            else if (op ==">>")
+            {
+                instr = "sarl";
+
+                string dummy_reg=target->usedRegs.front();
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                if(target->usedRegs.front() == "ecx"){
+                    string dummy = target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                if(dummy_reg != "ecx"){
+                    string reg4 = "movl\t%"+dummy_reg+", %ecx";
+                    x86code.push_back(reg4);
+                }
+                
+                reg1 = instr + "\t%cl" + ", %" + reg2;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                // int x = target->getOffset(result,scope);
+                // reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                // x86code.push_back(reg1);
+
+                if(loc=="") {
+                    int x = target->getOffset(result, scope);
+                    if (x < 0)
+                    {
+                    x *= -1;
+                    reg1 = "movl\t%"+reg2+", " + to_string(x) + "(%rdi)";
+                    }
+                    else reg1 ="movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                }
+                else 
+                    reg1 = "movl\t%" + reg2 + ", " + loc;
+                x86code.push_back(reg1);
+            }
+            else if (op =="<<")
+            {
+                instr = "sall";
+
+                string dummy_reg=target->usedRegs.front();
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+                if(target->usedRegs.front() == "ecx"){
+                    string dummy = target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
+                code =  target->getReg(arg1,scope);
+                x86code.push_back(code[0]);
+                reg2 = code[1];
+
+                if(dummy_reg != "ecx"){
+                    string reg4 = "movl\t%"+dummy_reg+", %ecx";
+                    x86code.push_back(reg4);
+                }
+                
+                reg1 = instr + "\t%cl" + ", %" + reg2;
+                x86code.push_back(reg1);
+                
+                // // move to destination(result)
+                // int x = target->getOffset(result,scope);
+                // reg1 = "movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                // x86code.push_back(reg1);
+
+
+
+                if(loc=="") {
+                        int x = target->getOffset(result, scope);
+                        if (x < 0)
+                        {
+                        x *= -1;
+                        reg1 = "movl\t%"+reg2+", " + to_string(x) + "(%rdi)";
+                        }
+                        else reg1 ="movl\t%"+reg2+", -" + to_string(x) + "(%rbp)";
+                }
+                else 
+                    reg1 = "movl\t%" + reg2 + ", " + loc;
+                x86code.push_back(reg1);
+            }
+            else if (op[0] =='~')
+            {
+                instr = "notl";
+
+                code = target->getReg(arg2, scope);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+
+                reg1 = instr + "\t" + "%" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                // int x = target->getOffset(result,scope);
+                // reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                // x86code.push_back(reg1);
+
+                if(loc==""){
+                    int x = target->getOffset(result,scope,1);
+                    if (x < 0)
+                    {
+                        x *= -1;
+                        reg1 = "movl\t%"+reg3+", " + to_string(x) + "(%rdi)";
+                    }
+                    else reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                }
+                else 
+                    reg1 = "movl\t%" + reg3 + ", " + loc;
                 x86code.push_back(reg1);
             }
             else if (op == ">="){
