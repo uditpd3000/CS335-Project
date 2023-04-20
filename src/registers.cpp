@@ -13,8 +13,8 @@ class X86{
         map<int,int> offsetToSize;
         map<string,string>tVarsToGlobals;
 
-        vector<string> regs{"ecx","edx"}; // 4-byte
-        vector<string> regs8bit{"al","bl","r14d","r15d"}; // 8-bit regs
+        vector<string> regs{"ecx", "edx", "r14d", "r15d"}; // 4-byte
+        vector<string> regs8bit{"al","bl"}; // 8-bit regs
         vector<string> regsBig{"r8","r9","r10","r11","r12","r13"}; // 8-byte regs
         queue<string>usedRegs;
         queue<string>usedRegs8bit;
@@ -189,7 +189,7 @@ class X86{
             int x,myoffset;
             if(name.length()>1 && (name[0]=='t' && name[1]=='_')){
                 if(tVarsToMem.find(name)==tVarsToMem.end()){
-                    cout<<name<<"-"<<mysize<<endl;
+                    // cout<<name<<"-"<<mysize<<endl;
                     x = allocateIntoMem(mysize);
                     myoffset = getTotalSize(scope);
                     x+=myoffset;
@@ -211,7 +211,7 @@ class X86{
                 }
 
             }
-            // cout<<name<<":"<<scope<<"---"<<x<<"..."<<isClass<<endl;
+            offsetToSize.insert({x,mysize});
             return x;
         }
 

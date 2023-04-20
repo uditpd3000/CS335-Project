@@ -802,7 +802,7 @@ MethodDeclaration:
       if($1->method->ret_type!="void") throwError("missing return statement for non-void type method",yylineno);
     }
     TwoWordInstr* myIns = new TwoWordInstr();
-    myIns->arg1="EndFunc";
+    myIns->arg1="\tEndFunc";
     myIns->arg2 = $1->method->name;
 
     mycode->insert(myIns); 
@@ -1851,7 +1851,7 @@ ArrayAccess:
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
-        $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
+        $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
         // $$->result = mycode->getVar($$->index);
       }
       $$->start=$1->start;
@@ -1896,13 +1896,13 @@ ArrayAccess:
         if($1->objOffset!=""){
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
-          $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
+          $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
           // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         }
         else {
           int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
           
-          $$->result = "*("+mycode->getVar(t4)+"+"+mycode->getVar(t6)+")";
+          $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
         }
         // $$->result = mycode->getVar($$->index);
       }
@@ -2590,14 +2590,12 @@ MethodInvocation:
     // for (auto it:method->modifiers)if(it=="static")boo=true;
     // if($1->anyName!="")boo=false;
     global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
-
-
-    }
-  | Primary dot Identifier brac_open ArgumentList brac_close {
+  }
+| Primary dot Identifier brac_open ArgumentList brac_close {
     $$=new Node("MethodInvocation");
     string t1=$2,t2=$3,t3=$4,t6=$6;
     $$->add($1->objects); 
-    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$5,new Node(mymap[t6],t6)};
+    vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),$5,new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
     string mysize = global_sym_table->getSize($3,$1->cls->name);
@@ -2619,20 +2617,20 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall("#"+t2,$5->resList,0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($3,$5->resList,0,false,mysize);
+    else $$->index = mycode->insertFunctnCall("#"+t2,$5->resList,0,false,mysize);
 
     $$->result = mycode->getVar($$->index-1);
      bool boo = true;
     global_sym_table->staticCheck(true,boo,global_sym_table->current_scope, yylineno);
 
   }
-  | Primary dot Identifier brac_open brac_close {
+| Primary dot Identifier brac_open brac_close {
     $$=new Node("MethodInvocation");
     string t1=$2,t2=$3,t3=$4,t6=$5;
     $$->add($1->objects); 
-    vector<Node*>v{new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t6],t6)};
+    vector<Node*>v{$1,new Node(mymap[t1],t1),new Node(mymap[t2],t2),new Node(mymap[t3],t3),new Node(mymap[t6],t6)};
     $$->add(v); 
     Method* method = global_sym_table->lookup_method($3,1,$1->cls->name);
     string mysize = global_sym_table->getSize($3,$1->cls->name);
@@ -2645,9 +2643,9 @@ MethodInvocation:
 
     $$->start = $1->start;
     if($$->type!="void"){
-      $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize,false);
+      $$->index = mycode->insertFunctnCall("#"+t2,vector<pair<string,int>>{},0,false,mysize,false);
     }
-    else $$->index = mycode->insertFunctnCall($3,vector<pair<string,int>>{},0,false,mysize);
+    else $$->index = mycode->insertFunctnCall("#"+t2,vector<pair<string,int>>{},0,false,mysize);
 
     $$->result = mycode->getVar($$->index-1);
      bool boo = true;
