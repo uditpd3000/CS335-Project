@@ -650,14 +650,19 @@ public:
             }
             else if (arg1 == "getAddress"){
                 vector<string>code;
-                code= target->getReg(op,scope,8);
-                x86code.push_back(code[0]);
-                string reg = code[1];
+                int x = target->tVarsToValue[op];
                 string reg1 = target->getReg();
-                x86code.push_back("movq\t%rbp, %"+reg1);
-                x86code.push_back("subq\t%" + reg + ", %"+reg1);
-                int x = target->getOffset(result, scope, 8);
-                x86code.push_back("movq\t%"+reg1 +", -"+ to_string(x) + "(%rbp)");
+                x86code.push_back("movq\t-"+to_string(x)+"(%rbp), %"+reg1);
+                x = target->getOffset(result,scope,8);
+                x86code.push_back("movq\t%"+reg1+", -"+to_string(x)+"(%rbp)");
+                // code= target->getReg(op,scope,8);
+                // x86code.push_back(code[0]);
+                // string reg = code[1];
+                // string reg1 = target->getReg();
+                // x86code.push_back("movq\t%rbp, %"+reg1);
+                // x86code.push_back("subq\t%" + reg + ", %"+reg1);
+                // int x = target->getOffset(result, scope, 8);
+                // x86code.push_back("movq\t%"+reg1 +", -"+ to_string(x) + "(%rbp)");
             }
             else{
                 if(arg1=="true"){
@@ -1122,6 +1127,8 @@ public:
                 if(x==1){x=target->getOffset(offset,scope,8);}
                 vector<string> code;
                 code = target->getReg(to_string(x), scope,8);
+
+                target->tVarsToValue.insert({result,x});
 
                 x86code.push_back(code[0]);
                 string reg = code[1];

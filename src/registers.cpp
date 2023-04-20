@@ -12,6 +12,7 @@ class X86{
         map<string,int>tVarsToMem;
         map<int,int> offsetToSize;
         map<string,string>tVarsToGlobals;
+        map<string,int>tVarsToValue;
 
         vector<string> regs{"ecx", "edx", "r14d", "r15d"}; // 4-byte
         vector<string> regs8bit{"al","bl"}; // 8-bit regs
