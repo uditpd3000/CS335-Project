@@ -1,14 +1,9 @@
 #include<stdio.h>
 
-
-int fact(int n){
-    if(n==1) return 1;
-    else return(fact(n-1)+1);
-}
 int main(){
-    int n=5;
-    int res=fact(5);
-
-    printf("%d \n",res);
-    return 0;
+    int a=12,b=5;
+    // int sum=a+b;
+    // int diff=a-b;
+    int div=(a+b)*b/((a-b)/b);
+    printf("%d\n",div);
 }

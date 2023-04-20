@@ -198,6 +198,11 @@ public:
             {
                 instr = "idivl";
 
+                while(target->usedRegs.front() != "eax"){
+                    string dummy=target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
@@ -217,10 +222,11 @@ public:
                 x86code.push_back(reg1);
                 
                 // move to destination(result)
-                string dummy=target->usedRegs.front();
-                target->usedRegs.pop();
-                target->usedRegs.push(dummy);
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
+                // string dummy=target->usedRegs.front();
+                // target->usedRegs.pop();
+                // target->usedRegs.push(dummy);
+                // reg1 = "movl\t%"+target->usedRegs.front()+", -";
+                reg1 = "movl\t%eax, -";
 
                 if(loc=="") {
                         int x = target->getOffset(result, scope);
@@ -238,6 +244,12 @@ public:
             {
                 instr = "idivl";
 
+                while(target->usedRegs.front() != "eax"){
+                    string dummy=target->usedRegs.front();
+                    target->usedRegs.pop();
+                    target->usedRegs.push(dummy);
+                }
+
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
@@ -257,7 +269,7 @@ public:
                 x86code.push_back(reg1);
                 
                 // move to destination(result)
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
+                reg1 = "movl\t%edx, -";
                 if (loc == "")
                 {
                     int x = target->getOffset(result, scope);
@@ -399,12 +411,12 @@ public:
                     if (x < 0)
                     {
                         x *= -1;
-                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                        reg1 = "movl\t%" +reg2+", -" + to_string(x) + "(%rdi)";
                     }
                     else
-                        reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                        reg1 = "movl\t%" +reg2+", -" + to_string(x) + "(%rbp)";
                 }
-                else reg1 = "movb\t%al, " + loc;
+                else reg1 = "movl\t%" +reg2+", -" + loc;
                 x86code.push_back(reg1);
             }
             else if (op =="<<")
@@ -443,12 +455,12 @@ public:
                     if (x < 0)
                     {
                         x *= -1;
-                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                        reg1 = "movl\t%" +reg2+", -" + to_string(x) + "(%rdi)";
                     }
                     else
-                        reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                        reg1 = "movl\t%" +reg2+", -" + to_string(x) + "(%rbp)";
                 }
-                else reg1 = "movb\t%al, " + loc;
+                else reg1 = "movl\t%" +reg2+", -" + loc;
                 x86code.push_back(reg1);
             }
             else if (op[0] =='~')
@@ -473,12 +485,12 @@ public:
                     if (x < 0)
                     {
                         x *= -1;
-                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                        reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rdi)";
                     }
                     else
-                        reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                        reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
                 }
-                else reg1 = "movb\t%al, " + loc;
+                else reg1 = "movl\t%"+reg3+", -" + loc;
                 x86code.push_back(reg1);
             }
             else if (op == ">="){
