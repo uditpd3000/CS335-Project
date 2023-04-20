@@ -522,6 +522,7 @@ StaticInitializer:
     for(auto it: global_sym_table->current_symbol_table->vars){
       it->offset = parentTable->offset;
       parentTable->offset += it->size;
+      it->otherScope = true;
       parentTable->insert_variable(it);
     }
     if(global_sym_table->isForScope==false)global_sym_table->end_scope();
@@ -540,6 +541,7 @@ InstanceInitializer:
     
     for(auto it: global_sym_table->current_symbol_table->vars){
       it->offset = parentTable->offset;
+      it->otherScope = true;
       parentTable->offset += it->size;
       parentTable->insert_variable(it);
     }
@@ -1134,7 +1136,7 @@ VariableDeclarator:
 
     $$->index = mycode->insertAss("0","","",$1);
     $$->result = $1;
-    $$->index=$$->start;
+    $$->start=$$->index;
     }
 | Identifier Dims {
     $$ = new Node("VariableDeclarator"); 
@@ -1392,7 +1394,7 @@ PrimitiveType:
 ;
 
 Expression: 
-  {indd = mycode->quadruple.size();} AssignmentExpression {$$=$2; $$->lineno=yylineno;$$->start = indd; $$->var->type = $$->type;}
+  {indd = mycode->quadruple.size();} AssignmentExpression {$$=$2; if(indd<$2->start || $2->start<=0 || $2->start>$2->index)$$->start = indd;$$->index=mycode->quadruple.size()-1; $$->lineno=yylineno;$$->var->type = $$->type;}
 ;
 
 AssignmentExpression: 
@@ -1410,7 +1412,7 @@ Assignment:
       throwError("Cannot convert from "+ to_string($3->dims)+" dimensions to "+to_string($1->dims)+" dimensions",yylineno);
       
     }
-
+    // cout<<"1415\n";
     if($1->type!=$3->type){
       if(!global_sym_table->typeCheckHelper($3->type, $1->type)){
         int p = mycode->insertAss("",$3->result,"cast_to_"+$1->type);
@@ -1420,7 +1422,7 @@ Assignment:
         throwError("cannot convert from "+ $3->type + " to " + $1->type ,yylineno);
       }
     }
-
+    // cout<<"1425\n";
     $$->type=$1->type;
     $$->var = $3->var;
     string x = "";
@@ -1430,11 +1432,14 @@ Assignment:
     if($1->start) $$->start = $1->start;
     else $$->start = $3->start;
     $$->result = $1->result;
+    // cout<<"1435\n";
     // cout<<"dukh\n"; mycode->print(); exit(1);
     global_sym_table->finalCheck($1->var->name,$1->finalOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($1->var->isField,$1->staticOk,global_sym_table->current_scope,yylineno);
     global_sym_table->staticCheck($3->var->isField,$3->staticOk,global_sym_table->current_scope,yylineno);
-    // cout<<$3->var->name<<" ";
+    // cout<<"1440"<<endl;
+
+    // cout<<mycode->getVar($$->start)<<"==========="<<mycode->getVar($$->index)<<endl;
 
     }
 ;
@@ -1798,6 +1803,7 @@ ArrayAccess:
         int t4 = mycode->insertAss(t1,to_string(typeToSize[v1->type]),"*int","");
         int t3 = mycode->insertGetFromSymTable($$->which_scope,v1->name,"",v1->offset);
         int t5 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
+        $$->index=t5;
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t3),mycode->getVar(t4),"");
         $$->result = "*("+mycode->getVar(t5)+"+"+mycode->getVar(t4)+")";
       }
@@ -1850,6 +1856,7 @@ ArrayAccess:
         int t3 = mycode->insertGetFromSymTable($1->anyName,v1->name,"",v1->offset);
         int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
         int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
+        $$->index=t6;
         // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
         // $$->result = mycode->getVar($$->index);
@@ -1897,10 +1904,12 @@ ArrayAccess:
           int t5 = mycode->insertPointerAssignment($1->objOffset,mycode->getVar(t3),"");
           int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
           $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
+          $$->index=t6;
           // $$->index = mycode->insertPointerAssignment(mycode->getVar(t5),mycode->getVar(t4),"");
         }
         else {
           int t6 = mycode->insertAss("getAddress","",mycode->getVar(t3),"");
+          $$->index=t6;
           
           $$->result = "*("+mycode->getVar(t6)+"+"+mycode->getVar(t4)+")";
         }
@@ -1926,6 +1935,7 @@ ArrayAccess:
 
     $$->start = $1->start;
     $$->finalOk = true;
+    // cout<<mycode->getVar($$->start)<<"=========="<<mycode->getVar($$->index)<<endl;
 
     }
 
@@ -2817,6 +2827,7 @@ StatementWithoutTrailingSubstatement:
     
     for(auto it: global_sym_table->current_symbol_table->vars){
        it->offset = parentTable->offset;
+       it->otherScope = true;
       parentTable->offset += it->size;
       parentTable->insert_variable(it);
     }
@@ -3096,8 +3107,8 @@ BasicForStatementStart Statement                                       {
 
   $$->index = mycode->insertFor($1->prestart, $1->start,$1->index,$1->result, $2->result);
   // cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
+
   $$->start = $$->index;
-  // mycode->print(); cout<<mycode->quadruple.size()-1<<endl; exit(1);
 
   }
 ;

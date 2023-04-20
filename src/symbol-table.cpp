@@ -28,6 +28,7 @@ public:
     bool inherited;
     bool isField = false;
     string objName;
+    bool otherScope = false;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue)
     {
@@ -472,6 +473,8 @@ public:
                 }
             }
         }
+        Variable *vaar = lookup_var(symbol, 0, 0, current_scope);
+        if(vaar->otherScope==true)return true;
         throwError("Error: Redeclaration of symbol :" + symbol, yylineno);
         return false;
     }
