@@ -209,37 +209,25 @@ public:
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
+                x86code.push_back("movl\t%"+reg2+", %eax");
 
-                // code = target->getReg(arg2, scope);
-                // x86code.push_back(code[0]);
-                // reg3 = code[1];
-
-                int offse;
-                if(target->tVarsToMem.find(arg2)!=target->tVarsToMem.end())
-                    offse = target->getTotalSize(scope) + target->tVarsToMem[arg2];
-                else 
-                    offse = target->getMemoryLocation(arg2,scope);
-                
+                int off = target->getOffset(arg2, scope);
                 x86code.push_back("cltd");
-                reg1 = instr + "\t-"+ to_string(offse)+"(%rbp)";
-                x86code.push_back(reg1);
+                x86code.push_back(instr+"\t-"+to_string(off)+"(%rbp)");
                 
                 // move to destination(result)
-                string dummy=target->usedRegs.front();
-                target->usedRegs.pop();
-                target->usedRegs.push(dummy);
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
+                reg1 = "movl\t%eax, ";
 
                 if(loc=="") {
                         int x = target->getOffset(result, scope);
                         if (x < 0)
                         {
                         x *= -1;
-                        reg1 = to_string(x) + "(%rdi)";
+                        loc = to_string(x) + "(%rdi)";
                         }
-                        else reg1 += to_string(x) + "(%rbp)";
+                        else loc +="-"+ to_string(x) + "(%rbp)";
                 }
-                else reg1 +=loc;
+                reg1 +=loc;
                 x86code.push_back(reg1);
             }
             else if (op[0] == '%')
@@ -249,35 +237,26 @@ public:
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
+                x86code.push_back("movl\t%"+reg2+", %eax");
 
-                // code = target->getReg(arg2, scope);
-                // x86code.push_back(code[0]);
-                // reg3 = code[1];
-
-                int offse;
-                if(target->tVarsToMem.find(arg2)!=target->tVarsToMem.end())
-                    offse = target->getTotalSize(scope) + target->tVarsToMem[arg2];
-                else 
-                    offse = target->getMemoryLocation(arg2,scope);
-                
+                int off = target->getOffset(arg2, scope);
                 x86code.push_back("cltd");
-                reg1 = instr + "\t-"+ to_string(offse)+"(%rbp)";
-                x86code.push_back(reg1);
+                x86code.push_back(instr+"\t-"+to_string(off)+"(%rbp)");
                 
                 // move to destination(result)
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
-                if (loc == "")
-                {
-                    int x = target->getOffset(result, scope);
-                    if (x < 0)
-                    {
+                reg1 = "movl\t%edx, ";
+
+                if(loc=="") {
+                        int x = target->getOffset(result, scope);
+                        if (x < 0)
+                        {
                         x *= -1;
-                        reg1+= to_string(x) + "(%rdi)";
-                    }
-                    else reg1 += to_string(x) + "(%rbp)";
+                        loc = to_string(x) + "(%rdi)";
+                        }
+                        else loc += "-"+to_string(x) + "(%rbp)";
                 }
-                else
-                    reg1 += loc;
+                reg1 +=loc;
+
                 x86code.push_back(reg1);
             }
             else if (op == "|")
