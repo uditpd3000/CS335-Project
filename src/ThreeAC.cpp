@@ -209,37 +209,25 @@ public:
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
+                x86code.push_back("movl\t%"+reg2+", %eax");
 
-                // code = target->getReg(arg2, scope);
-                // x86code.push_back(code[0]);
-                // reg3 = code[1];
-
-                int offse;
-                if(target->tVarsToMem.find(arg2)!=target->tVarsToMem.end())
-                    offse = target->getTotalSize(scope) + target->tVarsToMem[arg2];
-                else 
-                    offse = target->getMemoryLocation(arg2,scope);
-                
+                int off = target->getOffset(arg2, scope);
                 x86code.push_back("cltd");
-                reg1 = instr + "\t-"+ to_string(offse)+"(%rbp)";
-                x86code.push_back(reg1);
+                x86code.push_back(instr+"\t-"+to_string(off)+"(%rbp)");
                 
                 // move to destination(result)
-                string dummy=target->usedRegs.front();
-                target->usedRegs.pop();
-                target->usedRegs.push(dummy);
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
+                reg1 = "movl\t%eax, ";
 
                 if(loc=="") {
                         int x = target->getOffset(result, scope);
                         if (x < 0)
                         {
                         x *= -1;
-                        reg1 = to_string(x) + "(%rdi)";
+                        loc = to_string(x) + "(%rdi)";
                         }
-                        else reg1 += to_string(x) + "(%rbp)";
+                        else loc +="-"+ to_string(x) + "(%rbp)";
                 }
-                else reg1 +=loc;
+                reg1 +=loc;
                 x86code.push_back(reg1);
             }
             else if (op[0] == '%')
@@ -249,35 +237,26 @@ public:
                 code =  target->getReg(arg1,scope);
                 x86code.push_back(code[0]);
                 reg2 = code[1];
+                x86code.push_back("movl\t%"+reg2+", %eax");
 
-                // code = target->getReg(arg2, scope);
-                // x86code.push_back(code[0]);
-                // reg3 = code[1];
-
-                int offse;
-                if(target->tVarsToMem.find(arg2)!=target->tVarsToMem.end())
-                    offse = target->getTotalSize(scope) + target->tVarsToMem[arg2];
-                else 
-                    offse = target->getMemoryLocation(arg2,scope);
-                
+                int off = target->getOffset(arg2, scope);
                 x86code.push_back("cltd");
-                reg1 = instr + "\t-"+ to_string(offse)+"(%rbp)";
-                x86code.push_back(reg1);
+                x86code.push_back(instr+"\t-"+to_string(off)+"(%rbp)");
                 
                 // move to destination(result)
-                reg1 = "movl\t%"+target->usedRegs.front()+", ";
-                if (loc == "")
-                {
-                    int x = target->getOffset(result, scope);
-                    if (x < 0)
-                    {
+                reg1 = "movl\t%edx, ";
+
+                if(loc=="") {
+                        int x = target->getOffset(result, scope);
+                        if (x < 0)
+                        {
                         x *= -1;
-                        reg1+= to_string(x) + "(%rdi)";
-                    }
-                    else reg1 += to_string(x) + "(%rbp)";
+                        loc = to_string(x) + "(%rdi)";
+                        }
+                        else loc += "-"+to_string(x) + "(%rbp)";
                 }
-                else
-                    reg1 += loc;
+                reg1 +=loc;
+
                 x86code.push_back(reg1);
             }
             else if (op == "|")
@@ -671,14 +650,19 @@ public:
             }
             else if (arg1 == "getAddress"){
                 vector<string>code;
-                code= target->getReg(op,scope,8);
-                x86code.push_back(code[0]);
-                string reg = code[1];
+                int x = target->tVarsToValue[op];
                 string reg1 = target->getReg();
-                x86code.push_back("movq\t%rbp, %"+reg1);
-                x86code.push_back("subq\t%" + reg + ", %"+reg1);
-                int x = target->getOffset(result, scope, 8);
-                x86code.push_back("movq\t%"+reg1 +", -"+ to_string(x) + "(%rbp)");
+                x86code.push_back("movq\t-"+to_string(x)+"(%rbp), %"+reg1);
+                x = target->getOffset(result,scope,8);
+                x86code.push_back("movq\t%"+reg1+", -"+to_string(x)+"(%rbp)");
+                // code= target->getReg(op,scope,8);
+                // x86code.push_back(code[0]);
+                // string reg = code[1];
+                // string reg1 = target->getReg();
+                // x86code.push_back("movq\t%rbp, %"+reg1);
+                // x86code.push_back("subq\t%" + reg + ", %"+reg1);
+                // int x = target->getOffset(result, scope, 8);
+                // x86code.push_back("movq\t%"+reg1 +", -"+ to_string(x) + "(%rbp)");
             }
             else{
                 if(arg1=="true"){
@@ -876,6 +860,9 @@ public:
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             string methodName = scope.substr(parentName.length() + 1, scope.length() - (parentName.length()));
             int size = target->getTotalSize(scope) + getTemporarySize(methodName);
+            int a=16;
+            while(a<size) a+=16;
+            size=a;
             // x86code.push_back(methodName + ":");
             x86code.push_back("\tpushq\t%rbp");
             x86code.push_back("\tmovq\t%rsp, %rbp");
@@ -910,6 +897,9 @@ public:
             target->initFuncLocal();
             string parentName = global_sym_table->linkmap[scope]->parent->scope;
             int size = target->getTotalSize(scope)+getTemporarySize(parentName);
+            int a=16;
+            while(a<size) a+=16;
+            size=a;
             // cout<<size<<"-----";
             // x86code.push_back(parentName+".Constr" + ":");
             x86code.push_back("\tpushq\t%rbp");
@@ -1137,6 +1127,8 @@ public:
                 if(x==1){x=target->getOffset(offset,scope,8);}
                 vector<string> code;
                 code = target->getReg(to_string(x), scope,8);
+
+                target->tVarsToValue.insert({result,x});
 
                 x86code.push_back(code[0]);
                 string reg = code[1];
