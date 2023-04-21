@@ -477,6 +477,37 @@ public:
                     reg1 = "movl\t%" + reg3 + ", " + loc;
                 x86code.push_back(reg1);
             }
+            else if (op =="!")
+            {
+                instr = "xorb";
+
+                code = target->getReg(arg2, scope,1);
+                x86code.push_back(code[0]);
+                reg3 = code[1];
+
+
+                reg1 = instr + "\t$1, %" + reg3;
+                x86code.push_back(reg1);
+                
+                // move to destination(result)
+                // int x = target->getOffset(result,scope);
+                // reg1 = "movl\t%"+reg3+", -" + to_string(x) + "(%rbp)";
+                // x86code.push_back(reg1);
+
+                if(loc==""){
+                    int x = target->getOffset(result,scope,1);
+                    if (x < 0)
+                    {
+                        x *= -1;
+                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                    }
+                    else reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                }
+                else 
+                    reg1 = "movb\t%al, " + loc;
+
+                x86code.push_back(reg1);
+            }
             else if (op == ">="){
                 instr = "cmpl";
 
@@ -1213,6 +1244,12 @@ public:
         {
             if (elem == "")
                 continue;
+            else if (elem.length()>1 && (elem[0]=='t' && elem[1]=='_')){
+                int t = target->getOffset(elem,scope);
+                x86code.push_back("movl\t-" + to_string(t) + "(%rbp), %ecx");
+                x86code.push_back("movl\t%ecx, "+to_string(off)+"(%rax)");
+                continue;
+            }
             x86code.push_back("movl\t$" + elem + ", "+to_string(off)+"(%rax)");
             off += typesize;
         }
