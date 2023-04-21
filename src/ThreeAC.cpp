@@ -104,7 +104,11 @@ public:
         }
 
         if(result=="stackPointer" && op=="+int"){
-            x86code.push_back("addq\t$"+arg2+", %rsp");
+            int t = stoi(arg2);
+            if(t%16){
+                t += 16 - (t%16);
+            }
+            x86code.insert(x86code.begin(),"subq\t$"+to_string(t)+", %rsp");
         }
         else if (arg2 != "")
         {
@@ -1101,19 +1105,21 @@ public:
 
     string codegen(){
         if(isCall){
+            int size=0;
             for (auto x : params)
-            {
+            {   
+                int y;
                 // s += "\tparam " + x + "\n";
                 if((x[0]<='9' && x[0]>='0') || (x[0]=='-')) {
                     // x86code.push_back("push\t$"+x);
                     x86code.push_back("subq\t$4,%rsp");
                     x86code.push_back("movl\t$" + x + ", (%rsp)");
+                    y=4;
                 }
                 else{
                     if(x[0]=='*'){
 
                     }
-                    int y;
                     vector<string> code;
                     y = target->getOffset(x, scope);
                     if(y<0){
@@ -1139,6 +1145,12 @@ public:
                         x86code.push_back("pushq\t%"+code[1]);
                     }
                 }
+                size+=y;
+            }
+
+            if(size%16){
+                size = 16 - (size%16);
+                x86code.insert(x86code.begin(),"subq\t$"+to_string(size)+", %rsp");
             }
 
             // mov objec refer to reg
