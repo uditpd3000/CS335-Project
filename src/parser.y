@@ -1890,6 +1890,7 @@ ArrayAccess:
     $$->type = v1->type;
     $$->which_scope=$1->anyName;
     $$->finalOk = true;
+    $$->staticOk = true;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -1954,6 +1955,7 @@ ArrayAccess:
 
     $$->start = $1->start;
     $$->finalOk = true;
+    $$->staticOk = $3->staticOk;
     // cout<<mycode->getVar($$->start)<<"=========="<<mycode->getVar($$->index)<<endl;
 
     }

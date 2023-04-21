@@ -267,7 +267,7 @@ public:
 
                 x86code.push_back(reg1);
             }
-            else if (op == "|")
+            else if (op[0] == '|')
             {
                 instr = "orl";
 
@@ -297,7 +297,7 @@ public:
                     reg1 = "movl\t%" + reg2 + ", " + loc;
                 x86code.push_back(reg1);
             }
-            else if (op == "^")
+            else if (op[0] == '^')
             {
                 instr = "xorl";
 
@@ -327,7 +327,7 @@ public:
                     reg1 = "movl\t%" + reg2 + ", " + loc;
                 x86code.push_back(reg1);
             }
-            else if (op == "&")
+            else if (op[0] == '&')
             {
                 instr = "andl";
 

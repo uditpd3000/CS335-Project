@@ -5,7 +5,6 @@ acoutput = ../output/ThreeAddressCode.3ac
 dot_output=../output/graph.dot
 ps_output=../output/graph.ps
 output = ../output/x86-output.s
-executable = ../output/a.out
 
 default: help
 
