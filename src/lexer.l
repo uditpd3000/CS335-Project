@@ -13,7 +13,7 @@ FILE* pInputFile = NULL;
 
 bool flag=false; /* flag to indicate any lexical-error found */
 
-map<string, string> mymap;
+map<string,  string> mymap;
 
 
 void insertMap(string lexeme, string token){
