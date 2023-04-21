@@ -936,6 +936,7 @@ FormalParameter:
   string t1=$1; vector<Node*>v{(new Node(mymap[t1],t1)),$2,$3}; 
   $$->add(v);
   $$->var=$3->var;
+  $$->var->isParameter = true;
   $$->var->type=$2->type;
   if(typeToSize.find($$->var->type)!=typeToSize.end())$$->var->size = typeToSize[$$->var->type];
   if($2->dims==0){
@@ -953,6 +954,7 @@ FormalParameter:
     vector<Node*>v{$1,$2}; 
     $$->add(v);
     $$->var= $2->var;
+    $$->var->isParameter = true;
     $$->var->type = $1->type;
     if(typeToSize.find($$->var->type)!=typeToSize.end())$$->var->size = typeToSize[$$->var->type];
     if($1->dims==0 && $2->dims==0){
@@ -1789,7 +1791,7 @@ ArrayAccess:
     $$->var= v1;
     int ss = $$->var->dimsSize.size();
     // cout<<ss<<"ghghgh"<<endl;
-    if(ss){
+    if(ss || v1->isParameter){
       int ll=1;
       int zz = v1->dims-1; 
       // cout<<zz<<"hghgh"<<endl;
@@ -1841,7 +1843,7 @@ ArrayAccess:
     $$->var= v1;
     int ss = $$->var->dimsSize.size();
     // cout<<ss<<"ghghgh"<<endl;
-    if(ss){
+    if(ss|| v1->isParameter){
       int ll=1;
       int zz = v1->dims-1; 
       // cout<<zz<<"hghgh"<<endl;
@@ -1883,7 +1885,7 @@ ArrayAccess:
     $$->type= $1->type;
     $$->which_scope=$1->which_scope;
     int ss = $$->var->dimsSize.size();
-    if(ss){
+    if(ss|| $$->var->isParameter){
       int ll=1;
       int zz = ss-1; 
       int loo = $1->dims-1;

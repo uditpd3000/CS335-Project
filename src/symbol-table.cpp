@@ -29,6 +29,7 @@ public:
     bool isField = false;
     string objName;
     bool otherScope = false;
+    bool isParameter = false;
 
     Variable(string myname, string mytype, int mylineNo, vector<string> myModifiers, string myvalue)
     {
