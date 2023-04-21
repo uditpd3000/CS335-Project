@@ -1296,26 +1296,48 @@ public:
         // int off2 = target->getOffset(offset, scope);
         vector<string> code;
 
-        code = target->getReg(start, scope, 8);
-        if(code[0]!="") x86code.push_back(code[0]);
-        string reg11 = code[1];
-
-        if(target->offsetToSize[target->getOffset(offset,scope)] == 4){
-            code = target->getReg(offset, scope, 8, true);
+        if(start =="basePointer" ){
+            int off = target->getOffset(result, scope);
+            int t = target->offsetToSize[off];
+            if(t==4) {
+                string reg = "ecx";
+                x86code.push_back("movl\t"+offset+"(%rbp), %"+reg);
+                x86code.push_back("movl\t%"+reg+", -"+to_string(off)+"(%rbp)");
+            }
+            else if (t==1) {
+                string reg = "al";
+                x86code.push_back("movb\t"+offset+"(%rbp), %"+reg);
+                x86code.push_back("movb\t%"+reg+", -"+to_string(off)+"(%rbp)");
+            }
+            else {
+                string reg = "r8";
+                x86code.push_back("movq\t"+offset+"(%rbp), %"+reg);
+                x86code.push_back("movq\t%"+reg+", -"+to_string(off)+"(%rbp)");
+            }
         }
-        else code = target->getReg(offset, scope, 8);
-        if(code[0]!="")  x86code.push_back(code[0]);
-        string reg12 = code[1];
+        else{
 
-        // x86code.push_back("---");
-        // x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
-        // x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
-        int off = target->getOffset(result, scope);
-        x86code.push_back("addq\t%" + reg11 + ", %" + reg12); // total offset saved in reg12
-        
-        // if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12); 
-        x86code.push_back("movl\t(%"+ reg12+ "), %eax");
-        x86code.push_back("movl\t%eax, -" + to_string(off) + "(%rbp)");
+            code = target->getReg(start, scope, 8);
+            if(code[0]!="") x86code.push_back(code[0]);
+            string reg11 = code[1];
+
+            if(target->offsetToSize[target->getOffset(offset,scope)] == 4){
+                code = target->getReg(offset, scope, 8, true);
+            }
+            else code = target->getReg(offset, scope, 8);
+            if(code[0]!="")  x86code.push_back(code[0]);
+            string reg12 = code[1];
+
+            // x86code.push_back("---");
+            // x86code.push_back("movq\t-" + to_string(off1) + "(%rbp), %" + reg11);
+            // x86code.push_back("movq\t-" + to_string(off2) + "(%rbp), %" + reg12);
+            int off = target->getOffset(result, scope);
+            x86code.push_back("addq\t%" + reg11 + ", %" + reg12); // total offset saved in reg12
+            
+            // if(reg11!="rbp") x86code.push_back("addq\t%rbp, %" + reg12); 
+            x86code.push_back("movl\t(%"+ reg12+ "), %eax");
+            x86code.push_back("movl\t%eax, -" + to_string(off) + "(%rbp)");
+        }
 
         string s = "";
         for (auto yy : x86code)

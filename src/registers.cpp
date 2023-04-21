@@ -65,15 +65,8 @@ class X86{
             string u,t;
             int myoffset;
 
-            if(name=="basePointer"){
-                t="rbp";
-
-                v.push_back(u);
-                v.push_back(t);
-
-                return v;
-            }
-            else if(tVarsToGlobals.find(name)!=tVarsToGlobals.end()){
+            
+            if(tVarsToGlobals.find(name)!=tVarsToGlobals.end()){
                 t = usedRegs.front();
                 u = "movl\t" + tVarsToGlobals[name] + "(%rip), %"+t;
                 usedRegs.pop(); usedRegs.push(t);
