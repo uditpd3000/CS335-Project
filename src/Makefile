@@ -1,8 +1,10 @@
-TARGET = myASTgenerator
+TARGET = myCodeGenerator
 SRCS = lex.yy.c parser.tab.c
 VERBOSE=verbose.txt
-ThreeAddCode = ../output/ThreeAddressCode.txt
-output=../output/graph.dot
+acoutput = ../output/ThreeAddressCode.3ac
+dot_output=../output/graph.dot
+ps_output=../output/graph.ps
+output = ../output/x86-output.s
 
 default: help
 
@@ -14,40 +16,47 @@ help: # Show help for each of the Makefile recipes.
 
 .PHONY: build
 build : # generate files for the executable
-	@echo "building your Three Address Code cum AST Generator...\n"
+	@echo "building your Java-x86-Compiler...\n"
 	@flex lexer.l
 	@bison -d -t parser.y 2> error.txt
 	@g++ lex.yy.c parser.tab.c -o $(TARGET)
 	@rm error.txt
 
 .PHONY: run
-run: # run the executable using input like `make run input=filepath output=dotfilepath` or else run with terminal input
+run: # run the executable using input like `make run input=filepath output=x86-filepath` or else run with terminal input
 	@echo "compiling up...\n"
-	@./$(TARGET) $(input) $(output)
+	@./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@[ -e $(VERBOSE) ] && rm $(VERBOSE) || echo "\n~~~Generated tree in Non Verbose Mode~\n"
-	@dot -Tps $(output) -o graph.ps
 	@echo "find your results in output folder :p"
 
 .PHONY: verbose
-verbose: # run the executable in verbose like `make run input=filepath output=dotfilepath`
-	@ ./$(TARGET) $(input) $(output)
+verbose: # run the executable in verbose like `make run input=filepath output=x86-filepath`
+	@ ./$(TARGET) $(input) $(dot_output) $(acoutput) $(output)
 	@ echo "the emplementation follows-\n"
 	@ cat $(VERBOSE)
 	@ rm $(VERBOSE)
-	@dot -Tps $(output) -o graph.ps
 
 .PHONY: graph
 graph: # to show dot file
-	@cat graph.dot
+	@dot -Tps $(dot_output) -o $(ps_output)
+	@cat $(dot_output)
 
-.PHONY: ThreeAC
-ThreeAC: # to show Three Address Code
-	@cat output/ThreeAddressCode.txt
+.PHONY: threeAC
+threeAC: # to show Three Address Code
+	@cat $(acoutput)
+
+.PHONY: asm
+asm: # to show x86 Code
+	@cat $(output)
+
+.PHONY: runasm
+runasm: # to show x86 Code
+	@	gcc -no-pie $(output)
 
 .PHONY: clean
 clean : # clean up the generated files
 	@echo "cleaning up...\n"
-	@rm -f $(TARGET) $(SRCS) parser.output graph.dot 2> error.txt
-	@rm ../ voutput/symTables/*.csv 2> error.txt
-	@rm $(ThreeAddCode) 2> error.txt
-	@rm $(output) 2> error.txt
+	@rm $(TARGET) $(SRCS)
+	@rm ../output/symTables/*.csv
+	@rm $(acoutput) $(output)
+	@rm $(dot_output) 

@@ -1,0 +1,131 @@
+SieveOfEratosthenesDemo:
+sieveOfEratosthenes:
+	BeginFunc 
+	t_0 := popparam
+
+	n :=  *(basePointer +int 16)
+	t_1 := 400
+	param t_1
+	t_2 := allocmemt_1
+	primes := t_2
+L4:
+	i := 2
+L3:
+	t_3 := i *int i
+	t_4 := t_3 <= n
+	if t_4 goto L1
+	goto L2
+L0:
+	t_5 := i
+	i := i +int 1
+	goto L3
+L1:
+	t_6 := i *int 1
+	t_7 := t_6 *int 4
+	t_8 := getFromSymTable( SieveOfEratosthenesDemo_sieveOfEratosthenes , primes)
+	t_9 := getAddresst_8
+	*(t_9+t_7) := 1
+	goto L0
+L2:
+	t_10 := 0 *int 1
+	t_11 := t_10 *int 4
+	t_12 := getFromSymTable( SieveOfEratosthenesDemo_sieveOfEratosthenes , primes)
+	t_13 := getAddresst_12
+	*(t_13+t_11) := 0
+	t_14 := 1 *int 1
+	t_15 := t_14 *int 4
+	t_16 := getFromSymTable( SieveOfEratosthenesDemo_sieveOfEratosthenes , primes)
+	t_17 := getAddresst_16
+	*(t_17+t_15) := 0
+	t_18 := n == 2
+	if t_18 goto L5
+	goto L6
+L5:
+	push 1
+	pop basePointer
+	return 
+	goto L6
+L6:
+L20:
+	i := 2
+L19:
+	t_19 := i *int i
+	t_20 := t_19 <= n
+	if t_20 goto L17
+	goto L18
+L7:
+	t_21 := i
+	i := i +int 1
+	goto L19
+L17:
+	t_22 := i *int 1
+	t_23 := t_22 *int 4
+	t_24 := getFromSymTable( SieveOfEratosthenesDemo_sieveOfEratosthenes , primes)
+	t_25 := getAddresst_24
+	t_26 :=  *(t_25 +int t_23)
+	t_27 := t_26 == 1
+	if t_27 goto L15
+	goto L16
+L15:
+	t_28 := n %int i
+	t_29 := t_28 == 0
+	if t_29 goto L8
+	goto L9
+L8:
+	push 0
+	pop basePointer
+	return 
+	goto L9
+L9:
+L14:
+	t_30 := i *int i
+	j := t_30
+L13:
+	t_31 := j <= n
+	if t_31 goto L11
+	goto L12
+L10:
+	j := j +int i
+	goto L13
+L11:
+	t_32 := j *int 1
+	t_33 := t_32 *int 4
+	t_34 := getFromSymTable( SieveOfEratosthenesDemo_sieveOfEratosthenes , primes)
+	t_35 := getAddresst_34
+	*(t_35+t_33) := 0
+	goto L10
+L12:
+	goto L16
+L16:
+	goto L7
+L18:
+	push 1
+	pop basePointer
+	return 
+	EndFunc sieveOfEratosthenes
+main:
+	BeginFunc main
+	t_36 := popparam
+
+	args :=  *(basePointer +int 16)
+	n := 7
+	x := 2
+	param n
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 20
+	call sieveOfEratosthenes
+	t_37 := popReturnValue
+	stackPointer := stackPointer +int 4
+	x := t_37
+	t_38 := x == 1
+	if t_38 goto L21
+	goto L22
+L21:
+	t_39 := n
+	print t_39
+	goto L22
+L22:
+	pop basePointer
+	return 
+	EndFunc main
