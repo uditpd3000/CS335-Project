@@ -436,8 +436,22 @@ ArgumentList:
     $$->variables.push_back($1->var);
 
     $$->index = $1->index; $$->start = $1->start;
-    $$->resList.push_back(make_pair($1->result,typeToSize[$1->type]));
+    int t=-1;
+    if($1->result[0]=='*'){
+      t= mycode->insertAss($1->result,"","","");
+      cout<<"wohooo";
+
     }
+    if($1->var->isArray){
+        if(t==-1)$$->resList.push_back(make_pair($1->result,8));
+        else $$->resList.push_back(make_pair(mycode->getVar(t),8));
+    }
+    else{
+        if(t==-1)$$->resList.push_back(make_pair($1->result,typeToSize[$1->type]));
+        else $$->resList.push_back(make_pair(mycode->getVar(t),typeToSize[$1->type]));
+      // $$->resList.push_back(make_pair(mycode->getVar(t),typeToSize[$1->type]));
+    }
+  }
 | ArgumentList comma Expression   {
     $$=new Node("Arglist");
     string t1=$2;vector<Node*>v{$1,new Node(mymap[t1],t1),$3};

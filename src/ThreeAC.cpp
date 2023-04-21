@@ -1089,7 +1089,7 @@ public:
         }
 
         for (auto x : params)
-        {
+        { 
             s += "\tparam " + x + "\n";
         }
         // s=s.substr(0,s.length()-1);
@@ -1110,6 +1110,9 @@ public:
                     x86code.push_back("movl\t$" + x + ", (%rsp)");
                 }
                 else{
+                    if(x[0]=='*'){
+
+                    }
                     int y;
                     vector<string> code;
                     y = target->getOffset(x, scope);
