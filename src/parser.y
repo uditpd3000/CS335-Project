@@ -956,7 +956,10 @@ FormalParameter:
     $$->var= $2->var;
     $$->var->isParameter = true;
     $$->var->type = $1->type;
-    if(typeToSize.find($$->var->type)!=typeToSize.end())$$->var->size = typeToSize[$$->var->type];
+    if(typeToSize.find($$->var->type)!=typeToSize.end()){
+      if(!$$->var->isArray) $$->var->size = typeToSize[$$->var->type];
+      else $$->var->size=8;
+    }
     if($1->dims==0 && $2->dims==0){
     $$->var->isArray=false;
     }

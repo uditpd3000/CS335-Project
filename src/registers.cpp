@@ -154,8 +154,11 @@ class X86{
             for(auto v:curr->vars){
                 if(v->name==var){
                     // cout<<v->name<<"--"<<v->offset<<endl;
-                    if(!isClass)
-                        return v->offset+12;
+                    if(!isClass){
+                        // cout<<v->size<<"======"<<v->offset+8+v->size<<var<<endl;
+                        offsetToSize.insert({v->offset+8+v->size,v->size});
+                        return v->offset+v->size+8;
+                    }
                     else{
                         bool flag=false;
                         for(auto modifs : v->modifiers){
@@ -164,7 +167,10 @@ class X86{
                             }
                         }
                         if(flag) return 1;
-                        else return v->offset;
+                        else {
+                            offsetToSize.insert({v->offset,v->size});
+                            return v->offset;
+                        }
                     }
                 }
             }
@@ -205,7 +211,6 @@ class X86{
                 }
 
             }
-            offsetToSize.insert({x,mysize});
             return x;
         }
 
