@@ -465,7 +465,7 @@ public:
                 // x86code.push_back(reg1);
 
                 if(loc==""){
-                    int x = target->getOffset(result,scope,1);
+                    int x = target->getOffset(result,scope,4);
                     if (x < 0)
                     {
                         x *= -1;

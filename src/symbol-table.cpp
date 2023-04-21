@@ -271,7 +271,7 @@ public:
                 break;
             for (int i = 0; i < curr->vars.size(); i++)
             {
-                if (curr->vars[i]->name == s)
+                if (curr->vars[i]->name == s && curr->vars[i]->otherScope==false)
                     return curr->vars[i];
             }
 
