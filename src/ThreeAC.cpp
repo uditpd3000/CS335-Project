@@ -499,12 +499,13 @@ public:
                     if (x < 0)
                     {
                         x *= -1;
-                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                        reg1 = "movb\t%" + reg3 +", " + to_string(x) + "(%rdi)";
                     }
-                    else reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                    else
+                        reg1 = "movb\t%" + reg3 + ", -" + to_string(x) + "(%rbp)";
                 }
-                else 
-                    reg1 = "movb\t%al, " + loc;
+                else
+                    reg1 = "movb\t%" + reg3 + ", " + loc;
 
                 x86code.push_back(reg1);
             }
