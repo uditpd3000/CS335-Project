@@ -1890,6 +1890,7 @@ ArrayAccess:
     $$->type = v1->type;
     $$->which_scope=$1->anyName;
     $$->finalOk = true;
+    $$->staticOk = true;
 
     }
 | PrimaryNoNewArray box_open Expression box_close    {
@@ -1954,6 +1955,7 @@ ArrayAccess:
 
     $$->start = $1->start;
     $$->finalOk = true;
+    $$->staticOk = $3->staticOk;
     // cout<<mycode->getVar($$->start)<<"=========="<<mycode->getVar($$->index)<<endl;
 
     }
@@ -3129,7 +3131,22 @@ BasicForStatementStart Statement                                       {
   // cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
 
   $$->start = $$->index;
+  if(global_sym_table->isForScope==true){
+    global_sym_table->isForScope=false;
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
 
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      it->otherScope = true;
+      parentTable->insert_variable(it);
+    }
+  global_sym_table->end_scope();
+  }
   }
 ;
 
@@ -3142,7 +3159,23 @@ BasicForStatementStart StatementNoShortIf                              {
   $$->index = mycode->insertFor($1->prestart,$1->start,$1->index,$1->result, $2->result);
   // cout<<$2->start-1<<" "<<$1->index<<"barabar?\n";
   $$->start = $$->index;
+  if(global_sym_table->isForScope==true){
+    global_sym_table->isForScope=false;
+    SymbolTable* parentTable = global_sym_table->current_symbol_table;
+
+    while(parentTable->isMethod==false && parentTable->parent!=NULL){
+      parentTable = parentTable->parent;
+    }
+    
+    for(auto it: global_sym_table->current_symbol_table->vars){
+      it->offset = parentTable->offset;
+      parentTable->offset += it->size;
+      it->otherScope = true;
+      parentTable->insert_variable(it);
+    }
+    global_sym_table->end_scope();
   }
+}
 
 BasicForStatementStart:
 forr brac_open semi_colon semi_colon brac_close                         {

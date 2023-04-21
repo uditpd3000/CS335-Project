@@ -268,7 +268,7 @@ public:
 
                 x86code.push_back(reg1);
             }
-            else if (op == "|")
+            else if (op[0] == '|')
             {
                 instr = "orl";
 
@@ -298,7 +298,7 @@ public:
                     reg1 = "movl\t%" + reg2 + ", " + loc;
                 x86code.push_back(reg1);
             }
-            else if (op == "^")
+            else if (op[0] == '^')
             {
                 instr = "xorl";
 
@@ -328,7 +328,7 @@ public:
                     reg1 = "movl\t%" + reg2 + ", " + loc;
                 x86code.push_back(reg1);
             }
-            else if (op == "&")
+            else if (op[0] == '&')
             {
                 instr = "andl";
 
@@ -466,7 +466,7 @@ public:
                 // x86code.push_back(reg1);
 
                 if(loc==""){
-                    int x = target->getOffset(result,scope,1);
+                    int x = target->getOffset(result,scope,4);
                     if (x < 0)
                     {
                         x *= -1;
@@ -500,12 +500,13 @@ public:
                     if (x < 0)
                     {
                         x *= -1;
-                        reg1 = "movb\t%al, " + to_string(x) + "(%rdi)";
+                        reg1 = "movb\t%" + reg3 +", " + to_string(x) + "(%rdi)";
                     }
-                    else reg1 = "movb\t%al, -" + to_string(x) + "(%rbp)";
+                    else
+                        reg1 = "movb\t%" + reg3 + ", -" + to_string(x) + "(%rbp)";
                 }
-                else 
-                    reg1 = "movb\t%al, " + loc;
+                else
+                    reg1 = "movb\t%" + reg3 + ", " + loc;
 
                 x86code.push_back(reg1);
             }
