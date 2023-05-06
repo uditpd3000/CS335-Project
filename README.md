@@ -1,10 +1,11 @@
-# CS335-Project
+# CS335-Project (Compiler Design)
+## JAVA to x86_64
 
-- Primitive data types (e.g., int, long, float, double, and boolean)
-- Multidimensional (max 3D) arrays. You can ignore Java-style declarations (e.g., int[][] a
-= ...) and only support C-style declarations (e.g., int a[][] = ...).
 
-### Basic operators:
+### Supported Features:
+
+- Primitive data types
+- Multidimensional arrays. 
 
 - Arithmetic operators: +, -, *, /, %, ++, –
 - Preincrement, predecrement, postincrement, and postdecrement
@@ -13,12 +14,28 @@
 - Logical operators: &&, ||, !
 - Assignment operators: =, +=, -=, *=, /=, &=
 - Ternary operator
-- Ignore the <> operator<br><br>
 
-- Control flow vila if-else, for, and while, ignore constructs like do-while and switch
+- Control flow vila if-else, for, and while
 - Methods and method calls, including both static and non-static methods
 - Support for recursion
-- Support the library function println() for only printing the primitive types listed earlier
-- Support for classes and objects. For class definitions, support public and private access
-modifiers, ignore default and protected. Support for nested/inner classes is not required.
-- Ignore support for import ... statements as a basic feature.
+- Support the library function println() for only printing integer
+- Support for classes and objects
+
+### How to run:
+
+- cd src
+- make build
+- make run input=inputfile.java
+- make runasm
+- ./a.out
+
+assembly, 3AC , symbol tables and ast tree will be generated in output folder
+
+
+### Contributors
+
+- [Aarchie](https://github.com/aarchie-r) 
+- [Harshit](https://github.com/tiwariharshit2725)
+- [Me](https://github.com/uditpd3000) 
+
+PS: Coding in 6 sems << Coding in this project
