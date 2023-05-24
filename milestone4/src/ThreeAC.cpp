@@ -72,7 +72,6 @@ public:
 
         if(fieldDec==true){
             int off = target->getOffset(result,scope,4,true);
-            // cout<<"----"<<endl;
             loc = to_string(off)+"(%rdi)";
         }
         if(result[0]=='*'){
@@ -858,11 +857,7 @@ public:
                 x86code.push_back(code[0]);
                 reg2 = code[1];
                 
-                if(loc!=""){
-                    if(resSize==1) reg1 = "movb\t%"+reg2+", " + loc;
-                    else if(resSize==4) reg1 = "movl\t%"+reg2+", " + loc;
-                    else reg1 = "movq\t%"+reg2+", " + loc;
-                }
+                if(loc!="")reg1 = "movl\t%"+reg2+", " + loc;
                 else {
                     int x = target->getOffset(result, scope,resSize);
                     // cout<<result<<" "<<x<<"----"<<target->offsetToSize[x]<<endl;
@@ -1853,18 +1848,13 @@ public:
         if(blocks.find(blockName)==blocks.end()) return;
 
         vector<Instruction*> vi;
-        vector<Instruction*> ni;
 
-        int t=2;
         for(auto x: blocks[className]->codes){
             if(!x->isBlock){
-                if(!(x->result.length()>1 && (x->result[0]=='t' && x->result[1]=='_'))) x->fieldDec = true;
-                else x->fieldDec = false;
+                x->fieldDec = true;
                 // int off = target->getOffset(x->result,className);
-                // ni.push_back(x);
 
-                blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+t,x);
-                t++;
+                blocks[blockName]->codes.insert(blocks[blockName]->codes.begin()+2,x);
             }
             else{
                 vi.push_back(x);

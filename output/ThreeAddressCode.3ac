@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 SieveOfEratosthenesDemo:
 sieveOfEratosthenes:
 	BeginFunc 
@@ -140,6 +141,119 @@ L21:
 L22:
 	goto L24
 L24:
+=======
+AgeCheck:
+AgeCheck.Constr:
+	BeginConstr AgeCheck
+	t_0 := popparam
+
+	age :=  *(basePointer +int 16)
+	t_1 := getFromSymTable( AgeCheck , age)
+	t_1 := age
+	EndConstr AgeCheck
+sayAge:
+	BeginFunc sayAge
+	t_2 := popparam
+
+	t_3 := getFromSymTable( AgeCheck , age)
+	t_4 := t_3
+	print t_4
+	pop basePointer
+	return 
+	EndFunc sayAge
+isAdult:
+	BeginFunc 
+	t_5 := popparam
+
+	t_6 := getFromSymTable( AgeCheck , age)
+	t_7 := t_6 >= 18
+	if t_7 goto L1
+	goto L0
+L0:
+	push 0
+	pop basePointer
+	return 
+	goto L2
+L1:
+	push 1
+	pop basePointer
+	return 
+	goto L2
+L2:
+	EndFunc isAdult
+main:
+	BeginFunc main
+	t_8 := popparam
+
+	args :=  *(basePointer +int 16)
+	t_9 := 20
+	param t_9
+	t_10 := allocmemt_9
+	pushArr t_10 10 0
+	pushArr t_10 17 4
+	pushArr t_10 22 8
+	pushArr t_10 35 12
+	pushArr t_10 12 16
+
+	ages := t_10
+L9:
+	i := 0
+L8:
+	t_11 := i < 5
+	if t_11 goto L6
+	goto L7
+L3:
+	t_12 := i
+	i := i +int 1
+	goto L8
+L6:
+	t_13 := i *int 1
+	t_14 := t_13 *int 4
+	t_15 := getFromSymTable( AgeCheck_main , ages)
+	t_16 := getAddresst_15
+	t_17 :=  *(t_16 +int t_14)
+	t_18 := t_17
+	t_19 := 16
+	param t_19
+	t_20 := allocmemt_19
+	setObjectRef t_20
+	param t_18
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 0
+	call AgeCheck.Constr
+	stackPointer := stackPointer +int 8
+	t_21 := popObject
+	myObject := t_21
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 0
+	call sayAge
+	stackPointer := stackPointer +int 0
+	ins := 0
+	push basePointer
+	basePointer := stackPointer
+	stackPointer := stackPointer -int 0
+	call isAdult
+	t_22 := popReturnValue
+	stackPointer := stackPointer +int 0
+	ins := t_22
+	t_23 := ins == 1
+	if t_23 goto L4
+	goto L5
+L4:
+	t_24 := i *int 1
+	t_25 := t_24 *int 4
+	t_26 := getFromSymTable( AgeCheck_main , ages)
+	t_27 := getAddresst_26
+	t_28 :=  *(t_27 +int t_25)
+	t_29 := t_28
+	print t_29
+	goto L5
+L5:
+	goto L3
+L7:
+>>>>>>> main
 	pop basePointer
 	return 
 	EndFunc main

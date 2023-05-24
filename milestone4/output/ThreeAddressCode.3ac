@@ -1,0 +1,83 @@
+BreakContinueDemo:
+main:
+	BeginFunc main
+	t_0 := popparam
+
+	args :=  *(basePointer +int 16)
+	t_1 := 20
+	param t_1
+	t_2 := allocmemt_1
+	pushArr t_2 1 0
+	pushArr t_2 2 4
+	pushArr t_2 3 8
+	pushArr t_2 4 12
+	pushArr t_2 5 16
+
+	nums := t_2
+L6:
+	i := 0
+L5:
+	t_3 := i < 5
+	if t_3 goto L3
+	goto L4
+L0:
+	t_4 := i
+	i := i +int 1
+	goto L5
+L3:
+	t_5 := i *int 1
+	t_6 := t_5 *int 4
+	t_7 := getFromSymTable( BreakContinueDemo_main , nums)
+	t_8 := getAddresst_7
+	t_9 :=  *(t_8 +int t_6)
+	t_10 := t_9 == 3
+	if t_10 goto L1
+	goto L2
+L1:
+	goto L4
+	goto L2
+L2:
+	t_11 := i *int 1
+	t_12 := t_11 *int 4
+	t_13 := getFromSymTable( BreakContinueDemo_main , nums)
+	t_14 := getAddresst_13
+	t_15 :=  *(t_14 +int t_12)
+	t_16 := t_15
+	print t_16
+	goto L0
+L4:
+L13:
+	i := 0
+L12:
+	t_17 := i < 5
+	if t_17 goto L10
+	goto L11
+L7:
+	t_18 := i
+	i := i +int 1
+	goto L12
+L10:
+	t_19 := i *int 1
+	t_20 := t_19 *int 4
+	t_21 := getFromSymTable( BreakContinueDemo_main , nums)
+	t_22 := getAddresst_21
+	t_23 :=  *(t_22 +int t_20)
+	t_24 := t_23 == 3
+	if t_24 goto L8
+	goto L9
+L8:
+	goto L7
+	goto L9
+L9:
+	t_25 := i *int 1
+	t_26 := t_25 *int 4
+	t_27 := getFromSymTable( BreakContinueDemo_main , nums)
+	t_28 := getAddresst_27
+	t_29 :=  *(t_28 +int t_26)
+	t_30 := t_29
+	print t_30
+	goto L7
+L11:
+	pop basePointer
+	return 
+	EndFunc main
