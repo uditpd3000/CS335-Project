@@ -51,6 +51,6 @@ You can go through the readme of individual milestones in milestoneX/doc
 
 - [Aarchie](https://github.com/aarchie-r) 
 - [Harshit](https://github.com/tiwariharshit2725)
-- [Me](https://github.com/uditpd3000) 
+- [Udit Prasad](https://github.com/uditpd3000) 
 
 PS: Coding in 6 sems << Coding in this project
